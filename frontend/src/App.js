@@ -255,6 +255,7 @@ function App() {
             episode={currentEpisode}
             isTraining={isTraining}
             isPlayback={isPlayback}
+            trainingComplete={trainingComplete}
           />
         </div>
 

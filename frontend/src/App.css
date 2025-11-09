@@ -20,7 +20,7 @@ body {
 }
 
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ff7500 0%, #7664a0 100%);
   color: white;
   padding: 2rem;
   text-align: center;
@@ -83,7 +83,7 @@ body {
 }
 
 .app-footer {
-  background-color: #333;
+  background-color: #212427;
   color: white;
   text-align: center;
   padding: 1rem;

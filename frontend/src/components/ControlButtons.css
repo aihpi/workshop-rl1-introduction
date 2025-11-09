@@ -32,21 +32,21 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: #ff7500;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  background-color: #e66a00;
 }
 
 .btn-secondary {
-  background-color: #4caf50;
+  background-color: #7664a0;
   color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #45a049;
+  background-color: #655590;
 }
 
 .btn-danger {

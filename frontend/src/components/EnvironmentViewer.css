@@ -13,19 +13,19 @@
 }
 
 .status-indicator.ready {
-  background-color: #e3f2fd;
-  color: #1976d2;
+  background-color: #f3f1f7;
+  color: #7664a0;
 }
 
 .status-indicator.training {
-  background-color: #fff3e0;
-  color: #f57c00;
+  background-color: #fff4e6;
+  color: #ff7500;
   animation: pulse 1.5s infinite;
 }
 
 .status-indicator.playback {
-  background-color: #e8f5e9;
-  color: #388e3c;
+  background-color: #f3f1f7;
+  color: #7664a0;
   animation: pulse 1.5s infinite;
 }
 

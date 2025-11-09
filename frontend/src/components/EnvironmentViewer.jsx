@@ -1,11 +1,12 @@
 import React from 'react';
 import './EnvironmentViewer.css';
 
-const EnvironmentViewer = ({ frame, episode, isTraining, isPlayback }) => {
+const EnvironmentViewer = ({ frame, episode, isTraining, isPlayback, trainingComplete }) => {
   const getStatusText = () => {
     if (isPlayback) return 'Playing Policy';
     if (isTraining) return `Training - Episode ${episode}`;
-    return 'Ready';
+    if (trainingComplete) return 'Ready';
+    return 'Ready to train a policy';
   };
 
   const getStatusClass = () => {
