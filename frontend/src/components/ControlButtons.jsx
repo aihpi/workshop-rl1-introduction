@@ -3,7 +3,7 @@ import './ControlButtons.css';
 
 const ControlButtons = ({
   onStartTraining,
-  onReset,
+  onStopTraining,
   onPlayPolicy,
   isTraining,
   isPlayback,
@@ -13,10 +13,10 @@ const ControlButtons = ({
     <div className="control-buttons">
       <button
         className="btn btn-primary"
-        onClick={onStartTraining}
-        disabled={isTraining || isPlayback}
+        onClick={isTraining ? onStopTraining : onStartTraining}
+        disabled={isPlayback}
       >
-        {isTraining ? 'Training...' : 'Start Training'}
+        {isTraining ? 'Stop Training' : 'Start Training'}
       </button>
 
       <button
@@ -25,14 +25,6 @@ const ControlButtons = ({
         disabled={isTraining || isPlayback || !canPlayPolicy}
       >
         {isPlayback ? 'Playing...' : 'Play Policy'}
-      </button>
-
-      <button
-        className="btn btn-danger"
-        onClick={onReset}
-        disabled={isTraining || isPlayback}
-      >
-        Reset
       </button>
     </div>
   );

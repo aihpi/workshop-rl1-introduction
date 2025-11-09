@@ -87,12 +87,29 @@ function App() {
   const handleStartTraining = async () => {
     try {
       setError(null);
-      setIsTraining(true);
-      setTrainingComplete(false);
-      setRewards([]);
-      setCurrentEpisode(0);
 
-      // Start training session
+      // Close any existing EventSource (stops current training)
+      if (eventSource) {
+        eventSource.close();
+        setEventSource(null);
+      }
+
+      // Clear backend sessions (free memory and prevent leaks)
+      await resetTraining();
+
+      // Reset frontend state
+      setSessionId(null);
+      setIsTraining(false);
+      setIsPlayback(false);
+      setTrainingComplete(false);
+      setCurrentEpisode(0);
+      setRewards([]);
+      setLearningData(null);
+
+      // Set training flag
+      setIsTraining(true);
+
+      // Start new training session
       const response = await startTraining({
         algorithm: selectedAlgorithm,
         environment: selectedEnvironment,
@@ -170,7 +187,7 @@ function App() {
     }
   };
 
-  const handleReset = async () => {
+  const handleStopTraining = async () => {
     try {
       // Close EventSource if open
       if (eventSource) {
@@ -195,7 +212,8 @@ function App() {
       const previewData = await getEnvironmentPreview(selectedEnvironment);
       setCurrentFrame(previewData.frame);
     } catch (err) {
-      setError(err.message || 'Reset failed');
+      setError(err.message || 'Stop training failed');
+      setIsTraining(false);
     }
   };
 
@@ -223,7 +241,7 @@ function App() {
           />
           <ControlButtons
             onStartTraining={handleStartTraining}
-            onReset={handleReset}
+            onStopTraining={handleStopTraining}
             onPlayPolicy={handlePlayPolicy}
             isTraining={isTraining}
             isPlayback={isPlayback}
