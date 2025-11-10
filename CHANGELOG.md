@@ -16,6 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Created conftest.py with shared fixtures (Flask app, test client, sample Q-table)
   - Implemented 8 backend tests covering Q-Learning and API endpoints
   - All tests passing with 41% code coverage
+- **Frontend testing infrastructure** with Jest and React Testing Library
+  - Created src/components/__tests__/ directory for component tests
+  - Implemented 12 frontend tests covering key components
+  - ParameterPanel tests (5 tests): loading states, parameter rendering, environment dropdown
+  - EnvironmentViewer tests (6 tests): status display, frame rendering, placeholders
+  - App test (1 test): basic app rendering
+  - All tests passing with mocked API calls
 - **Comprehensive testing strategy documentation** in ARCHITECTURE.md
   - Backend testing approach (pytest, pytest-flask, pytest-cov, pytest-mock)
   - Frontend testing approach (Jest, React Testing Library)
@@ -37,13 +44,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Updated .gitignore to exclude test artifacts (.coverage, htmlcov/)
 
 ### Technical Details
-- **Testing Stack**: pytest with Flask integration, code coverage tracking
+- **Testing Stack**:
+  - Backend: pytest with Flask integration, code coverage tracking (8 tests, 41% coverage)
+  - Frontend: Jest with React Testing Library, mocked API calls (12 tests)
+  - Total: 20 automated tests across backend and frontend
 - **Docker**: Virtual environment with PATH configuration for simplified commands
 - **Dependency Management**: pyproject.toml as single source of truth
-- **Coverage**: 41% code coverage across Q-Learning algorithm and API endpoints
 
 ### Workshop Ready
-- Tests can be run locally (`uv run pytest`) or in Docker (`docker-compose exec backend pytest`)
+- Backend tests can be run locally (`uv run pytest`) or in Docker (`docker-compose exec backend pytest`)
+- Frontend tests can be run with `cd frontend && npm test`
 - Consistent testing environment across all platforms
 - Easy for participants to verify their implementation
 
