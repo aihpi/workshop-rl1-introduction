@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
+## [0.4.0] - 2025-11-10
+
+### Added
+- **Backend testing infrastructure** with pytest
+  - Created test directory structure (tests/, test_algorithms/, test_api/, etc.)
+  - Added pytest.ini configuration for test discovery and output formatting
+  - Added .coveragerc for code coverage measurement
+  - Created conftest.py with shared fixtures (Flask app, test client, sample Q-table)
+  - Implemented 8 backend tests covering Q-Learning and API endpoints
+  - All tests passing with 41% code coverage
+- **Comprehensive testing strategy documentation** in ARCHITECTURE.md
+  - Backend testing approach (pytest, pytest-flask, pytest-cov, pytest-mock)
+  - Frontend testing approach (Jest, React Testing Library)
+  - 87 detailed test cases documented
+  - Best practices and implementation priorities
+
+### Changed
+- **Docker modernization** - Single source of truth for dependencies
+  - Updated Dockerfile to use `uv sync --all-extras` (reads from pyproject.toml)
+  - Test dependencies automatically included in Docker environment
+  - Added PATH configuration for user-friendly commands in containers
+  - Workshop participants can now use simple commands:
+    - `docker-compose exec backend pytest` (instead of `.venv/bin/pytest`)
+    - `docker-compose exec backend python script.py`
+  - Follows modern Python tooling standards (2024+)
+- **Dependency management improvements**
+  - Added test dependencies to pyproject.toml as optional extras
+  - pytest>=7.4.0, pytest-cov>=4.1.0, pytest-flask>=1.2.0, pytest-mock>=3.11.0
+  - Updated .gitignore to exclude test artifacts (.coverage, htmlcov/)
+
+### Technical Details
+- **Testing Stack**: pytest with Flask integration, code coverage tracking
+- **Docker**: Virtual environment with PATH configuration for simplified commands
+- **Dependency Management**: pyproject.toml as single source of truth
+- **Coverage**: 41% code coverage across Q-Learning algorithm and API endpoints
+
+### Workshop Ready
+- Tests can be run locally (`uv run pytest`) or in Docker (`docker-compose exec backend pytest`)
+- Consistent testing environment across all platforms
+- Easy for participants to verify their implementation
+
 ## [0.3.0] - 2025-11-10
 
 ### Added
