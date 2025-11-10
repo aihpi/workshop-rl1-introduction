@@ -1,0 +1,23 @@
+[run]
+# What code to measure
+source = .
+
+# What to exclude from coverage
+omit =
+    tests/*
+    */migrations/*
+    */__pycache__/*
+    */site-packages/*
+    .venv/*
+
+[report]
+# Lines that don't need to be covered
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+
+# Show missing lines
+show_missing = True

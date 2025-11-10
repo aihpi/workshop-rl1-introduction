@@ -41,6 +41,8 @@ yarn-error.log*
 coverage/
 .nyc_output
 .pytest_cache/
+.coverage
+htmlcov/
 
 # IDE
 .vscode/

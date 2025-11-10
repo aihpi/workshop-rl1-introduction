@@ -26,14 +26,9 @@ ENV PATH="/root/.local/bin:$PATH"
 COPY pyproject.toml uv.lock* ./
 
 # Install Python dependencies using uv
-# --system flag installs into system Python (no venv needed in container)
-RUN uv pip install --system --no-cache \
-    flask>=3.0.0 \
-    flask-cors>=4.0.0 \
-    gymnasium>=0.29.0 \
-    numpy>=1.24.0 \
-    pillow>=10.0.0 \
-    pygame>=2.1.0
+# --system: installs into system Python (no venv needed in container)
+# --all-extras: includes dev dependencies (test tools)
+RUN uv sync --system --all-extras
 
 # Copy all application code
 COPY . .
