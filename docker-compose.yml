@@ -4,7 +4,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: rl-playground-backend
+    container_name: workshop-rl1-introduction-backend
     ports:
       - "5001:5001"
     volumes:
@@ -24,7 +24,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: rl-playground-frontend
+    container_name: workshop-rl1-introduction-frontend
     ports:
       - "3000:3000"
     volumes:

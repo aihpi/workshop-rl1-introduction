@@ -1,7 +1,7 @@
 [project]
-name = "rl-playground-backend"
+name = "workshop-rl1-introduction-backend"
 version = "0.1.0"
-description = "Backend for RL Playground - Educational RL visualization tool"
+description = "Backend for Workshop RL1 Introduction - Educational RL visualization tool"
 requires-python = ">=3.9"
 dependencies = [
     "flask>=3.0.0",

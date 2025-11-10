@@ -52,7 +52,7 @@ Changes flow: Edit file → Container sees change → Server reloads → Browser
 **Step 2: Clone the Repository**
 ```bash
 git clone <repository-url>
-cd rl-playground
+cd workshop-rl1-introduction
 ```
 
 **Step 3: Build and Start Containers (First Build)**
@@ -89,7 +89,7 @@ Press `Ctrl+C` in the terminal where docker-compose is running.
 
 ```bash
 # Navigate to project directory
-cd rl-playground
+cd workshop-rl1-introduction
 
 # Start containers (much faster after first build - takes ~10 seconds)
 docker-compose up
@@ -301,7 +301,7 @@ docker-compose exec frontend npm test
 
 Just close your browser and editor. The containers keep running in the background. Tomorrow:
 ```bash
-cd rl-playground
+cd workshop-rl1-introduction
 # Containers are still running - just open http://localhost:3000
 ```
 

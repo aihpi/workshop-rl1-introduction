@@ -11,7 +11,7 @@ An educational web interface for building intuition about reinforcement learning
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
-cd rl-playground
+cd workshop-rl1-introduction
 
 # 2. Start with Docker (recommended)
 docker-compose up
@@ -122,7 +122,7 @@ cd frontend && npm test
 ## Repository Structure
 
 ```
-rl-playground/
+workshop-rl1-introduction/
 ├── backend/               # Python Flask backend
 │   ├── algorithms/        # RL algorithm implementations
 │   │   ├── base_algorithm.py      # Abstract base class
