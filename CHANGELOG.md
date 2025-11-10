@@ -42,6 +42,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Added test dependencies to pyproject.toml as optional extras
   - pytest>=7.4.0, pytest-cov>=4.1.0, pytest-flask>=1.2.0, pytest-mock>=3.11.0
   - Updated .gitignore to exclude test artifacts (.coverage, htmlcov/)
+- **Documentation cleanup** - Prepared repository for colleague sharing
+  - README.md restructured and reduced by 43% (312 → 178 lines)
+  - Focused on essentials: Quick Start → Installation → Usage → Testing → Structure
+  - backend/README.md updated: Fixed port (5000→5001), added testing section
+  - frontend/README.md replaced CRA boilerplate with project-specific content
+  - Removed docs/WORKPLAN.md (contained outdated "critical bugs" information)
+- **Repository migration**
+  - Transferred from personal GitHub account to aihpi organization
+  - Renamed to workshop-rl1-introduction (following lowercase-with-hyphens convention)
+  - Removed .claude directory from Git tracking (kept locally for development)
 
 ### Technical Details
 - **Testing Stack**:
