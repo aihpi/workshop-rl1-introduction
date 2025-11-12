@@ -7,6 +7,17 @@ import LearningVisualization from './components/LearningVisualization';
 import ControlButtons from './components/ControlButtons';
 import { startTraining, subscribeToTraining, subscribeToPlayback, resetTraining, getEnvironmentPreview } from './api';
 
+// Calculate adaptive window size: 10% of episodes, clamped between 10 and 100
+const calculateWindowSize = (totalEpisodes) => {
+  return Math.max(10, Math.min(100, Math.floor(totalEpisodes * 0.1)));
+};
+
+// Calculate moving average of last N rewards (sliding window)
+const calculateMovingAverage = (rewards, windowSize) => {
+  const window = rewards.slice(Math.max(0, rewards.length - windowSize));
+  return window.reduce((sum, r) => sum + r, 0) / window.length;
+};
+
 function App() {
   // Configuration state
   const [selectedAlgorithm] = useState('Q-Learning');
@@ -23,6 +34,9 @@ function App() {
   const [currentFrame, setCurrentFrame] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(0);
   const [rewards, setRewards] = useState([]);
+  const [chartData, setChartData] = useState([]); // Moving average data points for chart display
+  const [windowSize, setWindowSize] = useState(10); // Adaptive window size for moving average
+  const [totalEpisodes, setTotalEpisodes] = useState(0); // Total episodes for training (from config)
   const [learningData, setLearningData] = useState(null);
 
   // Error state
@@ -76,6 +90,9 @@ function App() {
       setTrainingComplete(false);
       setCurrentEpisode(0);
       setRewards([]);
+      setChartData([]);
+      setWindowSize(10);
+      setTotalEpisodes(0);
       setLearningData(null);
       setError(null);
     };
@@ -104,6 +121,7 @@ function App() {
       setTrainingComplete(false);
       setCurrentEpisode(0);
       setRewards([]);
+      setChartData([]);
       setLearningData(null);
 
       // Set training flag
@@ -120,20 +138,53 @@ function App() {
       const newSessionId = response.session_id;
       setSessionId(newSessionId);
 
+      // Calculate and store window size and total episodes from config
+      const episodeCount = parameters.num_episodes || 1000; // Default to 1000 if not specified
+      const calculatedWindowSize = calculateWindowSize(episodeCount);
+      setWindowSize(calculatedWindowSize);
+      setTotalEpisodes(episodeCount);
+
       // Subscribe to training updates
       const es = subscribeToTraining(
         newSessionId,
-        // onUpdate
+        // onUpdate - called for each episode during training
         (data) => {
           setCurrentFrame(data.frame);
           setCurrentEpisode(data.episode);
           setLearningData(data.learning_data);
-          setRewards(prev => [...prev, data.reward]);
+
+          setRewards(prev => {
+            const updatedRewards = [...prev, data.reward];
+            const movingAvg = calculateMovingAverage(updatedRewards, calculatedWindowSize);
+
+            // Update chart every windowSize episodes for performance
+            if (updatedRewards.length % calculatedWindowSize === 0) {
+              setChartData(prevChart => [...prevChart, {
+                episode: updatedRewards.length,
+                avgReward: movingAvg
+              }]);
+            }
+
+            return updatedRewards;
+          });
         },
-        // onComplete
+        // onComplete - called when training finishes
         (data) => {
           setIsTraining(false);
           setTrainingComplete(true);
+
+          // Add final chart point if needed (when episode count isn't a multiple of windowSize)
+          setRewards(currentRewards => {
+            const needsFinalPoint = currentRewards.length % calculatedWindowSize !== 0;
+            if (needsFinalPoint) {
+              const finalAvg = calculateMovingAverage(currentRewards, calculatedWindowSize);
+              setChartData(prev => [...prev, {
+                episode: currentRewards.length,
+                avgReward: finalAvg
+              }]);
+            }
+            return currentRewards;
+          });
         },
         // onError
         (err) => {
@@ -205,6 +256,9 @@ function App() {
       setTrainingComplete(false);
       setCurrentEpisode(0);
       setRewards([]);
+      setChartData([]);
+      setWindowSize(10);
+      setTotalEpisodes(0);
       setLearningData(null);
       setError(null);
 
@@ -260,7 +314,11 @@ function App() {
         </div>
 
         <div className="column column-right">
-          <RewardChart rewards={rewards} />
+          <RewardChart
+            chartData={chartData}
+            totalEpisodes={totalEpisodes}
+            windowSize={windowSize}
+          />
           <LearningVisualization
             learningData={learningData}
             algorithm={selectedAlgorithm}

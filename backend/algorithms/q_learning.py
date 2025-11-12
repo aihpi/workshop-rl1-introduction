@@ -157,12 +157,12 @@ class QLearning(BaseAlgorithm):
         num_episodes_config = {
             'FrozenLake-v1': {
                 'min': 1,
-                'max': 100000,  # 1e5
+                'max': 20000,  # 2e4
                 'default': 1000  # 1e3
             },
             'FrozenLake-v1-NoSlip': {
                 'min': 1,
-                'max': 1000,  # 1e3
+                'max': 2000,  # 2e3
                 'default': 100  # 1e2
             }
         }
@@ -189,7 +189,7 @@ class QLearning(BaseAlgorithm):
             'discount_factor': {
                 'type': 'float',
                 'min': 0.0,
-                'max': 1.0,
+                'max': 0.99,
                 'default': 0.95,
                 'description': 'Discount factor (gamma) - importance of future rewards'
             },
