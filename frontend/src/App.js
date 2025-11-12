@@ -276,7 +276,7 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        <h1>RL Playground</h1>
+        <h1>RL Lab</h1>
         <p className="subtitle">Interactive Reinforcement Learning Visualization</p>
       </header>
 

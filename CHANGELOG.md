@@ -25,6 +25,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - All hardcoded color values replaced with CSS variables
   - Single source of truth for HPI brand colors
   - Easier color updates and better code readability
+- **Branding updated** from "RL Playground" to "RL Lab"
+  - Browser tab title changed to "RL Lab"
+  - Main application heading changed to "RL Lab"
 
 ### Technical Details
 - Content management via JSON files for easy future expansion
