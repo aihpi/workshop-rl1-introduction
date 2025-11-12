@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
+## [0.5.0] - 2025-11-12
+
+### Changed
+- **Episode rewards visualization refactored** to use moving average with sliding window
+  - Replaced raw individual episode rewards with moving average trajectory
+  - Adaptive window size: 10% of total episodes (clamped between 10-100)
+  - Smooths out binary reward noise (0/1) into meaningful trend lines
+  - Visual dots mark actual data points, lines show interpolation between intervals
+- **Chart performance optimization**
+  - Updates chart every N episodes instead of every episode (batch updates)
+  - Reduces UI lag for high episode counts (e.g., 20,000 episodes)
+  - Example: 10,000 episodes now triggers ~100 chart updates instead of 10,000
+- **Updated episode rewards statistics**
+  - Shows: Episodes Trained, Current Average, Best Average
+  - Removed: Max reward (not meaningful for moving averages)
+- **Episode limits adjusted** for better user experience
+  - FrozenLake-v1 (slippery): 100,000 → 20,000 episodes max
+  - FrozenLake-v1-NoSlip: 1,000 → 2,000 episodes max
+- **Discount factor constraint** for algorithmic stability
+  - Max value changed from 1.0 to 0.99
+  - Prevents convergence issues in Q-Learning
+
+### Technical Details
+- Moving average calculated using sliding window: last N rewards where N = window size
+- Chart data sorted to handle async race conditions (final episode vs. last interval)
+- All 12 frontend tests passing after refactoring
+
 ## [0.4.0] - 2025-11-10
 
 ### Added
