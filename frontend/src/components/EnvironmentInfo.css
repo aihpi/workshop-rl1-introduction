@@ -1,0 +1,129 @@
+.environment-info {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  overflow: hidden;
+}
+
+.environment-info .info-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+  border-left: 4px solid var(--hpi-orange);
+}
+
+.environment-info .info-panel-header:hover {
+  background-color: #f8f9fa;
+}
+
+.info-panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  flex-grow: 1;
+  margin-left: 10px;
+}
+
+.info-icon {
+  font-size: 20px;
+}
+
+.expand-icon {
+  font-size: 14px;
+  color: #666;
+  transition: transform 0.3s;
+}
+
+.info-panel-content {
+  padding: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.info-panel-content p {
+  margin: 0 0 15px 0;
+  line-height: 1.6;
+  color: #333;
+  font-size: 13px;
+}
+
+.info-panel-content section {
+  margin-bottom: 20px;
+}
+
+.info-panel-content section:last-child {
+  margin-bottom: 0;
+}
+
+.info-panel-content h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #212427;
+}
+
+.info-panel-content ul,
+.info-panel-content ol {
+  margin: 0 0 10px 0;
+  padding-left: 20px;
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.info-panel-content li {
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.link-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.link-list li {
+  margin-bottom: 8px;
+}
+
+.link-list a {
+  color: var(--hpi-orange);
+  text-decoration: none;
+  transition: color 0.2s;
+  font-size: 13px;
+}
+
+.link-list a:hover {
+  color: var(--hpi-violet);
+  text-decoration: underline;
+}
+
+.description {
+  font-style: italic;
+  color: #555;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 3px solid var(--hpi-orange);
+}
+
+.generic-message {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ParameterPanel from './components/ParameterPanel';
 import EnvironmentViewer from './components/EnvironmentViewer';
+import EnvironmentInfo from './components/EnvironmentInfo';
+import AlgorithmInfo from './components/AlgorithmInfo';
 import RewardChart from './components/RewardChart';
 import LearningVisualization from './components/LearningVisualization';
 import ControlButtons from './components/ControlButtons';
@@ -311,6 +313,8 @@ function App() {
             isPlayback={isPlayback}
             trainingComplete={trainingComplete}
           />
+          <EnvironmentInfo environment={selectedEnvironment} />
+          <AlgorithmInfo algorithm={selectedAlgorithm} />
         </div>
 
         <div className="column column-right">

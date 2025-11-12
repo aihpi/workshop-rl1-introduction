@@ -1,0 +1,50 @@
+{
+  "Q-Learning": {
+    "name": "Q-Learning",
+    "description": "A model-free, off-policy temporal-difference reinforcement learning algorithm that learns the value of actions in states.",
+    "sections": {
+      "whatIsIt": "Q-Learning learns a Q-function Q(s,a) that estimates the expected cumulative reward of taking action 'a' in state 's' and following the optimal policy thereafter.",
+      "howItWorks": [
+        "Initialize Q-table with zeros",
+        "Observe current state",
+        "Choose action using ε-greedy policy",
+        "Take action, observe reward and next state",
+        "Update Q-value: Q(s,a) ← Q(s,a) + α[r + γ·max Q(s',a') - Q(s,a)]",
+        "Repeat until convergence"
+      ],
+      "keyConcepts": {
+        "qValue": "Expected cumulative reward for taking action 'a' in state 's'",
+        "exploration": "Trying random actions to discover new strategies (ε-greedy)",
+        "exploitation": "Using current knowledge to maximize reward",
+        "offPolicy": "Learns optimal policy while following exploratory policy"
+      },
+      "parameters": {
+        "learningRate": {
+          "symbol": "α (alpha)",
+          "range": "0.01 - 1.0",
+          "description": "How much to update Q-values. Higher = faster learning but less stable."
+        },
+        "discountFactor": {
+          "symbol": "γ (gamma)",
+          "range": "0.0 - 0.99",
+          "description": "Importance of future rewards. Higher = more long-term planning."
+        },
+        "explorationRate": {
+          "symbol": "ε (epsilon)",
+          "range": "0.0 - 1.0",
+          "description": "Probability of random exploration. Higher = more exploration."
+        }
+      }
+    },
+    "links": [
+      {
+        "text": "Sutton & Barto: RL Book (Chapter 6)",
+        "url": "http://incompleteideas.net/book/RLbook2020.pdf"
+      },
+      {
+        "text": "Introduction to Q-Learning Tutorial",
+        "url": "https://www.datacamp.com/tutorial/introduction-q-learning-beginner-tutorial"
+      }
+    ]
+  }
+}

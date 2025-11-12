@@ -1,0 +1,64 @@
+{
+  "FrozenLake-v1": {
+    "name": "FrozenLake (Slippery)",
+    "description": "Navigate a frozen lake from start to goal without falling into holes. The surface is slippery, making movement stochastic.",
+    "sections": {
+      "goal": "Reach the goal tile (G) starting from the start tile (S) without falling into holes (H).",
+      "stateSpace": {
+        "type": "Discrete",
+        "size": 16,
+        "description": "16 tiles in a 4×4 grid. Each tile represents one state."
+      },
+      "actionSpace": {
+        "type": "Discrete",
+        "size": 4,
+        "actions": ["⬅️ Left (0)", "⬇️ Down (1)", "➡️ Right (2)", "⬆️ Up (3)"]
+      },
+      "rewards": {
+        "goal": 1.0,
+        "hole": 0.0,
+        "step": 0.0,
+        "description": "Sparse reward: +1 for reaching goal, 0 otherwise."
+      },
+      "stochasticity": "Slippery surface: 33% chance of moving perpendicular to intended direction.",
+      "difficulty": "The 4×4 version has ~0.7 optimal success rate due to stochasticity."
+    },
+    "links": [
+      {
+        "text": "Gymnasium FrozenLake Documentation",
+        "url": "https://gymnasium.farama.org/environments/toy_text/frozen_lake/"
+      }
+    ]
+  },
+  "FrozenLake-v1-NoSlip": {
+    "name": "FrozenLake (No Slip)",
+    "description": "Navigate a frozen lake from start to goal without falling into holes. The surface is NOT slippery, making movement deterministic.",
+    "sections": {
+      "goal": "Reach the goal tile (G) starting from the start tile (S) without falling into holes (H).",
+      "stateSpace": {
+        "type": "Discrete",
+        "size": 16,
+        "description": "16 tiles in a 4×4 grid. Each tile represents one state."
+      },
+      "actionSpace": {
+        "type": "Discrete",
+        "size": 4,
+        "actions": ["⬅️ Left (0)", "⬇️ Down (1)", "➡️ Right (2)", "⬆️ Up (3)"]
+      },
+      "rewards": {
+        "goal": 1.0,
+        "hole": 0.0,
+        "step": 0.0,
+        "description": "Sparse reward: +1 for reaching goal, 0 otherwise."
+      },
+      "stochasticity": "Deterministic: Agent always moves in the intended direction.",
+      "difficulty": "Easier than slippery version. Optimal policy achieves 100% success rate."
+    },
+    "links": [
+      {
+        "text": "Gymnasium FrozenLake Documentation",
+        "url": "https://gymnasium.farama.org/environments/toy_text/frozen_lake/"
+      }
+    ]
+  }
+}

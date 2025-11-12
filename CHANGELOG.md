@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
+## [0.6.0] - 2025-11-12
+
+### Added
+- **Educational information panels** for environments and algorithms
+  - Collapsible panels below EnvironmentViewer in center column
+  - EnvironmentInfo panel with HPI Orange accent (#ff7500)
+  - AlgorithmInfo panel with HPI Violet accent (#7664a0)
+  - Content loaded from JSON files (src/content/environments.json, algorithms.json)
+  - Panels display: description, state/action spaces, rewards, parameters explained, links
+  - Accordion-style UI: collapsed by default, expand independently
+  - State persistence: panels remain open during training (only reset on page refresh)
+  - Graceful fallback messages for missing content
+
+### Changed
+- **CSS refactored to use CSS variables** for maintainability
+  - Defined `--hpi-orange` and `--hpi-violet` in App.css :root
+  - All hardcoded color values replaced with CSS variables
+  - Single source of truth for HPI brand colors
+  - Easier color updates and better code readability
+
+### Technical Details
+- Content management via JSON files for easy future expansion
+- contentLoader.js utility functions for data access
+- Component-scoped CSS with semantic variable naming
+- All 12 frontend tests passing after implementation
+
 ## [0.5.0] - 2025-11-12
 
 ### Changed
