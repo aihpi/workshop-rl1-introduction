@@ -17,8 +17,8 @@ class EnvironmentManager:
     # Phase 1: FrozenLake-v1 with slippery and non-slippery variants
     # Future: Add more environments
     SUPPORTED_ENVIRONMENTS = [
-        'FrozenLake-v1',
-        'FrozenLake-v1-NoSlip'
+        'FrozenLake-v1-NoSlip',
+        'FrozenLake-v1'
     ]
 
     @staticmethod

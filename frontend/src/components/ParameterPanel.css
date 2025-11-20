@@ -34,16 +34,24 @@
 }
 
 .parameter-group input[type="text"],
-.parameter-group input[type="range"] {
+.parameter-group input[type="range"],
+.parameter-group select {
   width: 100%;
 }
 
-.parameter-group input[type="text"] {
+.parameter-group input[type="text"],
+.parameter-group select {
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.parameter-group input[type="text"]:disabled {
   background-color: #f5f5f5;
+  cursor: not-allowed;
 }
 
 .parameter-group input[type="range"] {

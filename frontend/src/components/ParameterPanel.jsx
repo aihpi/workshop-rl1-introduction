@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { getParameterSchema, getEnvironments } from '../api';
+import { getParameterSchema, getEnvironments, getAlgorithms } from '../api';
 import './ParameterPanel.css';
 
-const ParameterPanel = ({ algorithm, environment, parameters, onParametersChange, onEnvironmentChange }) => {
+const ParameterPanel = ({ algorithm, environment, parameters, onParametersChange, onAlgorithmChange, onEnvironmentChange }) => {
   const [schema, setSchema] = useState(null);
   const [environments, setEnvironments] = useState([]);
+  const [algorithms, setAlgorithms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,7 +25,7 @@ const ParameterPanel = ({ algorithm, environment, parameters, onParametersChange
     return value;
   };
 
-  // Load available environments on mount
+  // Load available environments and algorithms on mount
   useEffect(() => {
     const fetchEnvironments = async () => {
       try {
@@ -35,7 +36,17 @@ const ParameterPanel = ({ algorithm, environment, parameters, onParametersChange
       }
     };
 
+    const fetchAlgorithms = async () => {
+      try {
+        const algList = await getAlgorithms();
+        setAlgorithms(algList);
+      } catch (err) {
+        console.error('Failed to load algorithms:', err);
+      }
+    };
+
     fetchEnvironments();
+    fetchAlgorithms();
   }, []);
 
   // Load parameter schema when algorithm or environment changes
@@ -96,12 +107,6 @@ const ParameterPanel = ({ algorithm, environment, parameters, onParametersChange
       <h2>Configuration</h2>
 
       <div className="parameter-group">
-        <label>Algorithm</label>
-        <input type="text" value={algorithm} disabled />
-        <p className="hint">Phase 1: Q-Learning only</p>
-      </div>
-
-      <div className="parameter-group">
         <label>Environment</label>
         <select
           value={environment}
@@ -111,7 +116,20 @@ const ParameterPanel = ({ algorithm, environment, parameters, onParametersChange
             <option key={env} value={env}>{env}</option>
           ))}
         </select>
-        <p className="hint">Select FrozenLake variant (slippery or non-slippery)</p>
+        <p className="hint">Select environment</p>
+      </div>
+
+      <div className="parameter-group">
+        <label>Algorithm</label>
+        <select
+          value={algorithm}
+          onChange={(e) => onAlgorithmChange(e.target.value)}
+        >
+          {algorithms.map(alg => (
+            <option key={alg} value={alg}>{alg}</option>
+          ))}
+        </select>
+        <p className="hint">Select algorithm</p>
       </div>
 
       <h3>Parameters</h3>

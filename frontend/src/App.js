@@ -22,7 +22,7 @@ const calculateMovingAverage = (rewards, windowSize) => {
 
 function App() {
   // Configuration state
-  const [selectedAlgorithm] = useState('Q-Learning');
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState('Q-Learning');
   const [selectedEnvironment, setSelectedEnvironment] = useState('FrozenLake-v1-NoSlip');
   const [parameters, setParameters] = useState({});
 
@@ -293,6 +293,7 @@ function App() {
             environment={selectedEnvironment}
             parameters={parameters}
             onParametersChange={setParameters}
+            onAlgorithmChange={setSelectedAlgorithm}
             onEnvironmentChange={setSelectedEnvironment}
           />
           <ControlButtons
