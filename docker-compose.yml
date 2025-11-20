@@ -1,9 +1,7 @@
 services:
   # Backend service (Flask API)
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: davidgoll/workshop-rl1-backend:latest
     container_name: workshop-rl1-introduction-backend
     ports:
       - "5001:5001"
@@ -21,9 +19,7 @@ services:
 
   # Frontend service (React app)
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: davidgoll/workshop-rl1-frontend:latest
     container_name: workshop-rl1-introduction-frontend
     ports:
       - "3000:3000"

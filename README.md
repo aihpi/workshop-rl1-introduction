@@ -1,8 +1,14 @@
-# RL Playground
+# RL I - Introduction
 
-An educational web interface for building intuition about reinforcement learning fundamentals. Interactively adjust parameters, watch agents train in real-time, and visualize how RL algorithms learn.
+# RL Lab
+An educational web interface for building intuition about reinforcement learning fundamentals. The interface visualizes how RL algorithms learn. The backend is build on the well-known environments of the [gymnasium library](https://gymnasium.farama.org). Users can change environments, algorithms and parameters.
 
-**Current Implementation**: Q-Learning on FrozenLake-v1 (4×4 grid world) with the option to set `is_slippery`to `false`or `true`
+**Current Implementation**: 
+- environments
+   - Gymnasium FrozenLake-v1 (4x4) with `is_slippery=True`
+   - Gymnasium FrozenLake-v1 (4x4) with `is_slippery=False`
+- algorithms
+   - Q-learning (custom build)
 
 **Design**: Modular architecture designed for easy extension with new algorithms and environments
 
@@ -10,48 +16,64 @@ An educational web interface for building intuition about reinforcement learning
 
 ```bash
 # 1. Clone the repository
-git clone <repository-url>
+git clone https://github.com/aihpi/workshop-rl1-introduction.git
 cd workshop-rl1-introduction
 
-# 2. Start with Docker (recommended)
+# 2. Start with Docker
 docker-compose up
 
 # 3. Open browser
 http://localhost:3000
 ```
 
-That's it! The application is now running.
+**First-time setup takes ~1-2 minutes** (downloads pre-built images). Subsequent starts take seconds!
 
 ## Installation
 
 ### Option 1: Docker Setup (Strongly Recommended)
 
-**Prerequisites**: [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+**Prerequisites**:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- No Python or Node.js installation needed!
 
-**Start the application**:
-```bash
-docker-compose up
-```
+**Installation Steps**:
 
-Docker will automatically:
-- Build backend (Python/Flask) and frontend (React) containers
-- Install all dependencies
-- Start both services with live code reloading
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/aihpi/workshop-rl1-introduction.git
+   cd workshop-rl1-introduction
+   ```
 
-**Access**:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5001
+2. **Start the application**:
+   ```bash
+   docker-compose up
+   ```
 
-**Stop**:
+   **First time**: Downloads pre-built Docker images (~1-2 minutes)
+   **Subsequent runs**: Starts in seconds using cached images
+
+**What happens automatically**:
+- Downloads pre-built backend (Python/Flask) and frontend (React) images from Docker Hub
+- Starts both services with all dependencies included
+- Enables live code reloading for development
+
+**Access the application**:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5001
+
+**Stop the application**:
 ```bash
 docker-compose down
 ```
 
-**Common Docker commands**:
+**Useful Docker commands**:
 ```bash
-docker-compose up -d              # Run in background
-docker-compose logs -f            # View logs
-docker-compose up --build         # Rebuild after dependency changes
+docker-compose up -d              # Run in background (detached mode)
+docker-compose logs -f            # View live logs from both services
+docker-compose logs backend       # View only backend logs
+docker-compose logs frontend      # View only frontend logs
+docker-compose ps                 # Check container status
+docker-compose restart            # Restart services
 ```
 
 **Troubleshooting**: See [Docker Workflow Guide](tutorials/docker-workflow.md) for detailed troubleshooting.
