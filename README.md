@@ -16,6 +16,8 @@ An educational web interface for building intuition about reinforcement learning
 
 Already have Docker installed? Get started in 3 commands:
 
+**Prerequisites**: Docker Desktop running (or Docker Engine on Linux)
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/aihpi/workshop-rl1-introduction.git
