@@ -18,7 +18,7 @@ This guide walks you through the complete development workflow using Docker, fro
 │         ↓                        ↓                         │
 │  ┌──────────────┐         ┌──────────────┐                │
 │  │ backend/     │◄────────┤ localhost:   │                │
-│  │ frontend/    │ Mounted │ 3000, 5001   │                │
+│  │ frontend/    │ Mounted │ 3030, 5001   │                │
 │  │ (Your code)  │         │              │                │
 │  └──────────────┘         └──────────────┘                │
 │         ║                        ║                         │
@@ -73,7 +73,7 @@ Watch the output. You'll see:
 - Eventually: "webpack compiled successfully" (frontend)
 
 **Step 4: Verify Everything Works**
-- Open browser to http://localhost:3000
+- Open browser to http://localhost:3030
 - You should see the RL Playground interface
 - Try starting a training session to verify everything works
 
@@ -302,7 +302,7 @@ docker-compose exec frontend npm test
 Just close your browser and editor. The containers keep running in the background. Tomorrow:
 ```bash
 cd workshop-rl1-introduction
-# Containers are still running - just open http://localhost:3000
+# Containers are still running - just open http://localhost:3030
 ```
 
 Check if they're running:
@@ -337,7 +337,7 @@ This stops the containers. Tomorrow you'll need to run `docker-compose up` again
 
 **Networking**: Containers talk to each other:
 - Frontend container can reach backend at `http://backend:5001`
-- Your browser reaches frontend at `http://localhost:3000`
+- Your browser reaches frontend at `http://localhost:3030`
 - Your browser reaches backend at `http://localhost:5001`
 
 **Isolation**: Containers are isolated:
@@ -362,7 +362,7 @@ vim app.py  # ❌ DON'T DO THIS
 
 **Mistake 3: Port already in use**
 - Error: "port is already allocated"
-- **Fix**: Something else is using port 3000 or 5001. Stop that service or change ports in `docker-compose.yml`
+- **Fix**: Something else is using port 3030 or 5001. Stop that service or change ports in `docker-compose.yml`
 
 **Mistake 4: Docker Desktop not running**
 - Error: "Cannot connect to the Docker daemon"
@@ -389,10 +389,10 @@ When something goes wrong, follow this decision tree:
 **Problem: Containers won't start**
 ```
 ❓ Do you see "port is already allocated"?
-├─ Yes → Port 3000 or 5001 is in use
+├─ Yes → Port 3030 or 5001 is in use
 │        Solution: Find and stop the conflicting service
-│        • macOS/Linux: lsof -i :3000 or lsof -i :5001
-│        • Windows: Get-NetTCPConnection -LocalPort 3000
+│        • macOS/Linux: lsof -i :3030 or lsof -i :5001
+│        • Windows: Get-NetTCPConnection -LocalPort 3030
 └─ No → Check logs: docker-compose logs
          Look for error messages in the output
 ```
@@ -494,11 +494,11 @@ docker --version  # Should show Docker version
 **Port already in use**: Make sure ports 3000 and 5001 are not used by other applications
 ```bash
 # macOS/Linux
-lsof -i :3000
+lsof -i :3030
 lsof -i :5001
 
 # Windows (PowerShell)
-Get-NetTCPConnection -LocalPort 3000
+Get-NetTCPConnection -LocalPort 3030
 Get-NetTCPConnection -LocalPort 5001
 ```
 

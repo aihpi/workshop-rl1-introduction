@@ -270,7 +270,7 @@ frontend_1  | Compiled successfully!
 **❌ Troubleshooting**:
 
 - **"Cannot connect to Docker daemon"**: Docker Desktop is not running. Open it from Applications and wait for the whale icon to appear in menu bar.
-- **"Port 3000 is already allocated"**: Something else is using port 3000. Close other applications (especially other development servers) and try again.
+- **"Port 3030 is already allocated"**: Something else is using port 3030. Close other applications (especially other development servers) and try again.
 - **"Error response from daemon: pull access denied"**: Check your internet connection and try again.
 
 ---
@@ -280,7 +280,7 @@ frontend_1  | Compiled successfully!
 🎉 You're ready to use RL Lab!
 
 1. Open your web browser (Safari, Chrome, Firefox - any browser works)
-2. In the address bar, type: **`http://localhost:3000`**
+2. In the address bar, type: **`http://localhost:3030`**
 3. Press Enter
 
 **✅ Success!** You should see the RL Lab interface with:
@@ -341,22 +341,22 @@ To start again later, just:
 2. Wait for installation to complete
 3. Close Terminal and open a new one
 
-### Port conflicts (3000 or 5001 already in use)
+### Port conflicts (3030 or 5001 already in use)
 **Symptoms**: Error messages like:
 ```
 Error: bind: address already in use
-Error starting userland proxy: listen tcp 0.0.0.0:3000: bind: address already in use
+Error starting userland proxy: listen tcp 0.0.0.0:3030: bind: address already in use
 ```
 
-This means another program is already using port 3000 (frontend) or 5001 (backend).
+This means another program is already using port 3030 (frontend) or 5001 (backend).
 
 #### **Option 1: Find and Stop the Conflicting Process** (Recommended)
 
 **Step 1 - Find what's using the port:**
 
-For port 3000:
+For port 3030:
 ```bash
-lsof -i :3000
+lsof -i :3030
 ```
 
 For port 5001:
@@ -367,7 +367,7 @@ lsof -i :5001
 You'll see output like:
 ```
 COMMAND   PID      USER   FD   TYPE    DEVICE SIZE/OFF NODE NAME
-node    12345  username   23u  IPv4  0x1234567      0t0  TCP *:3000 (LISTEN)
+node    12345  username   23u  IPv4  0x1234567      0t0  TCP *:3030 (LISTEN)
 ```
 
 The **PID** (Process ID) is in the second column (e.g., `12345`).
@@ -406,7 +406,7 @@ If you want to keep the other application running, change RL Lab's ports:
    ```yaml
    frontend:
      ports:
-       - "3000:3000"
+       - "3030:3000"
    backend:
      ports:
        - "5001:5001"
@@ -416,7 +416,7 @@ If you want to keep the other application running, change RL Lab's ports:
    ```yaml
    frontend:
      ports:
-       - "3001:3000"
+       - "3031:3000"
    backend:
      ports:
        - "5002:5001"
@@ -424,10 +424,10 @@ If you want to keep the other application running, change RL Lab's ports:
 
 4. Save the file
 5. Start RL Lab: `docker-compose up`
-6. Access at the new port: `http://localhost:3001`
+6. Access at the new port: `http://localhost:3031`
 
 **Common culprits using these ports**:
-- **Port 3000**: React development servers, other Node.js apps
+- **Port 3030**: Less common, but could conflict with other services
 - **Port 5001**: Flask apps, other Python servers, **macOS AirPlay Receiver** (very common!)
 - **Port 7000**: macOS Control Center may use nearby ports
 

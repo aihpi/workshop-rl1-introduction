@@ -23,7 +23,7 @@ uv run python app.py       # Run Flask server (uv automatically uses venv)
 ```bash
 cd frontend
 npm install
-npm start                  # Run development server on localhost:3000
+npm start                  # Run development server on localhost:3030
 ```
 
 ## Critical Architecture Decisions
@@ -63,7 +63,7 @@ The architecture is designed for future compatibility with stable-baselines3:
 - **Server-Sent Events (SSE)**: Real-time streaming updates
   - Training endpoint: `/api/train/stream/<session_id>`
   - Playback endpoint: `/api/play-policy/stream/<session_id>`
-- **CORS**: Enabled for localhost:3000
+- **CORS**: Enabled for localhost:3030
 
 ## Project Structure
 
@@ -212,7 +212,7 @@ if (eventSource) {
 
 1. Rendering every step during training (ONLY render final frame per episode!)
 2. Hardcoding "Q-Learning" instead of using factory pattern
-3. Forgetting CORS configuration for localhost:3000
+3. Forgetting CORS configuration for localhost:3030
 4. Not closing EventSource connections (memory leaks)
 5. Blocking UI thread (use SSE for non-blocking updates)
 6. Missing error handling in async operations

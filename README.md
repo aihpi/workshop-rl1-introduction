@@ -26,7 +26,7 @@ cd workshop-rl1-introduction
 # 2. Start with Docker
 docker-compose up
 
-# 3. Open browser to http://localhost:3000
+# 3. Open browser to http://localhost:3030
 ```
 
 **First-time setup takes ~1-2 minutes** (downloads pre-built images). Subsequent starts take seconds!
@@ -89,7 +89,7 @@ docker-compose restart         # Restart services
 ```
 
 **Access the application**:
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:3030
 - **Backend API**: http://localhost:5001
 
 ---
@@ -111,12 +111,12 @@ uv run python app.py       # Start server (http://localhost:5001)
 ```bash
 cd frontend
 npm install                # Install dependencies
-npm start                  # Start server (http://localhost:3000)
+npm start                  # Start server (http://localhost:3030)
 ```
 
 ## Usage
 
-1. **Open the application** in your browser at http://localhost:3000
+1. **Open the application** in your browser at http://localhost:3030
 
 2. **Adjust parameters** using the sliders:
    - **Learning Rate (α)**: How fast the agent learns (0.01-1.0)

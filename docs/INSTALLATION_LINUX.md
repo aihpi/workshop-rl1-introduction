@@ -357,7 +357,7 @@ frontend_1  | Compiled successfully!
   sudo systemctl start docker
   ```
 
-- **"Port 3000 is already allocated"**: Something else is using port 3000. Close other applications and try again, or check for other containers:
+- **"Port 3030 is already allocated"**: Something else is using port 3030. Close other applications and try again, or check for other containers:
   ```bash
   docker ps
   docker stop <container-id>
@@ -372,7 +372,7 @@ frontend_1  | Compiled successfully!
 🎉 You're ready to use RL Lab!
 
 1. Open your web browser (Firefox, Chrome, Chromium - any browser works)
-2. In the address bar, type: **`http://localhost:3000`**
+2. In the address bar, type: **`http://localhost:3030`**
 3. Press Enter
 
 **✅ Success!** You should see the RL Lab interface with:
@@ -447,22 +447,22 @@ To start again later, just:
    sudo systemctl status docker
    ```
 
-### Port conflicts (3000 or 5001 already in use)
+### Port conflicts (3030 or 5001 already in use)
 **Symptoms**: Error messages like:
 ```
 Error: bind: address already in use
-Error starting userland proxy: listen tcp 0.0.0.0:3000: bind: address already in use
+Error starting userland proxy: listen tcp 0.0.0.0:3030: bind: address already in use
 ```
 
-This means another program is already using port 3000 (frontend) or 5001 (backend).
+This means another program is already using port 3030 (frontend) or 5001 (backend).
 
 #### **Option 1: Find and Stop the Conflicting Process** (Recommended)
 
 **Step 1 - Find what's using the port:**
 
-For port 3000:
+For port 3030:
 ```bash
-sudo lsof -i :3000
+sudo lsof -i :3030
 ```
 
 For port 5001:
@@ -472,20 +472,20 @@ sudo lsof -i :5001
 
 **Alternative** (if `lsof` is not installed):
 ```bash
-sudo netstat -tulpn | grep :3000
+sudo netstat -tulpn | grep :3030
 sudo netstat -tulpn | grep :5001
 ```
 
 Or using `ss` (modern replacement for netstat):
 ```bash
-sudo ss -tulpn | grep :3000
+sudo ss -tulpn | grep :3030
 sudo ss -tulpn | grep :5001
 ```
 
 You'll see output like:
 ```
 COMMAND   PID      USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-node    12345  username   23u  IPv4  12345      0t0  TCP *:3000 (LISTEN)
+node    12345  username   23u  IPv4  12345      0t0  TCP *:3030 (LISTEN)
 ```
 
 The **PID** (Process ID) is in the second column (e.g., `12345`).
@@ -538,7 +538,7 @@ If you want to keep the other application running, change RL Lab's ports:
    ```yaml
    frontend:
      ports:
-       - "3000:3000"
+       - "3000:3030"
    backend:
      ports:
        - "5001:5001"
@@ -548,7 +548,7 @@ If you want to keep the other application running, change RL Lab's ports:
    ```yaml
    frontend:
      ports:
-       - "3001:3000"
+       - "3001:3030"
    backend:
      ports:
        - "5002:5001"
@@ -559,7 +559,7 @@ If you want to keep the other application running, change RL Lab's ports:
 6. Access at the new port: `http://localhost:3001`
 
 **Common culprits using these ports**:
-- **Port 3000**: React development servers, other Node.js apps
+- **Port 3030**: React development servers, other Node.js apps
 - **Port 5001**: Flask apps, other Python servers
 - Check for other Docker containers: `docker ps`
 - Check for services: `sudo systemctl list-units --type=service --state=running`
@@ -579,7 +579,7 @@ If you want to keep the other application running, change RL Lab's ports:
 3. Refresh the browser page
 
 ### Firewall blocking connections
-**Symptoms**: Can't access localhost:3000 even though containers are running
+**Symptoms**: Can't access localhost:3030 even though containers are running
 
 **Solutions**:
 1. Check firewall status:

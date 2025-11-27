@@ -64,11 +64,18 @@ no match for platform in manifest: not found
 - Pushes multi-platform manifest to Docker Hub
 - Both Intel/AMD and Apple Silicon Macs can pull appropriate images
 
-**Next Steps**:
-1. Trigger GitHub Actions workflow (manual dispatch or push to main)
-2. Verify multi-arch images: `docker manifest inspect davidgoll/workshop-rl1-backend:latest`
-3. Test on fresh clone with M4 MacBook Air (ARM64)
-4. Test on Linux/Windows laptops (AMD64)
+**Testing Results**:
+- ✅ GitHub Actions successfully built multi-architecture images
+- ✅ Both ARM64 and AMD64 platforms verified on Docker Hub
+- ✅ Fresh clone tested on M4 MacBook Air - images pulled successfully
+
+#### Changed
+- **Frontend port changed from 3000 → 3030** to reduce workshop port conflicts
+  - Port 3000 is heavily used by Create React App, Next.js, and other dev servers
+  - Port 3030 chosen for lower collision risk while remaining memorable
+  - Application now accessible at `http://localhost:3030` (backend still at 5001)
+  - No Docker image rebuilds required - only port mapping change in docker-compose.yml
+  - All documentation updated (README, installation guides, tutorials)
 
 ---
 
