@@ -41,6 +41,7 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: davidgoll/workshop-rl1-backend:latest
+          platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=davidgoll/workshop-rl1-backend:latest
           cache-to: type=inline
 
@@ -51,5 +52,6 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: davidgoll/workshop-rl1-frontend:latest
+          platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=davidgoll/workshop-rl1-frontend:latest
           cache-to: type=inline

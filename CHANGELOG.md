@@ -58,13 +58,17 @@ no match for platform in manifest: not found
 - Docker uses local images first, never tries to pull from Docker Hub
 - Fresh clones have no local images, must pull from Docker Hub → fails on ARM64
 
-**Planned Fix**:
-- Add `platforms: linux/amd64,linux/arm64` to `.github/workflows/docker-build.yml`
-- GitHub Actions will build for both architectures using Docker Buildx
+**Fix Implemented**:
+- Added `platforms: linux/amd64,linux/arm64` to `.github/workflows/docker-build.yml`
+- GitHub Actions will now build for both architectures using Docker Buildx
 - Pushes multi-platform manifest to Docker Hub
 - Both Intel/AMD and Apple Silicon Macs can pull appropriate images
 
-**Implementation Status**: Issue documented, fix pending
+**Next Steps**:
+1. Trigger GitHub Actions workflow (manual dispatch or push to main)
+2. Verify multi-arch images: `docker manifest inspect davidgoll/workshop-rl1-backend:latest`
+3. Test on fresh clone with M4 MacBook Air (ARM64)
+4. Test on Linux/Windows laptops (AMD64)
 
 ---
 
