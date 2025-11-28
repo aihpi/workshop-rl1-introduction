@@ -16,7 +16,7 @@ An educational web interface for building intuition about reinforcement learning
 
 Already have Docker installed? Get started in 3 commands:
 
-**Prerequisites**: Docker Desktop running (or Docker Engine on Linux)
+**Prerequisites**: Docker Desktop running or Docker Engine
 
 ```bash
 # 1. Clone the repository
@@ -29,7 +29,7 @@ docker-compose up -d
 # 3. Open browser to http://localhost:3030
 ```
 
-**First-time setup takes ~1-2 minutes** (downloads pre-built images). Subsequent starts take seconds!
+**First-time setup takes ~1-2 minutes** (downloads pre-built images).
 
 **Note**: Running in detached mode (`-d`) keeps your terminal free. To view logs if needed for debugging, open a separate terminal and run `docker-compose logs -f`
 
