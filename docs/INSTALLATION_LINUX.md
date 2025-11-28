@@ -2,9 +2,7 @@
 
 Complete step-by-step installation guide for RL Lab on Linux (Ubuntu/Debian-based distributions).
 
-**Estimated time**: 15-20 minutes for first-time setup
-
-**Note**: This guide is written for Ubuntu 20.04+ and Debian 11+. Other distributions may require different commands.
+**Estimated time**: 10-15 minutes for first-time setup
 
 ---
 
@@ -13,7 +11,7 @@ Complete step-by-step installation guide for RL Lab on Linux (Ubuntu/Debian-base
 Before you begin, make sure you have:
 
 - [ ] Ubuntu 20.04+ or Debian 11+ (or equivalent distribution)
-- [ ] Sudo access (administrator privileges)
+- [ ] Administrator (sudo) access
 - [ ] At least 4GB RAM (8GB recommended)
 - [ ] At least 2GB free disk space
 - [ ] Active internet connection
@@ -47,28 +45,17 @@ Terminal is where you'll type commands to set up the project.
 
 Git is a tool that helps you download code from the internet (like this project).
 
-### 2.1 Update Package Lists
+### Quick Installation
 
-First, update your system's package information:
+In Terminal, type:
 ```bash
-sudo apt update
+sudo apt update && sudo apt install git -y
 ```
 
 You'll be asked for your password. Type it and press Enter.
 **Note**: You won't see characters appear as you type your password - this is normal for security reasons.
 
-### 2.2 Install Git
-
-Install Git with this command:
-```bash
-sudo apt install git -y
-```
-
-The `-y` flag automatically answers "yes" to prompts. Installation takes about 30 seconds.
-
-![Installing Git](installation-screenshots/linux/02-install-git.png)
-
-### 2.3 Verify Git Installation
+### Verify Git Installation
 
 Check that Git is installed:
 ```bash
@@ -80,81 +67,64 @@ git --version
 git version 2.34.1
 ```
 
+**📖 Need detailed help?** See the [official Git installation guide for Linux](https://git-scm.com/download/linux)
+
 ![Git version check](installation-screenshots/linux/03-git-version.png)
 
 ---
 
-## Step 3: Install Docker Engine
+## Step 3: Install Docker Desktop
 
 Docker runs the RL Lab application in an isolated environment, so you don't need to manually install Python, Node.js, or other dependencies.
 
-**Note**: Linux uses **Docker Engine** (command-line), not Docker Desktop like Windows/Mac.
+### 3.1 Download Docker Desktop
 
-### 3.1 Install Prerequisites
+1. Open your web browser
+2. Go to: **https://docs.docker.com/desktop/install/linux-install/**
+3. Choose your Linux distribution:
+   - **Ubuntu** (most common)
+   - **Debian**
+   - **Fedora**
+   - **Arch**
+4. Download the appropriate `.deb` or `.rpm` package for your system
 
-Install required packages for Docker installation:
-```bash
-sudo apt install ca-certificates curl gnupg -y
-```
+**📖 Detailed Instructions**: Follow the [official Docker Desktop installation guide for Linux](https://docs.docker.com/desktop/install/linux-install/)
 
-### 3.2 Add Docker's Official GPG Key
+The official guide provides:
+- System-specific installation commands
+- Distribution-specific instructions
+- Prerequisites and dependencies
+- Post-installation setup
 
-Create a directory for Docker's key:
-```bash
-sudo install -m 0755 -d /etc/apt/keyrings
-```
+![Docker Desktop download page](installation-screenshots/linux/04-docker-download.png)
 
-Download and add Docker's GPG key:
-```bash
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-```
+### 3.2 Install Docker Desktop
 
-Set proper permissions:
-```bash
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-```
-
-### 3.3 Set Up Docker Repository
-
-Add Docker's repository to your system:
-```bash
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```
-
-Update package lists again:
-```bash
-sudo apt update
-```
-
-### 3.4 Install Docker Engine
-
-Install Docker and related tools:
-```bash
-sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
-```
-
-This takes about 1-2 minutes.
-
-![Installing Docker](installation-screenshots/linux/04-install-docker.png)
-
-### 3.5 Add Your User to Docker Group (Important!)
-
-By default, Docker requires `sudo` for every command. To avoid this, add your user to the `docker` group:
+For **Ubuntu/Debian** users, the typical installation is:
 
 ```bash
-sudo usermod -aG docker $USER
+# Navigate to your Downloads folder
+cd ~/Downloads
+
+# Install Docker Desktop (replace with your actual filename)
+sudo apt install ./docker-desktop-<version>-<arch>.deb
 ```
 
-Activate the group changes:
+For other distributions, follow the official guide linked above.
+
+### 3.3 Start Docker Desktop
+
+After installation:
 ```bash
-newgrp docker
+# Start Docker Desktop
+systemctl --user start docker-desktop
 ```
 
-**Important**: If `newgrp` doesn't work on your system, you'll need to **log out and log back in** (or restart your computer) for the group change to take effect.
+Or find "Docker Desktop" in your applications menu and launch it.
 
-### 3.6 Verify Docker Installation
+### 3.4 Verify Docker Installation
 
-Check that Docker is installed and you can run it without `sudo`:
+Check that Docker is working:
 ```bash
 docker --version
 ```
@@ -164,83 +134,41 @@ docker --version
 Docker version 24.0.7, build afdd53b
 ```
 
-![Docker version check](installation-screenshots/linux/05-docker-version.png)
-
-Test that Docker is working:
-```bash
-docker run hello-world
-```
-
-This downloads a tiny test image and runs it. You should see:
-```
-Hello from Docker!
-This message shows that your installation appears to be working correctly.
-```
-
-**❌ Troubleshooting**:
-
-- **"permission denied"**: You need to run `newgrp docker` or log out and back in
-- **"Cannot connect to the Docker daemon"**: Docker service is not running. Start it with:
-  ```bash
-  sudo systemctl start docker
-  sudo systemctl enable docker
-  ```
-- **"command not found"**: Docker installation may have failed. Try reinstalling or check for error messages
-
----
-
-## Step 4: Install Docker Compose (if needed)
-
-Docker Compose should be installed automatically in Step 3.4 as `docker-compose-plugin`. Let's verify:
-
-### 4.1 Check Docker Compose Version
-
-Try the modern syntax first:
+Also verify Docker Compose is installed:
 ```bash
 docker compose version
 ```
 
-**✅ If you see a version number like `Docker Compose version v2.21.0`, you're good! Skip to Step 5.**
-
-**❌ If you get "docker: 'compose' is not a docker command"**, try the legacy syntax:
-```bash
-docker-compose --version
+**✅ Success Check**: You should see output like:
+```
+Docker Compose version v2.21.0
 ```
 
-**If neither works**, install docker-compose manually:
-```bash
-sudo apt install docker-compose -y
-```
+![Docker version check](installation-screenshots/linux/07-docker-version.png)
 
-Then verify:
-```bash
-docker-compose --version
-```
-
-**Note**: In subsequent steps, use whichever version works:
-- Modern: `docker compose up`
-- Legacy: `docker-compose up`
+**❌ Troubleshooting**:
+- **"command not found"**: Docker Desktop may not be in your PATH. Try restarting your terminal or logging out/in.
+- **"Cannot connect to Docker daemon"**: Docker Desktop is not running. Start it from your applications menu.
 
 ---
 
-## Step 5: Clone the RL Lab Repository
+## Step 4: Clone the RL Lab Repository
 
 Now you'll download the RL Lab project files to your computer.
 
-### 5.1 Choose Where to Save the Project
+### 4.1 Choose Where to Save the Project
 
 First, decide where you want to save the project. Common locations:
 - Home directory: `cd ~`
-- Desktop: `cd ~/Desktop` (if you have a Desktop folder)
 - Documents: `cd ~/Documents`
-- Or anywhere else you prefer!
+- Desktop: `cd ~/Desktop`
 
-Navigate to your chosen location. For example, to use your home directory:
+For example, to use your home directory:
 ```bash
 cd ~
 ```
 
-### 5.2 Clone the Repository
+### 4.2 Clone the Repository
 
 Type this command and press Enter:
 ```bash
@@ -260,9 +188,9 @@ Receiving objects: 100% (543/543), 2.1 MiB | 5.2 MiB/s, done.
 Resolving deltas: 100% (215/215), done.
 ```
 
-![Git clone in progress](installation-screenshots/linux/06-git-clone.png)
+![Git clone in progress](installation-screenshots/linux/05-git-clone.png)
 
-### 5.3 Enter the Project Directory
+### 4.3 Enter the Project Directory
 
 Now move into the project folder:
 ```bash
@@ -275,50 +203,31 @@ backend/        frontend/       docs/
 README.md       docker-compose.yml
 ```
 
-![Project directory contents](installation-screenshots/linux/07-directory-contents.png)
-
-**❌ If git clone fails**:
-- Check your internet connection
-- Make sure you typed the URL correctly
-- Try again - sometimes network issues cause temporary failures
+![Project directory contents](installation-screenshots/linux/06-directory-contents.png)
 
 ---
 
-## Step 6: Start the Application
+## Step 5: Start the Application
 
 You're almost there! Now let's start RL Lab.
 
-### 6.1 Start Docker Service (if needed)
+### 5.1 Make Sure Docker Desktop is Running
 
-Make sure Docker is running:
-```bash
-sudo systemctl status docker
-```
+Before continuing, check that Docker Desktop is running:
+- Look for Docker in your system tray or applications menu
+- Or check with: `docker ps` (should not error)
 
-If it says "active (running)", you're good!
-
-If it's not running, start it:
-```bash
-sudo systemctl start docker
-```
-
-### 6.2 Start the Application
+### 5.2 Start the Application
 
 In Terminal (make sure you're still in the `workshop-rl1-introduction` folder), type:
 
-**For modern Docker Compose:**
 ```bash
 docker compose up -d
 ```
 
-**For legacy docker-compose:**
-```bash
-docker-compose up -d
-```
-
 Press Enter and wait...
 
-### 6.3 What to Expect
+### 5.3 What to Expect
 
 **First time running** (~1-2 minutes):
 - Docker will download pre-built images from the internet
@@ -342,35 +251,22 @@ Press Enter and wait...
 **💡 Viewing logs** (optional, for debugging):
 If you need to see what's happening or debug issues, open a **separate terminal** and run:
 ```bash
-docker compose logs -f    # or: docker-compose logs -f
+docker compose logs -f
 ```
 This shows live logs from both services. Press `Ctrl + C` to stop viewing logs (the services keep running).
 
 **❌ Troubleshooting**:
 
-- **"permission denied"**: You're not in the docker group. Run:
+- **"Cannot connect to Docker daemon"**: Docker Desktop is not running. Start it from your applications menu.
+- **"Port 3030 is already allocated"**: Something else is using port 3030. Check what's using it:
   ```bash
-  sudo usermod -aG docker $USER
-  newgrp docker
+  sudo lsof -i :3030
   ```
-  Then try again.
-
-- **"Cannot connect to Docker daemon"**: Docker service is not running. Start it:
-  ```bash
-  sudo systemctl start docker
-  ```
-
-- **"Port 3030 is already allocated"**: Something else is using port 3030. Close other applications and try again, or check for other containers:
-  ```bash
-  docker ps
-  docker stop <container-id>
-  ```
-
-- **"Error response from daemon: pull access denied"**: Check your internet connection and try again.
+  Then stop that process or change RL Lab's port in docker-compose.yml.
 
 ---
 
-## Step 7: Access RL Lab in Your Browser
+## Step 6: Access RL Lab in Your Browser
 
 🎉 You're ready to use RL Lab!
 
@@ -409,46 +305,31 @@ When you're done using RL Lab:
 
 1. Open Terminal (if you closed it)
 2. Navigate to the project folder: `cd ~/workshop-rl1-introduction` (or wherever you saved it)
-3. Run: `docker compose down` (or `docker-compose down` for legacy)
+3. Run: `docker compose down`
 4. Wait for the containers to stop (you'll see "Stopped" and "Removed" messages)
 
 To start again later, just:
 1. Open Terminal
 2. Navigate to the project folder: `cd ~/workshop-rl1-introduction` (or wherever you saved it)
-3. Run: `docker compose up -d` (or `docker-compose up -d` for legacy)
+3. Run: `docker compose up -d`
 
 ---
 
 ## Common Issues and Solutions
 
-### "permission denied" when running Docker commands
-**Cause**: Your user is not in the docker group
+### Docker Desktop won't start
+**Symptoms**: Docker commands fail, daemon not available
 
 **Solutions**:
-1. Add yourself to the docker group:
-   ```bash
-   sudo usermod -aG docker $USER
-   newgrp docker
-   ```
-2. If that doesn't work, log out and log back in
-3. As a last resort, restart your computer
+1. Restart Docker Desktop from applications menu
+2. Check system requirements on the [official Docker Desktop page](https://docs.docker.com/desktop/install/linux-install/)
+3. Reinstall Docker Desktop following the official guide
 
-### Docker daemon is not running
-**Symptoms**: "Cannot connect to the Docker daemon" error
-
+### "git: command not found"
 **Solutions**:
-1. Start Docker service:
-   ```bash
-   sudo systemctl start docker
-   ```
-2. Enable Docker to start on boot:
-   ```bash
-   sudo systemctl enable docker
-   ```
-3. Check Docker status:
-   ```bash
-   sudo systemctl status docker
-   ```
+1. Install Git: `sudo apt install git -y`
+2. Verify installation: `git --version`
+3. Close and reopen Terminal
 
 ### Port conflicts (3030 or 5001 already in use)
 **Symptoms**: Error messages like:
@@ -459,7 +340,7 @@ Error starting userland proxy: listen tcp 0.0.0.0:3030: bind: address already in
 
 This means another program is already using port 3030 (frontend) or 5001 (backend).
 
-#### **Option 1: Find and Stop the Conflicting Process** (Recommended)
+#### **Find and Stop the Conflicting Process**
 
 **Step 1 - Find what's using the port:**
 
@@ -473,158 +354,45 @@ For port 5001:
 sudo lsof -i :5001
 ```
 
-**Alternative** (if `lsof` is not installed):
-```bash
-sudo netstat -tulpn | grep :3030
-sudo netstat -tulpn | grep :5001
-```
-
-Or using `ss` (modern replacement for netstat):
-```bash
-sudo ss -tulpn | grep :3030
-sudo ss -tulpn | grep :5001
-```
-
 You'll see output like:
 ```
-COMMAND   PID      USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-node    12345  username   23u  IPv4  12345      0t0  TCP *:3030 (LISTEN)
+COMMAND   PID      USER   FD   TYPE    DEVICE SIZE/OFF NODE NAME
+node    12345  username   23u  IPv4  0x1234567      0t0  TCP *:3030 (LISTEN)
 ```
 
 The **PID** (Process ID) is in the second column (e.g., `12345`).
 
-**Step 2 - Find out what program it is:**
+**Step 2 - Stop the process:**
 
-The `COMMAND` column shows what's running (e.g., `node`, `python3`, `docker-proxy`).
-
-For more details:
-```bash
-ps aux | grep 12345
-```
-
-**Step 3 - Stop the process:**
-
-**Method A** - Graceful stop (try this first):
 ```bash
 kill 12345
 ```
 
 Replace `12345` with your actual PID.
 
-**Method B** - Force stop (if graceful doesn't work):
+If that doesn't work, force stop:
 ```bash
 kill -9 12345
 ```
 
-The `-9` flag forces immediate termination.
-
-**Note**: If the process belongs to another user or requires elevated privileges, use:
+**Step 3 - Try starting RL Lab again:**
 ```bash
-sudo kill 12345
+docker compose up -d
 ```
 
-**Step 4 - Try starting RL Lab again:**
-```bash
-docker compose up
-```
-
-#### **Option 2: Change RL Lab's Ports** (If you need both applications running)
-
-If you want to keep the other application running, change RL Lab's ports:
-
-1. Open `docker-compose.yml` in a text editor (nano, vim, gedit, or any editor):
-   ```bash
-   nano docker-compose.yml
-   ```
-
-2. Find these lines:
-   ```yaml
-   frontend:
-     ports:
-       - "3000:3030"
-   backend:
-     ports:
-       - "5001:5001"
-   ```
-
-3. Change to different ports (e.g., 3001 and 5002):
-   ```yaml
-   frontend:
-     ports:
-       - "3001:3030"
-   backend:
-     ports:
-       - "5002:5001"
-   ```
-
-4. Save the file (in nano: `Ctrl + O`, then Enter, then `Ctrl + X`)
-5. Start RL Lab: `docker compose up`
-6. Access at the new port: `http://localhost:3001`
-
-**Common culprits using these ports**:
-- **Port 3030**: React development servers, other Node.js apps
-- **Port 5001**: Flask apps, other Python servers
-- Check for other Docker containers: `docker ps`
-- Check for services: `sudo systemctl list-units --type=service --state=running`
-
-### Browser shows "Unable to connect" or "Connection refused"
+### Browser shows "This site can't be reached"
 **Solutions**:
-1. Make sure `docker compose up` is still running (check Terminal window)
+1. Make sure Docker containers are running: `docker compose ps`
 2. Wait a bit longer - first startup can take 2-3 minutes
 3. Try refreshing the browser
-4. Check Docker is running: `sudo systemctl status docker`
-5. Look at Terminal output for error messages
+4. Check Docker Desktop is running
+5. View logs for error messages: `docker compose logs`
 
 ### Training doesn't start or shows errors
 **Solutions**:
-1. Check Terminal window for backend error messages
+1. View logs for backend error messages: `docker compose logs backend`
 2. Try clicking "Reset" and then "Start Training" again
 3. Refresh the browser page
-
-### Firewall blocking connections
-**Symptoms**: Can't access localhost:3030 even though containers are running
-
-**Solutions**:
-1. Check firewall status:
-   ```bash
-   sudo ufw status
-   ```
-2. If firewall is active, allow the ports:
-   ```bash
-   sudo ufw allow 3000
-   sudo ufw allow 5001
-   ```
-3. Or temporarily disable firewall for testing:
-   ```bash
-   sudo ufw disable
-   ```
-
----
-
-## Distribution-Specific Notes
-
-### Fedora / RHEL / CentOS
-Use `dnf` instead of `apt`:
-```bash
-sudo dnf install git docker docker-compose
-```
-
-### Arch Linux
-Use `pacman`:
-```bash
-sudo pacman -S git docker docker-compose
-```
-
-### openSUSE
-Use `zypper`:
-```bash
-sudo zypper install git docker docker-compose
-```
-
-After installation, make sure to:
-1. Start Docker: `sudo systemctl start docker`
-2. Enable on boot: `sudo systemctl enable docker`
-3. Add user to docker group: `sudo usermod -aG docker $USER`
 
 ---
 
@@ -636,6 +404,10 @@ After installation, make sure to:
 - [README.md](../README.md) - Project overview and features
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Technical details about how RL Lab works
 - [Docker Workflow Guide](../tutorials/docker-workflow.md) - Advanced Docker usage
+
+**Official Documentation**:
+- [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux-install/)
+- [Git for Linux](https://git-scm.com/download/linux)
 
 **Need Help?**
 - Check the troubleshooting section above
