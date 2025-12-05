@@ -30,6 +30,7 @@ function App() {
   const [isTraining, setIsTraining] = useState(false);
   const [isPlayback, setIsPlayback] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
+  const [playbackInterval, setPlaybackInterval] = useState(null);
 
   // Data state
   const [currentFrame, setCurrentFrame] = useState(null);
@@ -246,14 +247,19 @@ function App() {
               frameIndex++;
             } else {
               clearInterval(interval);
+              setPlaybackInterval(null);
               setIsPlayback(false);
             }
           }, 200);
+
+          // Store interval reference so we can stop it
+          setPlaybackInterval(interval);
         },
         // onError
         (err) => {
           setError(err.message || 'Playback failed');
           setIsPlayback(false);
+          setPlaybackInterval(null);
         }
       );
 
@@ -261,6 +267,24 @@ function App() {
     } catch (err) {
       setError(err.message || 'Failed to play policy');
       setIsPlayback(false);
+      setPlaybackInterval(null);
+    }
+  };
+
+  const handleStopPlayback = () => {
+    // Clear the animation interval
+    if (playbackInterval) {
+      clearInterval(playbackInterval);
+      setPlaybackInterval(null);
+    }
+
+    // Stop playback
+    setIsPlayback(false);
+
+    // Close EventSource
+    if (eventSource) {
+      eventSource.close();
+      setEventSource(null);
     }
   };
 
@@ -322,6 +346,7 @@ function App() {
             onStartTraining={handleStartTraining}
             onStopTraining={handleStopTraining}
             onPlayPolicy={handlePlayPolicy}
+            onStopPlayback={handleStopPlayback}
             isTraining={isTraining}
             isPlayback={isPlayback}
             canPlayPolicy={trainingComplete}

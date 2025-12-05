@@ -5,6 +5,7 @@ const ControlButtons = ({
   onStartTraining,
   onStopTraining,
   onPlayPolicy,
+  onStopPlayback,
   isTraining,
   isPlayback,
   canPlayPolicy,
@@ -29,10 +30,10 @@ const ControlButtons = ({
 
       <button
         className="btn btn-secondary"
-        onClick={onPlayPolicy}
-        disabled={isTraining || isPlayback || !canPlayPolicy}
+        onClick={isPlayback ? onStopPlayback : onPlayPolicy}
+        disabled={isTraining || !canPlayPolicy}
       >
-        {isPlayback ? 'Playing...' : 'Play Policy'}
+        {isPlayback ? 'Stop Playback' : 'Play Policy'}
       </button>
     </div>
   );

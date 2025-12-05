@@ -13,6 +13,7 @@ const ParameterPanel = ({
   onStartTraining,
   onStopTraining,
   onPlayPolicy,
+  onStopPlayback,
   isTraining,
   isPlayback,
   canPlayPolicy,
@@ -159,6 +160,7 @@ const ParameterPanel = ({
         onStartTraining={onStartTraining}
         onStopTraining={onStopTraining}
         onPlayPolicy={onPlayPolicy}
+        onStopPlayback={onStopPlayback}
         isTraining={isTraining}
         isPlayback={isPlayback}
         canPlayPolicy={canPlayPolicy}
