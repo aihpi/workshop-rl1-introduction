@@ -56,20 +56,7 @@ const AlgorithmInfo = ({ algorithm }) => {
           </section>
 
           <section>
-            <h4>Key Concepts</h4>
-            <dl>
-              <dt>Q-Value</dt>
-              <dd>{sections.keyConcepts.qValue}</dd>
-              <dt>Exploration vs Exploitation</dt>
-              <dd>{sections.keyConcepts.exploration}</dd>
-              <dd>{sections.keyConcepts.exploitation}</dd>
-              <dt>Off-Policy Learning</dt>
-              <dd>{sections.keyConcepts.offPolicy}</dd>
-            </dl>
-          </section>
-
-          <section>
-            <h4>Parameters Explained</h4>
+            {/* <h4>Parameters Explained</h4> */}
             {Object.entries(sections.parameters).map(([key, param]) => (
               <div className="parameter-explanation" key={key}>
                 <strong>{param.symbol}</strong> - {param.description}
@@ -77,6 +64,19 @@ const AlgorithmInfo = ({ algorithm }) => {
                 <em>Range: {param.range}</em>
               </div>
             ))}
+          </section>
+
+          <section>
+            {/* <h4>Key Concepts</h4> */}
+            <dl>
+              <dt>Q-Value</dt>
+              <dd>{sections.keyConcepts.qValue}</dd>
+              <dt>Exploration vs Exploitation</dt>
+              <dd>{sections.keyConcepts.exploration}</dd>
+              <dd>{sections.keyConcepts.exploitation}</dd>
+              <dt>Epsilon-Greedy Policy</dt>
+              <dd>{sections.keyConcepts.epsilonGreedy}</dd>
+            </dl>
           </section>
 
           <section>
