@@ -105,6 +105,14 @@ function App() {
 
   // Validation function for Q-init parameters
   const isValidParameters = () => {
+    // Validate num_episodes is a positive integer
+    const episodes = parameters.num_episodes;
+    if (episodes === undefined || episodes === '' || isNaN(episodes) ||
+        parseFloat(episodes) <= 0 ||
+        parseFloat(episodes) != parseInt(episodes)) {
+      return false;
+    }
+
     // Validate Q-init parameters based on strategy
     if (parameters.q_init_strategy === 'fixed') {
       const value = parameters.q_init_value;

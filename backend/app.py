@@ -188,7 +188,7 @@ def stream_training(session_id):
         return jsonify({'error': 'Session not found'}), 404
 
     session = trainer.get_session(session_id)
-    num_episodes = session['parameters'].get('num_episodes', 1000)
+    num_episodes = int(session['parameters'].get('num_episodes', 1000))
 
     def generate():
         """Generator function for SSE events."""

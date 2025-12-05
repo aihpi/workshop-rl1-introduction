@@ -240,30 +240,14 @@ class QLearning(BaseAlgorithm):
         Returns:
             Dictionary of parameter specifications
         """
-        # Environment-specific num_episodes configurations
-        num_episodes_config = {
-            'FrozenLake-v1': {
-                'min': 1,
-                'max': 20000,  # 2e4
-                'default': 1000  # 1e3
-            },
-            'FrozenLake-v1-NoSlip': {
-                'min': 1,
-                'max': 2000,  # 2e3
-                'default': 100  # 1e2
-            }
+        # Environment-specific num_episodes defaults
+        num_episodes_defaults = {
+            'FrozenLake-v1': 5000,
+            'FrozenLake-v1-NoSlip': 500
         }
 
-        # Get environment-specific config or use default
-        if environment and environment in num_episodes_config:
-            episodes_config = num_episodes_config[environment]
-        else:
-            # Default for unknown environments
-            episodes_config = {
-                'min': 1,
-                'max': 200000,
-                'default': 1000
-            }
+        # Get environment-specific default or use fallback
+        num_episodes_default = num_episodes_defaults.get(environment, 1000)
 
         return {
             'learning_rate': {
@@ -289,9 +273,7 @@ class QLearning(BaseAlgorithm):
             },
             'num_episodes': {
                 'type': 'int',
-                'min': episodes_config['min'],
-                'max': episodes_config['max'],
-                'default': episodes_config['default'],
+                'default': num_episodes_default,
                 'description': 'Number of training episodes'
             },
             'q_init_strategy': {

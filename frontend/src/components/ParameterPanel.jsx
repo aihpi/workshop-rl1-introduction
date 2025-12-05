@@ -99,7 +99,12 @@ const ParameterPanel = ({
     let parsedValue = value;
 
     if (paramSpec.type === 'int') {
-      parsedValue = parseInt(value, 10);
+      // For num_episodes text input, keep as string to allow typing intermediate states
+      if (paramName === 'num_episodes') {
+        parsedValue = value; // Keep as string
+      } else {
+        parsedValue = parseInt(value, 10);
+      }
     } else if (paramSpec.type === 'float') {
       // For Q-init parameters (text inputs), keep as string to allow typing intermediate states like "-"
       if (paramName.startsWith('q_init_')) {
@@ -170,9 +175,39 @@ const ParameterPanel = ({
       {/* Learning Parameters Section */}
       <h3>Learning Parameters</h3>
 
-      {/* Core learning parameters in desired order: num_episodes, exploration_rate, learning_rate, discount_factor */}
-      {schema && ['num_episodes', 'exploration_rate', 'learning_rate', 'discount_factor']
-        .filter(paramName => schema[paramName]) // Only include if parameter exists in schema
+      {/* num_episodes as text input */}
+      {schema && schema.num_episodes && (
+        <div className="parameter-group">
+          <label>
+            num episodes
+            <span className="param-value">
+              {formatNumber(parameters.num_episodes ?? schema.num_episodes.default, 'num_episodes')}
+            </span>
+          </label>
+          <input
+            type="text"
+            value={parameters.num_episodes ?? schema.num_episodes.default}
+            onChange={(e) => handleParameterChange('num_episodes', e.target.value)}
+            className="q-value-input"
+          />
+          <p className="hint">{schema.num_episodes.description}</p>
+
+          {/* Validation Warning */}
+          {(parameters.num_episodes === undefined ||
+            parameters.num_episodes === '' ||
+            isNaN(parameters.num_episodes) ||
+            parseFloat(parameters.num_episodes) <= 0 ||
+            parseFloat(parameters.num_episodes) != parseInt(parameters.num_episodes)) && (
+            <p className="hint error">
+              ⚠️ Must be a positive integer
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Other learning parameters as sliders */}
+      {schema && ['exploration_rate', 'learning_rate', 'discount_factor']
+        .filter(paramName => schema[paramName])
         .map(paramName => {
           const param = schema[paramName];
           const value = parameters[paramName] || param.default;
