@@ -47,7 +47,7 @@ const RewardChart = ({ chartData, totalEpisodes, windowSize }) => {
                 domain={[0, totalEpisodes]}
                 type="number"
                 ticks={ticks}
-                label={{ value: 'Episode', position: 'insideBottom', offset: -5 }}
+                label={{ value: 'Episode', position: 'insideBottom', offset: 0 }}
               />
               <YAxis
                 label={{ value: 'Average Reward', angle: -90, position: 'insideLeft' }}

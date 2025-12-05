@@ -1,11 +1,11 @@
 {
   "Q-Learning": {
     "name": "Q-Learning",
-    "description": "A model-free, off-policy temporal-difference reinforcement learning algorithm that learns the value of actions in states.",
+    "description": "A simple tabular reinforcement learning algorithm that learns the value of actions in states.",
     "sections": {
       "whatIsIt": "Q-Learning learns a Q-function Q(s,a) that estimates the expected cumulative reward of taking action 'a' in state 's' and following the optimal policy thereafter.",
       "howItWorks": [
-        "Initialize Q-table with zeros",
+        "Initialize Q-table",
         "Observe current state",
         "Choose action using ε-greedy policy",
         "Take action, observe reward and next state",

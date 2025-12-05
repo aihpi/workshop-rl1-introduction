@@ -255,26 +255,26 @@ class QLearning(BaseAlgorithm):
                 'min': 0.01,
                 'max': 1.0,
                 'default': 0.1,
-                'description': 'Alpha - controls how much new information overrides old'
+                'description': '0 < alpha <= 1 - controls how much new information overrides old'
             },
             'discount_factor': {
                 'type': 'float',
                 'min': 0.0,
                 'max': 0.99,
                 'default': 0.95,
-                'description': 'Gamma - importance of future rewards'
+                'description': '0 <= gamma < 1 - importance of future rewards'
             },
             'exploration_rate': {
                 'type': 'float',
                 'min': 0.0,
                 'max': 1.0,
                 'default': 0.1,
-                'description': 'Epsilon - probability of random action'
+                'description': '0 < epsilon <= 1 - probability of random action'
             },
             'num_episodes': {
                 'type': 'int',
                 'default': num_episodes_default,
-                'description': 'Number of training episodes'
+                'description': 'Number of training episodes. Must be an integer.'
             },
             'q_init_strategy': {
                 'type': 'string',
