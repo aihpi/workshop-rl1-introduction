@@ -50,6 +50,7 @@ describe('ParameterPanel', () => {
     // Set up default API responses
     api.getParameterSchema.mockResolvedValue(mockSchema);
     api.getEnvironments.mockResolvedValue(mockEnvironments);
+    api.getAlgorithms.mockResolvedValue(['Q-Learning']);
   });
 
   test('renders loading state initially', () => {
@@ -82,18 +83,19 @@ describe('ParameterPanel', () => {
     expect(screen.getByText(/num episodes/i)).toBeInTheDocument();
   });
 
-  test('displays algorithm as disabled input', async () => {
+  test('displays algorithm select with current value', async () => {
     /**
-     * WHY: Algorithm should be shown but not editable (Phase 1 only has Q-Learning)
-     * HOW: Check that algorithm input exists and is disabled
+     * WHY: Algorithm select should show the currently selected algorithm
+     * HOW: Check that algorithm select exists and has the correct value
      */
     // Act
     render(<ParameterPanel {...defaultProps} />);
 
     // Assert
     await waitFor(() => {
-      const algorithmInput = screen.getByDisplayValue('Q-Learning');
-      expect(algorithmInput).toBeDisabled();
+      const algorithmSelect = screen.getByDisplayValue('Q-Learning');
+      expect(algorithmSelect).toBeInTheDocument();
+      expect(algorithmSelect).toHaveValue('Q-Learning');
     });
   });
 
