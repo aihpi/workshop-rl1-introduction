@@ -6,11 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
-## [0.7.0] - 2025-11-20 (In Progress)
+## [0.7.0] - 2025-12-07
 
-### Completed Today
+### Changed
+- **Frontend Docker image optimized**
+  - Switched from `node:18` to `node:18-alpine` base image
+  - Image size reduced: 2.14GB → 767MB (64% reduction, 1.37GB saved)
+  - Faster downloads for workshop students
+  - GitHub Actions automatically builds and pushes optimized image to Docker Hub
 
-#### Added
+- **Documentation reorganization**
+  - Moved internal documentation (ARCHITECTURE.md, CHANGELOG.md) to `dev/` folder
+  - Created DEVELOPMENT.md for local setup without Docker
+  - Updated ARCHITECTURE.md: fixed project name (RL Lab), updated structure, fixed API count
+  - Renamed `docs/installation-screenshots/` to `docs/screenshots/`
+  - Removed `tutorials/` folder (internal documentation)
+
+- **Installation guides updated** (macOS, Linux, Windows)
+  - Updated disk space requirement: 2GB → 4GB (reflects actual image sizes)
+  - Updated macOS version requirement to Sonoma 14+ with Docker docs link
+  - Removed "Active internet connection" prerequisite (implied)
+  - Updated Docker compose output examples to show realistic command prompts
+  - Removed screenshot references and broken links
+  - Made all three guides consistent and accurate
+
+### Fixed
+- **Frontend tests** (12 tests passing)
+  - Added missing `getAlgorithms` mock to ParameterPanel tests
+  - Updated algorithm select test to match current implementation (select is enabled, not disabled)
+
+---
+
+## [0.6.1] - 2025-11-20
+
+### Added
 - **Docker Hub pre-built images** for faster workshop setup
   - Created Docker Hub account (username: davidgoll)
   - Built and pushed backend/frontend images to Docker Hub
