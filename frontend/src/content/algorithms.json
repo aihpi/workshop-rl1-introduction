@@ -50,5 +50,58 @@
         "url": "https://medium.com/data-science/q-learning-for-beginners-2837b777741"
       }
     ]
+  },
+  "DQN": {
+    "name": "DQN (Deep Q-Network)",
+    "description": "Q-Learning with a neural network instead of a table: the network estimates Q-values from continuous state inputs, enabling RL in environments where a Q-table is impossible.",
+    "sections": {
+      "whatIsIt": "DQN replaces the Q-table with a neural network that takes the state as input and outputs one Q-value per action. This is necessary when states are continuous (like CartPole's positions and velocities): there are infinitely many states, so a table can't hold them. Two tricks make the training stable: a replay buffer stores past experiences and trains the network on random batches of them (breaking the correlation between consecutive steps), and a separate target network provides slowly-changing learning targets. The learning rule is the same Bellman update as Q-Learning, just applied through gradient descent.",
+      "howItWorks": [
+        "Initialize Q-network and target network with random weights",
+        "Observe current state s",
+        "Choose action using ε-greedy policy (ε decays over training)",
+        "Take action a, observe reward r and next state s'; store (s, a, r, s') in the replay buffer",
+        "Sample a random batch from the buffer and update the Q-network toward r + γ·max Q_target(s',a')",
+        "Every N steps, copy the Q-network weights into the target network",
+        "Repeat from step 2"
+      ],
+      "keyConcepts": {
+        "qValue": "Estimated by the neural network: input state, output one Q-value per action",
+        "exploration": "Trying random actions to discover new strategies. DQN starts fully random (ε = 1) and anneals ε down as it learns",
+        "exploitation": "Using the network's current Q-estimates to pick the best action",
+        "epsilonGreedy": "Same as Q-Learning, but ε decays linearly over the first part of training instead of staying fixed"
+      },
+      "parameters": {
+        "learningRate": {
+          "symbol": "α (alpha)",
+          "range": "0.0001 ≤ α ≤ 0.01",
+          "description": "Step size of the gradient updates to the Q-network. Higher = faster but less stable."
+        },
+        "discountFactor": {
+          "symbol": "γ (gamma)",
+          "range": "0.9 ≤ γ < 1",
+          "description": "Importance of future rewards. Higher = more long-term planning."
+        },
+        "explorationFraction": {
+          "symbol": "ε decay",
+          "range": "0.05 ≤ f ≤ 1",
+          "description": "Fraction of the timestep budget over which ε decays linearly from 1.0 to its final value."
+        }
+      }
+    },
+    "links": [
+      {
+        "text": "Mnih et al. 2015: Human-level control through deep RL (Nature)",
+        "url": "https://www.nature.com/articles/nature14236"
+      },
+      {
+        "text": "Stable-Baselines3 DQN Documentation",
+        "url": "https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html"
+      },
+      {
+        "text": "Gymnasium CartPole Documentation",
+        "url": "https://gymnasium.farama.org/environments/classic_control/cart_pole/"
+      }
+    ]
   }
 }

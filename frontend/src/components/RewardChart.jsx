@@ -13,10 +13,13 @@ const RewardChart = ({ chartData, totalEpisodes, windowSize }) => {
   const bestAvg = hasData ? Math.max(...sortedData.map(d => d.avgReward)).toFixed(3) : 0;
   const episodesTrained = lastPoint ? lastPoint.episode : 0;
 
-  // Generate X-axis ticks at 10% intervals
-  const ticks = totalEpisodes === 0
-    ? [0]
-    : Array.from({length: 11}, (_, i) => Math.round(totalEpisodes * i / 10));
+  // Fixed x-axis when the episode count is known upfront (episode-budgeted
+  // algorithms); auto-scaling axis when it isn't (timestep-budgeted, e.g. DQN)
+  const knownTotal = totalEpisodes != null && totalEpisodes > 0;
+  const xDomain = knownTotal ? [0, totalEpisodes] : [0, 'dataMax'];
+  const ticks = knownTotal
+    ? Array.from({length: 11}, (_, i) => Math.round(totalEpisodes * i / 10))
+    : undefined;
 
   return (
     <div className="reward-chart">
@@ -44,7 +47,7 @@ const RewardChart = ({ chartData, totalEpisodes, windowSize }) => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="episode"
-                domain={[0, totalEpisodes]}
+                domain={xDomain}
                 type="number"
                 ticks={ticks}
                 label={{ value: 'Episode', position: 'insideBottom', offset: 0 }}
@@ -60,6 +63,7 @@ const RewardChart = ({ chartData, totalEpisodes, windowSize }) => {
                 stroke="#8884d8"
                 strokeWidth={2}
                 dot={true}
+                isAnimationActive={false}
                 name={`Moving Average (window: ${windowSize})`}
               />
             </LineChart>

@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { getParameterSchema, getEnvironments, getAlgorithms } from '../api';
+import { getParameterSchema, getEnvironments, getAlgorithms, getCompatibility } from '../api';
 import ControlButtons from './ControlButtons';
 import './ParameterPanel.css';
+
+// Training-budget parameter: each algorithm exposes exactly one of these
+// (Q-Learning: num_episodes, SB3 algorithms: total_timesteps)
+export const BUDGET_KEYS = ['num_episodes', 'total_timesteps'];
+
+// Parameters with bespoke rendering; everything else renders generically
+const SPECIAL_KEYS = [...BUDGET_KEYS, 'seed', 'q_init_strategy', 'q_init_value', 'q_init_min', 'q_init_max'];
 
 const ParameterPanel = ({
   algorithm,
@@ -22,13 +29,14 @@ const ParameterPanel = ({
   const [schema, setSchema] = useState(null);
   const [environments, setEnvironments] = useState([]);
   const [algorithms, setAlgorithms] = useState([]);
+  const [compatibility, setCompatibility] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Format large numbers in scientific notation
   const formatNumber = (value, paramName) => {
-    // Only format num_episodes with scientific notation for large values
-    if (paramName === 'num_episodes' && value >= 1000) {
+    // Only format the training budget with scientific notation for large values
+    if (BUDGET_KEYS.includes(paramName) && value >= 1000) {
       const exponent = Math.floor(Math.log10(value));
       const mantissa = value / Math.pow(10, exponent);
       // If it's a clean power of 10, show as 1eX, otherwise show mantissa
@@ -61,9 +69,38 @@ const ParameterPanel = ({
       }
     };
 
+    const fetchCompatibility = async () => {
+      try {
+        const compat = await getCompatibility();
+        setCompatibility(compat);
+      } catch (err) {
+        console.error('Failed to load compatibility:', err);
+      }
+    };
+
     fetchEnvironments();
     fetchAlgorithms();
+    fetchCompatibility();
   }, []);
+
+  // Algorithms compatible with the selected environment
+  const compatibleAlgorithms = compatibility
+    ? algorithms.filter(alg => (compatibility[alg] || []).includes(environment))
+    : algorithms;
+
+  // Auto-switch to a compatible algorithm when the environment changes
+  useEffect(() => {
+    if (!compatibility || !environment) return;
+    if (!(compatibility[algorithm] || []).includes(environment)) {
+      const firstCompatible = Object.keys(compatibility).find(
+        alg => compatibility[alg].includes(environment)
+      );
+      if (firstCompatible) {
+        onAlgorithmChange(firstCompatible);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [environment, compatibility]);
 
   // Load parameter schema when algorithm or environment changes
   useEffect(() => {
@@ -99,8 +136,9 @@ const ParameterPanel = ({
     let parsedValue = value;
 
     if (paramSpec.type === 'int') {
-      // For num_episodes text input, keep as string to allow typing intermediate states
-      if (paramName === 'num_episodes') {
+      // Budget and seed are text inputs: keep as string to allow typing
+      // intermediate states (and an empty seed, which means "random run")
+      if (BUDGET_KEYS.includes(paramName) || paramName === 'seed') {
         parsedValue = value; // Keep as string
       } else {
         parsedValue = parseInt(value, 10);
@@ -153,12 +191,42 @@ const ParameterPanel = ({
           value={algorithm}
           onChange={(e) => onAlgorithmChange(e.target.value)}
         >
-          {algorithms.map(alg => (
+          {compatibleAlgorithms.map(alg => (
             <option key={alg} value={alg}>{alg}</option>
           ))}
         </select>
         <p className="hint">Select algorithm</p>
       </div>
+
+      {/* Random seed - directly below the environment/algorithm choice */}
+      {schema && schema.seed && (
+        <div className="parameter-group">
+          <label>
+            Random Seed
+            <span className="param-value">
+              {(parameters.seed ?? schema.seed.default) === '' ? 'random' : (parameters.seed ?? schema.seed.default)}
+            </span>
+          </label>
+          <input
+            type="text"
+            value={parameters.seed ?? schema.seed.default}
+            onChange={(e) => handleParameterChange('seed', e.target.value)}
+            placeholder="random"
+            className="q-value-input"
+          />
+          <p className="hint">{schema.seed.description}</p>
+
+          {/* Validation Warning: empty is fine, otherwise a non-negative integer */}
+          {parameters.seed !== undefined && parameters.seed !== '' &&
+            (isNaN(parameters.seed) ||
+             parseFloat(parameters.seed) < 0 ||
+             parseFloat(parameters.seed) != parseInt(parameters.seed)) && (
+            <p className="hint error">
+              ⚠️ Must be a non-negative integer (or empty for a random run)
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Control Buttons */}
       <ControlButtons
@@ -175,43 +243,82 @@ const ParameterPanel = ({
       {/* Learning Parameters Section */}
       <h3>Learning Parameters</h3>
 
-      {/* num_episodes as text input */}
-      {schema && schema.num_episodes && (
-        <div className="parameter-group">
+      {/* Training budget (num_episodes or total_timesteps) as text input */}
+      {schema && BUDGET_KEYS.filter(key => schema[key]).map(budgetKey => (
+        <div key={budgetKey} className="parameter-group">
           <label>
-            num episodes
+            {budgetKey.replace(/_/g, ' ')}
             <span className="param-value">
-              {formatNumber(parameters.num_episodes ?? schema.num_episodes.default, 'num_episodes')}
+              {formatNumber(parameters[budgetKey] ?? schema[budgetKey].default, budgetKey)}
             </span>
           </label>
           <input
             type="text"
-            value={parameters.num_episodes ?? schema.num_episodes.default}
-            onChange={(e) => handleParameterChange('num_episodes', e.target.value)}
+            value={parameters[budgetKey] ?? schema[budgetKey].default}
+            onChange={(e) => handleParameterChange(budgetKey, e.target.value)}
             className="q-value-input"
           />
-          <p className="hint">{schema.num_episodes.description}</p>
+          <p className="hint">{schema[budgetKey].description}</p>
 
           {/* Validation Warning */}
-          {(parameters.num_episodes === undefined ||
-            parameters.num_episodes === '' ||
-            isNaN(parameters.num_episodes) ||
-            parseFloat(parameters.num_episodes) <= 0 ||
-            parseFloat(parameters.num_episodes) != parseInt(parameters.num_episodes)) && (
+          {(parameters[budgetKey] === undefined ||
+            parameters[budgetKey] === '' ||
+            isNaN(parameters[budgetKey]) ||
+            parseFloat(parameters[budgetKey]) <= 0 ||
+            parseFloat(parameters[budgetKey]) != parseInt(parameters[budgetKey])) && (
             <p className="hint error">
               ⚠️ Must be a positive integer
             </p>
           )}
         </div>
-      )}
+      ))}
 
-      {/* Other learning parameters as sliders */}
-      {schema && ['exploration_rate', 'learning_rate', 'discount_factor']
-        .filter(paramName => schema[paramName])
-        .map(paramName => {
-          const param = schema[paramName];
-          const value = parameters[paramName] || param.default;
+      {/* All other parameters, rendered from the schema */}
+      {schema && Object.entries(schema)
+        .filter(([paramName]) => !SPECIAL_KEYS.includes(paramName))
+        .map(([paramName, param]) => {
+          const value = parameters[paramName] ?? param.default;
 
+          // Dropdown for parameters with fixed options
+          if (param.options) {
+            return (
+              <div key={paramName} className="parameter-group">
+                <label>{paramName.replace(/_/g, ' ')}</label>
+                <select
+                  value={value}
+                  onChange={(e) => handleParameterChange(paramName, e.target.value)}
+                >
+                  {param.options.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <p className="hint">{param.description}</p>
+              </div>
+            );
+          }
+
+          // Slider for bounded numeric parameters
+          if (param.min !== undefined && param.max !== undefined) {
+            return (
+              <div key={paramName} className="parameter-group">
+                <label>
+                  {paramName.replace(/_/g, ' ')}
+                  <span className="param-value">{formatNumber(value, paramName)}</span>
+                </label>
+                <input
+                  type="range"
+                  min={param.min}
+                  max={param.max}
+                  step={param.step ?? (param.type === 'int' ? 1 : 0.01)}
+                  value={value}
+                  onChange={(e) => handleParameterChange(paramName, e.target.value)}
+                />
+                <p className="hint">{param.description}</p>
+              </div>
+            );
+          }
+
+          // Text input for unbounded parameters
           return (
             <div key={paramName} className="parameter-group">
               <label>
@@ -219,12 +326,10 @@ const ParameterPanel = ({
                 <span className="param-value">{formatNumber(value, paramName)}</span>
               </label>
               <input
-                type="range"
-                min={param.min}
-                max={param.max}
-                step={param.type === 'int' ? 1 : 0.01}
+                type="text"
                 value={value}
                 onChange={(e) => handleParameterChange(paramName, e.target.value)}
+                className="q-value-input"
               />
               <p className="hint">{param.description}</p>
             </div>
@@ -232,8 +337,8 @@ const ParameterPanel = ({
         })
       }
 
-      {/* Q-Value Initialization Subsection */}
-      <h4>Q-Value Initialization</h4>
+      {/* Q-Value Initialization Subsection (tabular algorithms only) */}
+      {schema && schema.q_init_strategy && <h4>Q-Value Initialization</h4>}
 
       {/* Strategy Dropdown - Always visible */}
       {schema && schema.q_init_strategy && (

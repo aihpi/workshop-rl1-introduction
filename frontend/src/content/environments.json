@@ -60,5 +60,34 @@
         "url": "https://gymnasium.farama.org/environments/toy_text/frozen_lake/"
       }
     ]
+  },
+  "CartPole-v1": {
+    "name": "CartPole",
+    "description": "Balance a pole upright on a moving cart by pushing the cart left or right. The classic first environment for deep reinforcement learning.",
+    "sections": {
+      "goal": "Keep the pole balanced upright as long as possible. The episode ends when the pole tips more than 12° from vertical, the cart moves more than 2.4 units from the center, or 500 steps are reached (success).",
+      "stateSpace": {
+        "type": "Continuous (Box)",
+        "size": 4,
+        "description": "Four continuous values: cart position, cart velocity, pole angle, pole angular velocity. Because the state is continuous, a Q-table is impossible - this is why a neural network (DQN) is needed."
+      },
+      "actionSpace": {
+        "type": "Discrete",
+        "size": 2,
+        "actions": ["⬅️ Push cart left (0)", "➡️ Push cart right (1)"]
+      },
+      "rewards": {
+        "step": 1.0,
+        "description": "+1 for every timestep the pole stays up - so the episode return equals the episode length, and the reward chart directly shows how long the agent balances."
+      },
+      "stochasticity": "Deterministic dynamics; only the initial state is slightly randomized.",
+      "difficulty": "Considered solved at an average return of 475+ over 100 episodes (max 500)."
+    },
+    "links": [
+      {
+        "text": "Gymnasium CartPole Documentation",
+        "url": "https://gymnasium.farama.org/environments/classic_control/cart_pole/"
+      }
+    ]
   }
 }

@@ -12,8 +12,10 @@ This repository contains the material used in the "Reinforcement Learning I - In
 - **Environments**:
    - [Gymnasium FrozenLake-v1](https://gymnasium.farama.org/environments/toy_text/frozen_lake/) (4x4) with `is_slippery=True`
    - [Gymnasium FrozenLake-v1](https://gymnasium.farama.org/environments/toy_text/frozen_lake/) (4x4) with `is_slippery=False`
+   - [Gymnasium CartPole-v1](https://gymnasium.farama.org/environments/classic_control/cart_pole/)
 - **Algorithms**:
-   - Q-learning (custom build)
+   - Q-learning (custom build) — for FrozenLake
+   - DQN ([stable-baselines3](https://stable-baselines3.readthedocs.io/)) — for CartPole
 
 ## Setup and Installation
 
@@ -143,8 +145,8 @@ workshop-rl1-introduction/
 
 ## Limitations
 
-- Currently limited to FrozenLake environment (4x4 grid)
-- Only Q-Learning algorithm implemented
+- Two environments (FrozenLake 4x4, CartPole) and two algorithms (Q-Learning, DQN)
+- Each algorithm supports specific environments (Q-Learning: FrozenLake; DQN: CartPole)
 - Requires Docker for running the application
 
 ## References

@@ -2,6 +2,16 @@ import os
 # Set SDL to use dummy video driver to avoid macOS threading issues with pygame
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
+# Gymnasium's env.close() calls pygame.quit(), which tears down SDL subsystems
+# (joystick/IOKit) registered on the thread that first rendered. Our envs render
+# in short-lived Flask/SSE threads, so a later close() or GC finalization from
+# another thread segfaults on macOS (SIGSEGV in SDL_JoystickQuit). Neutralize
+# pygame teardown for the server's lifetime - SDL cleanup only matters at
+# process exit anyway.
+import pygame
+pygame.quit = lambda: None
+pygame.display.quit = lambda: None
+
 from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 import json
@@ -58,6 +68,17 @@ def get_algorithms():
     """
     algorithms = AlgorithmFactory.get_available_algorithms()
     return jsonify(algorithms)
+
+
+@app.route('/api/compatibility', methods=['GET'])
+def get_compatibility():
+    """
+    Get the algorithm -> supported environments mapping.
+
+    Returns:
+        JSON dict mapping algorithm names to lists of environment names
+    """
+    return jsonify(AlgorithmFactory.get_compatibility())
 
 
 @app.route('/api/environments', methods=['GET'])
@@ -188,7 +209,6 @@ def stream_training(session_id):
         return jsonify({'error': 'Session not found'}), 404
 
     session = trainer.get_session(session_id)
-    num_episodes = int(session['parameters'].get('num_episodes', 1000))
 
     def generate():
         """Generator function for SSE events."""
@@ -217,18 +237,22 @@ def stream_training(session_id):
         def train_in_thread():
             """Run training in a separate thread."""
             try:
-                print(f"DEBUG: Starting training for session {session_id} with {num_episodes} episodes")
+                print(f"DEBUG: Starting training for session {session_id}")
 
-                # Start training
-                trainer.train(session_id, num_episodes, callback)
+                # Start training (budget comes from the algorithm's parameters)
+                trainer.train(session_id, callback)
 
-                print(f"DEBUG: Training completed successfully for session {session_id}")
-
-                # Send completion event
-                completion_data = {
-                    'status': 'complete',
-                    'message': 'Training completed successfully'
-                }
+                # Distinguish a user-requested stop from natural completion
+                if session['stop_event'].is_set():
+                    completion_data = {
+                        'status': 'stopped',
+                        'message': 'Training stopped by user'
+                    }
+                else:
+                    completion_data = {
+                        'status': 'complete',
+                        'message': 'Training completed successfully'
+                    }
                 event_queue.put(completion_data)
 
             except Exception as e:
@@ -280,6 +304,24 @@ def stream_training(session_id):
             'Connection': 'keep-alive'
         }
     )
+
+
+@app.route('/api/train/stop/<session_id>', methods=['POST'])
+def stop_training(session_id):
+    """
+    Request a graceful stop of a running training session.
+    Training halts at the next episode boundary; the partial policy
+    remains playable.
+
+    Args:
+        session_id: Session UUID
+
+    Returns:
+        JSON success message or 404 if session not found
+    """
+    if not trainer.request_stop(session_id):
+        return jsonify({'error': 'Session not found'}), 404
+    return jsonify({'message': 'Stop requested'})
 
 
 @app.route('/api/play-policy/stream/<session_id>', methods=['GET'])
@@ -353,10 +395,12 @@ if __name__ == '__main__':
     print("Server running on http://localhost:5001")
     print("\nAvailable endpoints:")
     print("  GET  /api/algorithms")
+    print("  GET  /api/compatibility")
     print("  GET  /api/environments")
     print("  GET  /api/environments/<env_name>/preview")
     print("  GET  /api/parameters/<algorithm>")
     print("  POST /api/train")
+    print("  POST /api/train/stop/<session_id>")
     print("  GET  /api/train/stream/<session_id>")
     print("  GET  /api/play-policy/stream/<session_id>")
     print("  POST /api/reset")

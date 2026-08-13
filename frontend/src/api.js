@@ -19,6 +19,14 @@ export const getEnvironments = async () => {
 };
 
 /**
+ * Get the algorithm -> supported environments mapping
+ */
+export const getCompatibility = async () => {
+  const response = await axios.get(`${API_BASE_URL}/compatibility`);
+  return response.data;
+};
+
+/**
  * Get a preview frame of an environment's initial state
  */
 export const getEnvironmentPreview = async (envName) => {
@@ -58,8 +66,9 @@ export const subscribeToTraining = (sessionId, onUpdate, onComplete, onError) =>
       if (data.status === 'training') {
         // Training update
         onUpdate(data);
-      } else if (data.status === 'complete') {
-        // Training complete
+      } else if (data.status === 'complete' || data.status === 'stopped') {
+        // Training finished (naturally or stopped by user);
+        // either way the partial policy is playable
         onComplete(data);
         eventSource.close();
       } else if (data.status === 'error') {
@@ -112,6 +121,14 @@ export const subscribeToPlayback = (sessionId, onFrames, onError) => {
   };
 
   return eventSource;
+};
+
+/**
+ * Request a graceful stop of a running training session
+ */
+export const stopTraining = async (sessionId) => {
+  const response = await axios.post(`${API_BASE_URL}/train/stop/${sessionId}`);
+  return response.data;
 };
 
 /**

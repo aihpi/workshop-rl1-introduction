@@ -29,6 +29,24 @@ class TestBasicEndpoints:
         data = response.get_json()
         assert isinstance(data, list), "Response should be a list"
         assert 'Q-Learning' in data, "Should include Q-Learning"
+        assert 'DQN' in data, "Should include DQN"
+
+    def test_get_compatibility(self, client):
+        """
+        Test GET /api/compatibility returns the algorithm -> environments map.
+
+        WHY: Frontend filters the algorithm dropdown by environment.
+        HOW: Make GET request, verify mapping structure.
+        """
+        # Act
+        response = client.get('/api/compatibility')
+
+        # Assert
+        assert response.status_code == 200
+        data = response.get_json()
+        assert isinstance(data, dict), "Response should be a dict"
+        assert 'CartPole-v1' in data['DQN']
+        assert 'FrozenLake-v1' in data['Q-Learning']
 
     def test_get_environments(self, client):
         """
@@ -92,6 +110,38 @@ class TestErrorHandling:
         # Assert
         # API returns 400 (Bad Request) for unknown algorithms
         assert response.status_code == 400, "Unknown algorithm should return 400"
+
+    def test_incompatible_pair_returns_400(self, client):
+        """
+        Test that training an algorithm on an unsupported environment fails cleanly.
+
+        WHY: Q-Learning cannot run on continuous-state environments; the API
+        should reject the pair instead of crashing with a 500.
+        HOW: POST /api/train with Q-Learning x CartPole-v1, expect 400.
+        """
+        # Act
+        response = client.post('/api/train', json={
+            'algorithm': 'Q-Learning',
+            'environment': 'CartPole-v1',
+            'parameters': {'num_episodes': 10}
+        })
+
+        # Assert
+        assert response.status_code == 400
+        assert 'does not support' in response.get_json()['error']
+
+    def test_stop_unknown_session_returns_404(self, client):
+        """
+        Test POST /api/train/stop/<id> with an unknown session.
+
+        WHY: Stop requests for dead sessions should fail cleanly.
+        HOW: POST to the stop endpoint with a made-up ID, expect 404.
+        """
+        # Act
+        response = client.post('/api/train/stop/nonexistent-session-id')
+
+        # Assert
+        assert response.status_code == 404
 
     def test_reset_endpoint(self, client):
         """

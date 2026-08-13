@@ -10,6 +10,8 @@ class QLearning(BaseAlgorithm):
     Uses epsilon-greedy exploration and standard Q-learning update rule.
     """
 
+    SUPPORTED_ENVIRONMENTS = ['FrozenLake-v1-NoSlip', 'FrozenLake-v1']
+
     def __init__(self, env, parameters: Dict[str, Any]):
         """
         Initialize Q-Learning algorithm.
@@ -19,6 +21,14 @@ class QLearning(BaseAlgorithm):
             parameters: Dict with learning_rate, discount_factor, exploration_rate
         """
         super().__init__(env, parameters)
+
+        # Seed the algorithm's own randomness (epsilon coin flips, tie-breaks,
+        # random Q-init, action sampling) - the environment itself is seeded
+        # by the EnvironmentManager
+        seed = parameters.get('seed')
+        if seed is not None:
+            np.random.seed(int(seed))
+            env.action_space.seed(int(seed))
 
         # Extract parameters
         self.learning_rate = parameters.get('learning_rate', 0.1)
@@ -127,19 +137,23 @@ class QLearning(BaseAlgorithm):
         max_actions = np.where(q_values == max_value)[0]
         return np.random.choice(max_actions)
 
-    def train(self, num_episodes: int, callback: Optional[Callable] = None) -> None:
+    def train(self, callback: Optional[Callable] = None, stop_event=None) -> None:
         """
-        Train Q-Learning agent.
+        Train Q-Learning agent for self.parameters['num_episodes'] episodes.
 
         CRITICAL: Only renders the final frame of each episode!
 
         Args:
-            num_episodes: Number of episodes to train
             callback: Called after each episode with (episode, reward, learning_data, frame)
+            stop_event: Optional threading.Event to stop training at an episode boundary
         """
+        num_episodes = int(self.parameters.get('num_episodes', 1000))
         max_steps_per_episode = 100  # Prevent infinite loops
 
         for episode in range(num_episodes):
+            if stop_event is not None and stop_event.is_set():
+                break
+
             state, _ = self.env.reset()
             total_reward = 0
             done = False
@@ -296,5 +310,10 @@ class QLearning(BaseAlgorithm):
                 'type': 'float',
                 'default': 1.0,
                 'description': 'Maximum bound for random Q-value initialization'
+            },
+            'seed': {
+                'type': 'int',
+                'default': '',
+                'description': 'Empty = random run. Set a number to make runs reproducible (same seed = same run).'
             }
         }

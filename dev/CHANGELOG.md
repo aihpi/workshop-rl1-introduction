@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
+## [0.8.0] - 2026-08-12
+
+### Added
+- **DQN algorithm (stable-baselines3)** on **CartPole-v1** — first deep-RL algorithm in RL Lab
+  - New `algorithms/sb3_base.py`: reusable SB3 wrapper (per-episode SSE reporting via a custom callback, terminal-frame rendering, playback frame striding); PPO later only needs a small subclass
+  - New `algorithms/dqn.py` with rl-baselines3-zoo tuned CartPole defaults (50k timesteps trains in a few minutes on CPU)
+  - DQN uses `total_timesteps` as its training budget (SB3/literature convention); Q-Learning keeps `num_episodes`. The budget now lives in each algorithm's parameters instead of the HTTP layer
+- **Algorithm ↔ environment compatibility**: algorithms declare `SUPPORTED_ENVIRONMENTS`; new `GET /api/compatibility` endpoint; frontend filters the algorithm dropdown and auto-switches on environment change (Q-Learning × CartPole now returns a clean 400 instead of a 500)
+- **Server-side graceful stop**: `POST /api/train/stop/<session_id>` stops training at the next episode boundary, streams a `stopped` SSE status, and keeps the partial policy playable
+- **DQN training diagnostics visualization**: exploration rate, TD loss (with client-accumulated loss curve), episode length, total timesteps; `LearningVisualization` is now a per-algorithm dispatcher (`visualizations/QTableVisualization`, `visualizations/DQNDiagnostics`)
+- **Schema-driven parameter panel**: parameters render generically from the backend schema (slider for bounded params with optional `step`, dropdown for `options`, text input otherwise) — new algorithms need no frontend parameter code
+- **Seed as a UI parameter** for both algorithms (empty by default = randomly drawn seed each run; enter a number for reproducible runs). Q-Learning now seeds its own RNG and action space — previously only the environment was seeded and reruns diverged
+- Backend test suite grew from 8 to 31 tests; frontend from 12 to 19
+
+### Changed
+- **Backend Docker image grows to ~2.2 GB uncompressed** (PyTorch CPU + stable-baselines3; verified with a local arm64 build). CPU-only torch wheels are pinned via `[tool.uv.sources]` for Linux. **Workshop participants must `docker compose pull` after the new image is published.**
+- Reward chart x-axis auto-scales when the total episode count is unknown upfront (timestep-budgeted algorithms)
+- **SSE episode events are coalesced in the frontend** (applied at most ~6x/second): fast training emits dozens of episodes per second, and re-rendering charts + frame per event exhausted browser memory (Safari killed the page). No data is lost - chart points are identical; chart animation disabled to reduce churn
+- Long policy playbacks (>60 frames) animate at 50 ms/frame instead of 200 ms
+
+---
+
 ## [0.7.0] - 2025-12-07
 
 ### Changed

@@ -10,6 +10,14 @@ class BaseAlgorithm(ABC):
     must implement to work with the RL Playground system.
     """
 
+    # Environment names (from EnvironmentManager) this algorithm can train on
+    SUPPORTED_ENVIRONMENTS: list = []
+
+    @classmethod
+    def supports_environment(cls, env_name: str) -> bool:
+        """Check if this algorithm supports the given environment."""
+        return env_name in cls.SUPPORTED_ENVIRONMENTS
+
     def __init__(self, env, parameters: Dict[str, Any]):
         """
         Initialize the algorithm.
@@ -22,14 +30,17 @@ class BaseAlgorithm(ABC):
         self.parameters = parameters
 
     @abstractmethod
-    def train(self, num_episodes: int, callback: Optional[Callable] = None) -> None:
+    def train(self, callback: Optional[Callable] = None, stop_event=None) -> None:
         """
-        Train the agent for a specified number of episodes.
+        Train the agent. The training budget is read from self.parameters
+        (e.g. 'num_episodes' for tabular algorithms, 'total_timesteps' for
+        stable-baselines3 algorithms).
 
         Args:
-            num_episodes: Number of episodes to train
             callback: Optional callback function called after each episode.
                      Signature: callback(episode, reward, learning_data, frame)
+            stop_event: Optional threading.Event; training stops gracefully
+                     at the next episode boundary once it is set.
         """
         pass
 

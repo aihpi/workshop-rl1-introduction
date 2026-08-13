@@ -1,0 +1,162 @@
+"""
+Shared wrapper for stable-baselines3 algorithms.
+
+Adapts SB3's timestep-based, VecEnv-based training loop to the
+BaseAlgorithm interface (per-episode callback with a rendered frame).
+"""
+from typing import Dict, Any, Callable, Optional
+
+import torch
+from stable_baselines3.common.callbacks import BaseCallback as SB3BaseCallback
+from stable_baselines3.common.monitor import Monitor
+
+from .base_algorithm import BaseAlgorithm
+
+# Keep Flask responsive while SB3 trains in the SSE daemon thread
+torch.set_num_threads(2)
+
+
+class EpisodeTrackingCallback(SB3BaseCallback):
+    """
+    Fires the RL Lab per-episode callback whenever an episode finishes.
+
+    SB3 wraps the env in a DummyVecEnv (n_envs=1) and the Monitor wrapper
+    injects info['episode'] = {'r': reward, 'l': length, 't': time} on
+    episode end.
+    """
+
+    def __init__(self, episode_callback, stop_event, learning_data_fn, render_terminal_fn):
+        super().__init__(verbose=0)
+        self.episode_callback = episode_callback
+        self.stop_event = stop_event
+        self.learning_data_fn = learning_data_fn
+        self.render_terminal_fn = render_terminal_fn
+        self.episode_count = 0
+
+    def _on_step(self) -> bool:
+        for i, done in enumerate(self.locals['dones']):
+            if not done:
+                continue
+            info = self.locals['infos'][i]
+            ep = info.get('episode')
+            if ep is None:
+                continue
+            self.episode_count += 1
+            if self.episode_callback:
+                frame = self.render_terminal_fn(info.get('terminal_observation'))
+                self.episode_callback(
+                    self.episode_count - 1,  # 0-based, like Q-Learning
+                    float(ep['r']),
+                    self.learning_data_fn(episode_length=int(ep['l'])),
+                    frame,
+                )
+
+        # SB3 stops by itself at total_timesteps; we only stop early on request
+        if self.stop_event is not None and self.stop_event.is_set():
+            return False
+        return True
+
+
+class SB3Algorithm(BaseAlgorithm):
+    """
+    Base class for stable-baselines3 algorithms (DQN now, PPO later).
+
+    Subclasses implement _create_model() and get_parameter_schema(),
+    and may extend _get_diagnostics().
+    """
+
+    # Render every Nth step during playback (SB3 envs have long episodes;
+    # CartPole runs up to 500 steps -> ~250 frames at stride 2)
+    FRAME_STRIDE = 2
+    MAX_PLAYBACK_STEPS = 500
+
+    def __init__(self, env, parameters: Dict[str, Any]):
+        super().__init__(env, parameters)
+        # Monitor injects per-episode reward/length into info dicts;
+        # wrap explicitly instead of relying on SB3's auto-wrapping
+        self.monitored_env = Monitor(env)
+        self.model = self._create_model(self.monitored_env, parameters)
+
+    def _create_model(self, env, parameters: Dict[str, Any]):
+        """Create and return the SB3 model. Implemented by subclasses."""
+        raise NotImplementedError
+
+    def train(self, callback: Optional[Callable] = None, stop_event=None) -> None:
+        total_timesteps = int(self.parameters.get('total_timesteps', 50000))
+
+        sb3_callback = EpisodeTrackingCallback(
+            episode_callback=callback,
+            stop_event=stop_event,
+            learning_data_fn=self.get_learning_data,
+            render_terminal_fn=self._render_terminal_frame,
+        )
+
+        # log_interval huge on purpose: SB3's Logger.dump() clears its
+        # name_to_value dict, and _get_diagnostics() reads train/loss from it.
+        # With no dumps the latest recorded loss is always available.
+        self.model.learn(
+            total_timesteps=total_timesteps,
+            callback=sb3_callback,
+            log_interval=10**9,
+            progress_bar=False,
+        )
+
+    def _render_terminal_frame(self, terminal_obs):
+        """
+        Render the true final frame of an episode.
+
+        SB3's DummyVecEnv auto-resets before the callback runs, so a plain
+        render() would show the fresh reset state. Classic-control envs
+        render from unwrapped.state, so we temporarily restore the terminal
+        observation, render, and put the reset state back.
+        """
+        unwrapped = self.env.unwrapped
+        if terminal_obs is not None and hasattr(unwrapped, 'state'):
+            saved_state = unwrapped.state
+            try:
+                unwrapped.state = terminal_obs
+                return self.env.render()
+            finally:
+                unwrapped.state = saved_state
+        return self.env.render()
+
+    def play_policy(self, callback: Optional[Callable] = None) -> list:
+        frames = []
+        obs, _ = self.env.reset()
+        done = False
+        steps = 0
+
+        while not done and steps < self.MAX_PLAYBACK_STEPS:
+            action, _ = self.model.predict(obs, deterministic=True)
+            obs, _, terminated, truncated, _ = self.env.step(int(action))
+            done = terminated or truncated
+
+            # Render a subset of steps to keep the playback payload small,
+            # but always include the final frame
+            if steps % self.FRAME_STRIDE == 0 or done:
+                frame = self.env.render()
+                frames.append(frame)
+                if callback:
+                    callback(frame)
+
+            steps += 1
+
+        return frames
+
+    def get_learning_data(self, episode_length: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Return diagnostics for visualization. All values are cast to
+        python types - numpy scalars break json.dumps in the SSE stream.
+        """
+        diagnostics = self._get_diagnostics()
+        if episode_length is not None:
+            diagnostics['episode_length'] = int(episode_length)
+        return {'diagnostics': diagnostics}
+
+    def _get_diagnostics(self) -> Dict[str, Any]:
+        """Common SB3 diagnostics; subclasses extend (e.g. exploration_rate)."""
+        loss = self.model.logger.name_to_value.get('train/loss')
+        return {
+            'loss': float(loss) if loss is not None else None,
+            'total_timesteps': int(self.model.num_timesteps),
+        }

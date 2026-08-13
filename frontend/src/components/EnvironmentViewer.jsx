@@ -1,10 +1,14 @@
 import React from 'react';
 import './EnvironmentViewer.css';
 
-const EnvironmentViewer = ({ frame, episode, isTraining, isPlayback, trainingComplete }) => {
+const EnvironmentViewer = ({ frame, episode, timesteps, isTraining, isPlayback, trainingComplete }) => {
   const getStatusText = () => {
     if (isPlayback) return 'Playing Policy';
-    if (isTraining) return `Training - Episode ${episode}`;
+    if (isTraining) {
+      // Timestep count is only reported by timestep-budgeted algorithms (e.g. DQN)
+      const timestepInfo = timesteps != null ? ` - Timestep ${timesteps}` : '';
+      return `Training - Episode ${episode}${timestepInfo}`;
+    }
     if (trainingComplete) return 'Ready';
     return 'Ready to train a policy';
   };

@@ -14,11 +14,10 @@ class EnvironmentManager:
     converts numpy frames to base64-encoded PNG strings for transmission.
     """
 
-    # Phase 1: FrozenLake-v1 with slippery and non-slippery variants
-    # Future: Add more environments
     SUPPORTED_ENVIRONMENTS = [
         'FrozenLake-v1-NoSlip',
-        'FrozenLake-v1'
+        'FrozenLake-v1',
+        'CartPole-v1'
     ]
 
     @staticmethod

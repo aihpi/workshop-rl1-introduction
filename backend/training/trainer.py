@@ -1,3 +1,5 @@
+import random
+import threading
 import uuid
 from typing import Dict, Any, Optional
 from algorithms import AlgorithmFactory
@@ -26,11 +28,15 @@ class TrainingCoordinator:
         """
         Create a new training session.
 
+        The random seed comes from parameters['seed'] (empty/missing means
+        a randomly drawn seed, i.e. a non-reproducible run); the `seed`
+        argument is a fallback for direct callers.
+
         Args:
             algorithm_name: Name of the algorithm to use
             environment_name: Name of the environment
             parameters: Algorithm parameters
-            seed: Optional random seed
+            seed: Optional random seed (used when parameters has none)
 
         Returns:
             Session ID (UUID string)
@@ -38,11 +44,22 @@ class TrainingCoordinator:
         Raises:
             ValueError: If algorithm or environment is invalid
         """
-        # Create environment
-        env = EnvironmentManager.create_environment(environment_name, seed)
+        # Resolve the seed: explicit value -> reproducible run,
+        # empty/missing -> draw one randomly
+        raw_seed = parameters.get('seed', seed)
+        if raw_seed in (None, ''):
+            raw_seed = random.randint(0, 2**31 - 1)
+        resolved_seed = int(raw_seed)
+        # Algorithms read the seed from their parameters
+        parameters = {**parameters, 'seed': resolved_seed}
 
-        # Create algorithm instance
-        algorithm = AlgorithmFactory.create_algorithm(algorithm_name, env, parameters)
+        # Create environment
+        env = EnvironmentManager.create_environment(environment_name, resolved_seed)
+
+        # Create algorithm instance (validates algorithm/environment compatibility)
+        algorithm = AlgorithmFactory.create_algorithm(
+            algorithm_name, env, parameters, environment_name=environment_name
+        )
 
         # Generate session ID
         session_id = str(uuid.uuid4())
@@ -54,7 +71,8 @@ class TrainingCoordinator:
             'algorithm_name': algorithm_name,
             'environment_name': environment_name,
             'parameters': parameters,
-            'trained': False
+            'trained': False,
+            'stop_event': threading.Event()
         }
 
         return session_id
@@ -62,15 +80,14 @@ class TrainingCoordinator:
     def train(
         self,
         session_id: str,
-        num_episodes: int,
         callback: Optional[callable] = None
     ) -> None:
         """
-        Train the algorithm for a session.
+        Train the algorithm for a session. The training budget comes from
+        the algorithm's own parameters (num_episodes or total_timesteps).
 
         Args:
             session_id: Session UUID
-            num_episodes: Number of episodes to train
             callback: Optional callback function for episode updates
 
         Raises:
@@ -82,11 +99,28 @@ class TrainingCoordinator:
         session = self.sessions[session_id]
         algorithm = session['algorithm']
 
-        # Train with callback
-        algorithm.train(num_episodes, callback)
+        # Train with callback; a stopped run still counts as trained
+        # (a partially-trained policy is playable)
+        algorithm.train(callback, stop_event=session['stop_event'])
 
         # Mark as trained
         session['trained'] = True
+
+    def request_stop(self, session_id: str) -> bool:
+        """
+        Request a graceful stop of a running training session.
+
+        Args:
+            session_id: Session UUID
+
+        Returns:
+            True if the session exists and the stop was requested, else False
+        """
+        session = self.sessions.get(session_id)
+        if session is None:
+            return False
+        session['stop_event'].set()
+        return True
 
     def play_policy(
         self,
@@ -131,6 +165,10 @@ class TrainingCoordinator:
 
     def reset_all_sessions(self) -> None:
         """Clear all sessions from memory."""
+        # Signal running trainings to stop before closing their envs
+        for session in self.sessions.values():
+            session['stop_event'].set()
+
         # Close all environments
         for session in self.sessions.values():
             env = session.get('environment')

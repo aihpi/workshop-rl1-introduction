@@ -67,9 +67,13 @@ const EnvironmentInfo = ({ environment }) => {
           <section>
             <h4>Reward Structure</h4>
             <ul>
-              <li>Goal: +{sections.rewards.goal}</li>
-              <li>Hole: {sections.rewards.hole}</li>
-              <li>Step: {sections.rewards.step}</li>
+              {Object.entries(sections.rewards)
+                .filter(([key]) => key !== 'description')
+                .map(([key, value]) => (
+                  <li key={key}>
+                    {key.charAt(0).toUpperCase() + key.slice(1)}: {value}
+                  </li>
+                ))}
             </ul>
             <p>{sections.rewards.description}</p>
           </section>
