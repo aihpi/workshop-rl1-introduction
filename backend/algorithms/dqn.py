@@ -38,11 +38,6 @@ class DQNAlgorithm(SB3Algorithm):
             verbose=0,
         )
 
-    def _get_diagnostics(self) -> Dict[str, Any]:
-        diagnostics = super()._get_diagnostics()
-        diagnostics['exploration_rate'] = float(self.model.exploration_rate)
-        return diagnostics
-
     @staticmethod
     def get_parameter_schema(environment: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
         return {

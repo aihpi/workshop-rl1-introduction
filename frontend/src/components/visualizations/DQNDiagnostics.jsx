@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { HPI_VIOLET } from './colorUtils';
 import '../LearningVisualization.css';
+
+const HPI_VIOLET = '#7664a0';
 
 /**
  * Training diagnostics for DQN: current exploration rate, latest loss,

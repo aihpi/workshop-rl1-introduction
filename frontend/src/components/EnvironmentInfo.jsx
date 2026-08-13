@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { getEnvironmentInfo } from '../utils/contentLoader';
+import environmentsData from '../content/environments.json';
 import './EnvironmentInfo.css';
 
 const EnvironmentInfo = ({ environment }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const content = getEnvironmentInfo(environment);
+  const content = environmentsData[environment] || null;
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);

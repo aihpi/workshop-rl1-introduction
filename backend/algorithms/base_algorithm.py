@@ -13,11 +13,6 @@ class BaseAlgorithm(ABC):
     # Environment names (from EnvironmentManager) this algorithm can train on
     SUPPORTED_ENVIRONMENTS: list = []
 
-    @classmethod
-    def supports_environment(cls, env_name: str) -> bool:
-        """Check if this algorithm supports the given environment."""
-        return env_name in cls.SUPPORTED_ENVIRONMENTS
-
     def __init__(self, env, parameters: Dict[str, Any]):
         """
         Initialize the algorithm.

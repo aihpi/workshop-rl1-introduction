@@ -7,7 +7,7 @@ import AlgorithmInfo from './components/AlgorithmInfo';
 import RewardChart from './components/RewardChart';
 import LearningVisualization from './components/LearningVisualization';
 import { startTraining, stopTraining, subscribeToTraining, subscribeToPlayback, resetTraining, getEnvironmentPreview } from './api';
-import { BUDGET_KEYS } from './components/ParameterPanel';
+import { BUDGET_KEYS, isIntAtLeast } from './components/ParameterPanel';
 
 // Calculate adaptive window size: 10% of episodes, clamped between 10 and 100
 const calculateWindowSize = (totalEpisodes) => {
@@ -98,36 +98,26 @@ function App() {
     setError(null);
   };
 
-  // Load environment preview and reset when environment changes
+  // Reset and reload the preview when the environment or algorithm changes
+  // (stale learning data must not survive a switch)
   useEffect(() => {
     resetState();
     loadPreview();
-  }, [selectedEnvironment]);
-
-  // Reset when algorithm changes (stale learning data must not survive
-  // a switch between algorithms with different visualizations)
-  useEffect(() => {
-    resetState();
-    loadPreview();
-  }, [selectedAlgorithm]);
+  }, [selectedEnvironment, selectedAlgorithm]);
 
   // Validation function for training parameters
   const isValidParameters = () => {
-    // Validate the training budget (num_episodes or total_timesteps)
-    // is present and a positive integer
+    // The training budget (num_episodes or total_timesteps) must be
+    // present and a positive integer
     const budgetKey = BUDGET_KEYS.find(key => parameters[key] !== undefined);
-    const budget = budgetKey ? parameters[budgetKey] : undefined;
-    if (budget === undefined || budget === '' || isNaN(budget) ||
-        parseFloat(budget) <= 0 ||
-        parseFloat(budget) != parseInt(budget)) {
+    if (!budgetKey || !isIntAtLeast(parameters[budgetKey], 1)) {
       return false;
     }
 
     // Seed may be empty (random run), but if given it must be a
     // non-negative integer
     const seed = parameters.seed;
-    if (seed !== undefined && seed !== '' &&
-        (isNaN(seed) || parseFloat(seed) < 0 || parseFloat(seed) != parseInt(seed))) {
+    if (seed !== undefined && seed !== '' && !isIntAtLeast(seed, 0)) {
       return false;
     }
 

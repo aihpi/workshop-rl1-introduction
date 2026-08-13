@@ -18,37 +18,17 @@ import json
 import queue
 import threading
 
-print("DEBUG: Starting imports...")
+from algorithms import AlgorithmFactory
+from environments.environment_manager import EnvironmentManager
+from training.trainer import TrainingCoordinator
 
-try:
-    from algorithms import AlgorithmFactory
-    print("DEBUG: AlgorithmFactory imported successfully")
-except Exception as e:
-    print(f"DEBUG: AlgorithmFactory import failed: {e}")
-
-try:
-    from environments.environment_manager import EnvironmentManager
-    print("DEBUG: EnvironmentManager imported successfully")
-except Exception as e:
-    print(f"DEBUG: EnvironmentManager import failed: {e}")
-
-try:
-    from training.trainer import TrainingCoordinator
-    print("DEBUG: TrainingCoordinator imported successfully")
-except Exception as e:
-    print(f"DEBUG: TrainingCoordinator import failed: {e}")
-
-print("DEBUG: Creating Flask app...")
 app = Flask(__name__)
 
-print("DEBUG: Setting up CORS...")
 # Enable CORS for frontend on localhost:3030
 CORS(app, origins=['http://localhost:3030', 'http://127.0.0.1:3030'])
 
-print("DEBUG: Creating training coordinator...")
 # Global training coordinator
 trainer = TrainingCoordinator()
-print("DEBUG: Training coordinator created successfully")
 
 
 @app.route('/test')
@@ -163,9 +143,10 @@ def start_training():
         {
             "algorithm": "Q-Learning",
             "environment": "FrozenLake-v1",
-            "parameters": {...},
-            "seed": 42 (optional)
+            "parameters": {...}
         }
+
+    The seed lives in parameters ('seed'); empty/missing means a random run.
 
     Returns:
         JSON with session_id
@@ -175,7 +156,6 @@ def start_training():
         algorithm = data.get('algorithm')
         environment = data.get('environment')
         parameters = data.get('parameters', {})
-        seed = data.get('seed')
 
         # Validate inputs
         if not algorithm:
@@ -184,7 +164,7 @@ def start_training():
             return jsonify({'error': 'Environment is required'}), 400
 
         # Create session
-        session_id = trainer.create_session(algorithm, environment, parameters, seed)
+        session_id = trainer.create_session(algorithm, environment, parameters)
 
         return jsonify({'session_id': session_id})
 
@@ -217,8 +197,6 @@ def stream_training(session_id):
 
         def callback(episode, reward, learning_data, frame):
             """Callback for each episode - puts data into queue."""
-            print(f"DEBUG: Episode {episode} completed with reward {reward}")
-
             # Convert frame to base64
             frame_base64 = EnvironmentManager.frame_to_base64(frame)
 
@@ -243,17 +221,11 @@ def stream_training(session_id):
                 trainer.train(session_id, callback)
 
                 # Distinguish a user-requested stop from natural completion
-                if session['stop_event'].is_set():
-                    completion_data = {
-                        'status': 'stopped',
-                        'message': 'Training stopped by user'
-                    }
-                else:
-                    completion_data = {
-                        'status': 'complete',
-                        'message': 'Training completed successfully'
-                    }
-                event_queue.put(completion_data)
+                stopped = session['stop_event'].is_set()
+                event_queue.put({
+                    'status': 'stopped' if stopped else 'complete',
+                    'message': 'Training stopped by user' if stopped else 'Training completed successfully'
+                })
 
             except Exception as e:
                 print(f"DEBUG: Training failed with error: {e}")

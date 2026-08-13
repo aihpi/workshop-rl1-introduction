@@ -55,8 +55,6 @@ class TestDQNSchema:
 
     def test_supported_environments(self):
         assert DQNAlgorithm.SUPPORTED_ENVIRONMENTS == ['CartPole-v1']
-        assert DQNAlgorithm.supports_environment('CartPole-v1')
-        assert not DQNAlgorithm.supports_environment('FrozenLake-v1')
 
 
 class TestDQNTraining:

@@ -61,8 +61,7 @@ class SB3Algorithm(BaseAlgorithm):
     """
     Base class for stable-baselines3 algorithms (DQN now, PPO later).
 
-    Subclasses implement _create_model() and get_parameter_schema(),
-    and may extend _get_diagnostics().
+    Subclasses implement _create_model() and get_parameter_schema().
     """
 
     # Render every Nth step during playback (SB3 envs have long episodes;
@@ -154,9 +153,13 @@ class SB3Algorithm(BaseAlgorithm):
         return {'diagnostics': diagnostics}
 
     def _get_diagnostics(self) -> Dict[str, Any]:
-        """Common SB3 diagnostics; subclasses extend (e.g. exploration_rate)."""
+        """SB3 diagnostics; exploration_rate only exists on some models (DQN)."""
         loss = self.model.logger.name_to_value.get('train/loss')
-        return {
+        diagnostics = {
             'loss': float(loss) if loss is not None else None,
             'total_timesteps': int(self.model.num_timesteps),
         }
+        exploration_rate = getattr(self.model, 'exploration_rate', None)
+        if exploration_rate is not None:
+            diagnostics['exploration_rate'] = float(exploration_rate)
+        return diagnostics

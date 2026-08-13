@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { getAlgorithmInfo } from '../utils/contentLoader';
+import algorithmsData from '../content/algorithms.json';
 import './AlgorithmInfo.css';
 
 const AlgorithmInfo = ({ algorithm }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const content = getAlgorithmInfo(algorithm);
+  const content = algorithmsData[algorithm] || null;
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);

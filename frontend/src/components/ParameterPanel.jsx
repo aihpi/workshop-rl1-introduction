@@ -10,6 +10,11 @@ export const BUDGET_KEYS = ['num_episodes', 'total_timesteps'];
 // Parameters with bespoke rendering; everything else renders generically
 const SPECIAL_KEYS = [...BUDGET_KEYS, 'seed', 'q_init_strategy', 'q_init_value', 'q_init_min', 'q_init_max'];
 
+// True when value is an integer >= min (values arrive as strings from text inputs)
+export const isIntAtLeast = (value, min) =>
+  value !== undefined && value !== '' && !isNaN(value) &&
+  parseFloat(value) >= min && parseFloat(value) === parseInt(value, 10);
+
 const ParameterPanel = ({
   algorithm,
   environment,
@@ -33,18 +38,10 @@ const ParameterPanel = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Format large numbers in scientific notation
+  // Scientific notation for large training budgets
   const formatNumber = (value, paramName) => {
-    // Only format the training budget with scientific notation for large values
     if (BUDGET_KEYS.includes(paramName) && value >= 1000) {
-      const exponent = Math.floor(Math.log10(value));
-      const mantissa = value / Math.pow(10, exponent);
-      // If it's a clean power of 10, show as 1eX, otherwise show mantissa
-      if (mantissa === 1) {
-        return `1e${exponent}`;
-      } else {
-        return `${mantissa.toFixed(1)}e${exponent}`;
-      }
+      return Number(value).toExponential(1);
     }
     return value;
   };
@@ -217,10 +214,7 @@ const ParameterPanel = ({
           <p className="hint">{schema.seed.description}</p>
 
           {/* Validation Warning: empty is fine, otherwise a non-negative integer */}
-          {parameters.seed !== undefined && parameters.seed !== '' &&
-            (isNaN(parameters.seed) ||
-             parseFloat(parameters.seed) < 0 ||
-             parseFloat(parameters.seed) != parseInt(parameters.seed)) && (
+          {parameters.seed !== undefined && parameters.seed !== '' && !isIntAtLeast(parameters.seed, 0) && (
             <p className="hint error">
               ⚠️ Must be a non-negative integer (or empty for a random run)
             </p>
@@ -261,11 +255,7 @@ const ParameterPanel = ({
           <p className="hint">{schema[budgetKey].description}</p>
 
           {/* Validation Warning */}
-          {(parameters[budgetKey] === undefined ||
-            parameters[budgetKey] === '' ||
-            isNaN(parameters[budgetKey]) ||
-            parseFloat(parameters[budgetKey]) <= 0 ||
-            parseFloat(parameters[budgetKey]) != parseInt(parameters[budgetKey])) && (
+          {!isIntAtLeast(parameters[budgetKey], 1) && (
             <p className="hint error">
               ⚠️ Must be a positive integer
             </p>
@@ -273,52 +263,14 @@ const ParameterPanel = ({
         </div>
       ))}
 
-      {/* All other parameters, rendered from the schema */}
+      {/* All other parameters render as sliders (bounded numerics are the
+          only remaining schema shape; add branches when a schema needs more) */}
       {schema && Object.entries(schema)
-        .filter(([paramName]) => !SPECIAL_KEYS.includes(paramName))
+        .filter(([paramName, param]) =>
+          !SPECIAL_KEYS.includes(paramName) && param.min !== undefined && param.max !== undefined)
         .map(([paramName, param]) => {
           const value = parameters[paramName] ?? param.default;
 
-          // Dropdown for parameters with fixed options
-          if (param.options) {
-            return (
-              <div key={paramName} className="parameter-group">
-                <label>{paramName.replace(/_/g, ' ')}</label>
-                <select
-                  value={value}
-                  onChange={(e) => handleParameterChange(paramName, e.target.value)}
-                >
-                  {param.options.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <p className="hint">{param.description}</p>
-              </div>
-            );
-          }
-
-          // Slider for bounded numeric parameters
-          if (param.min !== undefined && param.max !== undefined) {
-            return (
-              <div key={paramName} className="parameter-group">
-                <label>
-                  {paramName.replace(/_/g, ' ')}
-                  <span className="param-value">{formatNumber(value, paramName)}</span>
-                </label>
-                <input
-                  type="range"
-                  min={param.min}
-                  max={param.max}
-                  step={param.step ?? (param.type === 'int' ? 1 : 0.01)}
-                  value={value}
-                  onChange={(e) => handleParameterChange(paramName, e.target.value)}
-                />
-                <p className="hint">{param.description}</p>
-              </div>
-            );
-          }
-
-          // Text input for unbounded parameters
           return (
             <div key={paramName} className="parameter-group">
               <label>
@@ -326,10 +278,12 @@ const ParameterPanel = ({
                 <span className="param-value">{formatNumber(value, paramName)}</span>
               </label>
               <input
-                type="text"
+                type="range"
+                min={param.min}
+                max={param.max}
+                step={param.step ?? (param.type === 'int' ? 1 : 0.01)}
                 value={value}
                 onChange={(e) => handleParameterChange(paramName, e.target.value)}
-                className="q-value-input"
               />
               <p className="hint">{param.description}</p>
             </div>

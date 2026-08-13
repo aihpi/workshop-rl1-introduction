@@ -74,7 +74,7 @@ class AlgorithmFactory:
 
         algorithm_class = AlgorithmFactory.ALGORITHMS[name]
 
-        if environment_name is not None and not algorithm_class.supports_environment(environment_name):
+        if environment_name is not None and environment_name not in algorithm_class.SUPPORTED_ENVIRONMENTS:
             raise ValueError(
                 f"Algorithm '{name}' does not support environment '{environment_name}'. "
                 f"Supported environments: {algorithm_class.SUPPORTED_ENVIRONMENTS}"

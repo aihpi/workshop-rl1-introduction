@@ -186,14 +186,7 @@ class QLearning(BaseAlgorithm):
 
             # Call callback with episode results
             if callback:
-                learning_data = self.get_learning_data()
-
-                # Debug logging every 100 episodes
-                if episode % 100 == 0:
-                    print(f"DEBUG: Episode {episode}: Q-table min={np.min(self.q_table):.4f}, max={np.max(self.q_table):.4f}, mean={np.mean(self.q_table):.4f}")
-                    print(f"DEBUG: Q-table sample (state 0): {self.q_table[0]}")
-
-                callback(episode, total_reward, learning_data, frame)
+                callback(episode, total_reward, self.get_learning_data(), frame)
 
     def play_policy(self, callback: Optional[Callable] = None) -> list:
         """

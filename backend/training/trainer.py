@@ -22,21 +22,18 @@ class TrainingCoordinator:
         self,
         algorithm_name: str,
         environment_name: str,
-        parameters: Dict[str, Any],
-        seed: Optional[int] = None
+        parameters: Dict[str, Any]
     ) -> str:
         """
         Create a new training session.
 
-        The random seed comes from parameters['seed'] (empty/missing means
-        a randomly drawn seed, i.e. a non-reproducible run); the `seed`
-        argument is a fallback for direct callers.
+        The random seed comes from parameters['seed']; empty/missing means
+        a randomly drawn seed, i.e. a non-reproducible run.
 
         Args:
             algorithm_name: Name of the algorithm to use
             environment_name: Name of the environment
             parameters: Algorithm parameters
-            seed: Optional random seed (used when parameters has none)
 
         Returns:
             Session ID (UUID string)
@@ -46,7 +43,7 @@ class TrainingCoordinator:
         """
         # Resolve the seed: explicit value -> reproducible run,
         # empty/missing -> draw one randomly
-        raw_seed = parameters.get('seed', seed)
+        raw_seed = parameters.get('seed')
         if raw_seed in (None, ''):
             raw_seed = random.randint(0, 2**31 - 1)
         resolved_seed = int(raw_seed)

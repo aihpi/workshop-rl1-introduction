@@ -1,6 +1,21 @@
 import React from 'react';
-import { getColorFromGradient, HPI_VIOLET, HPI_ORANGE } from './colorUtils';
 import '../LearningVisualization.css';
+
+// HPI brand gradient for the value heatmap
+const HPI_VIOLET = '#7664a0';
+const HPI_ORANGE = '#ff7500';
+
+// Interpolate between HPI violet (0.0) and HPI orange (1.0)
+const getColorFromGradient = (normalizedValue) => {
+  const violet = { r: 118, g: 100, b: 160 };
+  const orange = { r: 255, g: 117, b: 0 };
+
+  const r = Math.round(violet.r + (orange.r - violet.r) * normalizedValue);
+  const g = Math.round(violet.g + (orange.g - violet.g) * normalizedValue);
+  const b = Math.round(violet.b + (orange.b - violet.b) * normalizedValue);
+
+  return `rgb(${r}, ${g}, ${b})`;
+};
 
 /**
  * Q-table heatmap for tabular Q-Learning on square-grid environments
