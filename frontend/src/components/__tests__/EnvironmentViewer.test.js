@@ -161,9 +161,18 @@ describe('EnvironmentViewer action arrow', () => {
     expect(arrow).toHaveTextContent('➡');
   });
 
-  test('shows no arrow for environments without a mapping', () => {
+  test('shows the chosen direction for FrozenLake during playback', () => {
     const { container } = render(
       <EnvironmentViewer {...playbackProps} environment="FrozenLake-v1" playbackAction={1} />
+    );
+    const arrow = container.querySelector('.action-arrow');
+    expect(arrow).toBeInTheDocument();
+    expect(arrow).toHaveTextContent('⬇'); // action 1 = DOWN
+  });
+
+  test('shows no arrow for environments without a mapping', () => {
+    const { container } = render(
+      <EnvironmentViewer {...playbackProps} environment="MountainCar-v0" playbackAction={1} />
     );
     expect(container.querySelector('.action-arrow')).not.toBeInTheDocument();
   });

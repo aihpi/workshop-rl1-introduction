@@ -1,10 +1,13 @@
 import React from 'react';
 import './EnvironmentViewer.css';
 
-// Arrow overlay per environment: index = action. Only environments listed
-// here show the action arrow during playback (CartPole/DQN only for now).
+// Arrow overlay per environment: index = action. Shows the action the
+// agent CHOSE - on slippery FrozenLake the resulting move may differ,
+// which is exactly the teaching moment.
 const ACTION_ARROWS = {
   'CartPole-v1': ['⬅', '➡'],
+  'FrozenLake-v1': ['⬅', '⬇', '➡', '⬆'],       // LEFT, DOWN, RIGHT, UP
+  'FrozenLake-v1-NoSlip': ['⬅', '⬇', '➡', '⬆'],
 };
 
 const EnvironmentViewer = ({ frame, episode, timesteps, playbackStep, playbackAction, environment, isTraining, isPlayback, trainingComplete }) => {
