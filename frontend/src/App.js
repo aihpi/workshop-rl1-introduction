@@ -20,10 +20,6 @@ const calculateMovingAverage = (rewards, windowSize) => {
   return window.reduce((sum, r) => sum + r, 0) / window.length;
 };
 
-// Budgets above these default the "Live charts" toggle to off: redrawing
-// ever-growing charts ~6x/s steals CPU from training on the same machine
-const LIVE_CHART_THRESHOLDS = { total_timesteps: 20000, num_episodes: 2000 };
-
 // Keep chart series at a displayable size; the full data stays untouched
 const downsampleForDisplay = (points, maxPoints = 1000) => {
   if (points.length <= maxPoints * 1.5) return points;
@@ -56,8 +52,9 @@ function App() {
   const [totalEpisodes, setTotalEpisodes] = useState(0); // Total episodes for training (from config)
   const [learningData, setLearningData] = useState(null);
 
-  // Live charts: render charts/frames during training, or only at the end
-  // (full-speed mode for long runs). Auto-defaults from the budget below.
+  // Live charts: render charts/frames during training (default), or only at
+  // the end - an opt-out that can speed up training on weaker machines where
+  // browser rendering competes with the backend for CPU
   const [liveCharts, setLiveCharts] = useState(true);
 
   // Error state
@@ -125,16 +122,6 @@ function App() {
     resetState();
     loadPreview();
   }, [selectedEnvironment, selectedAlgorithm]);
-
-  // Auto-default the live-charts toggle from the training budget: big runs
-  // start in full-speed mode. A manual flip sticks until the budget changes.
-  const budgetKey = BUDGET_KEYS.find(key => parameters[key] !== undefined);
-  const budgetValue = budgetKey ? parseInt(parameters[budgetKey], 10) : null;
-  useEffect(() => {
-    if (budgetKey && budgetValue !== null && !isNaN(budgetValue)) {
-      setLiveCharts(budgetValue <= LIVE_CHART_THRESHOLDS[budgetKey]);
-    }
-  }, [budgetKey, budgetValue]);
 
   // Validation function for training parameters
   const isValidParameters = () => {
