@@ -146,26 +146,9 @@ function App() {
 
   const handleStartTraining = async () => {
     try {
-      setError(null);
-
-      // Close any existing EventSource (stops current training)
-      if (eventSource) {
-        eventSource.close();
-        setEventSource(null);
-      }
-
-      // Clear backend sessions (free memory and prevent leaks)
-      await resetTraining();
-
-      // Reset frontend state
-      setSessionId(null);
-      setIsTraining(false);
-      setIsPlayback(false);
-      setTrainingComplete(false);
-      setCurrentEpisode(0);
-      setRewards([]);
-      setChartData([]);
-      setLearningData(null);
+      // Reset any previous run (closes the EventSource, clears backend
+      // sessions and all frontend training state)
+      await resetState();
 
       // Set training flag
       setIsTraining(true);
@@ -192,43 +175,50 @@ function App() {
       // Coalesce episode events before rendering: fast training finishes
       // dozens of episodes per second, and re-rendering the charts and the
       // frame on every single one exhausts browser memory (Safari kills the
-      // page). Events are buffered and applied at most ~6x per second - no
-      // data is lost, chart points are identical.
-      const pending = { latest: null, rewards: [], timer: null };
+      // page). Events are buffered and applied at most ~6x per second.
+      // All rewards accumulate in `pending.all` (plain JS, single source of
+      // truth) and chart points are computed OUTSIDE the setState updaters -
+      // updaters must stay pure (StrictMode double-invokes them and impure
+      // ones duplicate chart points).
+      const pending = { latest: null, frame: null, all: [], flushedLength: 0, timer: null };
 
       const flushUpdates = () => {
         pending.timer = null;
         // Skip if this training's stream was closed meanwhile (e.g. the user
         // switched environments) - don't write stale data over the reset state
         if (!pending.latest || es.readyState === EventSource.CLOSED) return;
-        const batch = pending.rewards;
         const latest = pending.latest;
-        pending.rewards = [];
         pending.latest = null;
 
-        setCurrentFrame(latest.frame);
+        // Frames are throttled server-side (frame=null on most episodes
+        // during fast training); show the newest one received
+        if (pending.frame) {
+          setCurrentFrame(pending.frame);
+          pending.frame = null;
+        }
         setCurrentEpisode(latest.episode);
         setLearningData(latest.learning_data);
 
-        setRewards(prev => {
-          const updatedRewards = [...prev, ...batch];
+        // Add a chart point at every windowSize boundary crossed since the last flush
+        const all = pending.all;
+        const newPoints = [];
+        const firstBoundary =
+          (Math.floor(pending.flushedLength / calculatedWindowSize) + 1) * calculatedWindowSize;
+        for (let m = firstBoundary; m <= all.length; m += calculatedWindowSize) {
+          newPoints.push({
+            episode: m,
+            avgReward: calculateMovingAverage(
+              all.slice(Math.max(0, m - calculatedWindowSize), m),
+              calculatedWindowSize
+            )
+          });
+        }
+        pending.flushedLength = all.length;
 
-          // Add a chart point at every windowSize boundary the batch crossed
-          const newPoints = [];
-          const firstBoundary =
-            (Math.floor(prev.length / calculatedWindowSize) + 1) * calculatedWindowSize;
-          for (let m = firstBoundary; m <= updatedRewards.length; m += calculatedWindowSize) {
-            newPoints.push({
-              episode: m,
-              avgReward: calculateMovingAverage(updatedRewards.slice(0, m), calculatedWindowSize)
-            });
-          }
-          if (newPoints.length > 0) {
-            setChartData(prevChart => [...prevChart, ...newPoints]);
-          }
-
-          return updatedRewards;
-        });
+        setRewards(all.slice());
+        if (newPoints.length > 0) {
+          setChartData(prevChart => [...prevChart, ...newPoints]);
+        }
       };
 
       // Subscribe to training updates
@@ -237,7 +227,10 @@ function App() {
         // onUpdate - called for each episode during training
         (data) => {
           pending.latest = data;
-          pending.rewards.push(data.reward);
+          pending.all.push(data.reward);
+          if (data.frame) {
+            pending.frame = data.frame;
+          }
           if (!pending.timer) {
             pending.timer = setTimeout(flushUpdates, 150);
           }
@@ -253,17 +246,13 @@ function App() {
           setTrainingComplete(true);
 
           // Add final chart point if needed (when episode count isn't a multiple of windowSize)
-          setRewards(currentRewards => {
-            const needsFinalPoint = currentRewards.length % calculatedWindowSize !== 0;
-            if (needsFinalPoint) {
-              const finalAvg = calculateMovingAverage(currentRewards, calculatedWindowSize);
-              setChartData(prev => [...prev, {
-                episode: currentRewards.length,
-                avgReward: finalAvg
-              }]);
-            }
-            return currentRewards;
-          });
+          const all = pending.all;
+          if (all.length > 0 && all.length % calculatedWindowSize !== 0) {
+            setChartData(prev => [...prev, {
+              episode: all.length,
+              avgReward: calculateMovingAverage(all, calculatedWindowSize)
+            }]);
+          }
         },
         // onError
         (err) => {
@@ -346,6 +335,12 @@ function App() {
   };
 
   const handleStopTraining = async () => {
+    // The Stop button appears as soon as Start is clicked, but the session
+    // only exists once the /api/train response arrives - stopping before
+    // that would orphan the run (the backend reset is also session-gated).
+    // Ignore the click; it works again a moment later.
+    if (!sessionId) return;
+
     try {
       // Graceful server-side stop: training halts at the next episode
       // boundary and the 'stopped' event arrives through the open

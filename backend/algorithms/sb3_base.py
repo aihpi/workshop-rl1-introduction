@@ -4,6 +4,7 @@ Shared wrapper for stable-baselines3 algorithms.
 Adapts SB3's timestep-based, VecEnv-based training loop to the
 BaseAlgorithm interface (per-episode callback with a rendered frame).
 """
+import time
 from typing import Dict, Any, Callable, Optional
 
 import torch
@@ -25,6 +26,12 @@ class EpisodeTrackingCallback(SB3BaseCallback):
     episode end.
     """
 
+    # Render at most one terminal frame per this interval: fast training
+    # finishes dozens of episodes per second, and the frontend applies at
+    # most ~6 updates/s anyway - rendering + encoding the rest would only
+    # slow down training (episodes without a frame send frame=None)
+    RENDER_INTERVAL_SECONDS = 0.15
+
     def __init__(self, episode_callback, stop_event, learning_data_fn, render_terminal_fn):
         super().__init__(verbose=0)
         self.episode_callback = episode_callback
@@ -32,6 +39,7 @@ class EpisodeTrackingCallback(SB3BaseCallback):
         self.learning_data_fn = learning_data_fn
         self.render_terminal_fn = render_terminal_fn
         self.episode_count = 0
+        self._last_render_time = 0.0
 
     def _on_step(self) -> bool:
         for i, done in enumerate(self.locals['dones']):
@@ -43,11 +51,19 @@ class EpisodeTrackingCallback(SB3BaseCallback):
                 continue
             self.episode_count += 1
             if self.episode_callback:
-                frame = self.render_terminal_fn(info.get('terminal_observation'))
+                now = time.monotonic()
+                if now - self._last_render_time >= self.RENDER_INTERVAL_SECONDS:
+                    frame = self.render_terminal_fn(info.get('terminal_observation'))
+                    self._last_render_time = now
+                else:
+                    frame = None
                 self.episode_callback(
                     self.episode_count - 1,  # 0-based, like Q-Learning
                     float(ep['r']),
-                    self.learning_data_fn(episode_length=int(ep['l'])),
+                    self.learning_data_fn(
+                        episode_length=int(ep['l']),
+                        episode=self.episode_count - 1,
+                    ),
                     frame,
                 )
 
@@ -142,14 +158,19 @@ class SB3Algorithm(BaseAlgorithm):
 
         return frames
 
-    def get_learning_data(self, episode_length: Optional[int] = None) -> Dict[str, Any]:
+    def get_learning_data(self, episode_length: Optional[int] = None,
+                          episode: Optional[int] = None) -> Dict[str, Any]:
         """
         Return diagnostics for visualization. All values are cast to
         python types - numpy scalars break json.dumps in the SSE stream.
+        The episode index lets the frontend plot subsampled diagnostics
+        at their true position on the episode axis.
         """
         diagnostics = self._get_diagnostics()
         if episode_length is not None:
             diagnostics['episode_length'] = int(episode_length)
+        if episode is not None:
+            diagnostics['episode'] = int(episode)
         return {'diagnostics': diagnostics}
 
     def _get_diagnostics(self) -> Dict[str, Any]:

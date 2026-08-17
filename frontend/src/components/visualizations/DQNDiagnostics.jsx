@@ -42,7 +42,10 @@ const DQNDiagnostics = ({ learningData }) => {
 
     if (diagnostics.loss !== null && diagnostics.loss !== undefined) {
       setLossHistory(prev => [...prev, {
-        episode: prev.length + 1,
+        // The coalescer subsamples diagnostics (~6/s), so points are sparse;
+        // the backend-supplied episode index puts each one at its true
+        // position on the episode axis (aligned with the reward chart)
+        episode: (diagnostics.episode ?? prev.length) + 1,
         loss: diagnostics.loss
       }]);
     }

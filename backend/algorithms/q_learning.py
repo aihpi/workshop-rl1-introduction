@@ -22,12 +22,13 @@ class QLearning(BaseAlgorithm):
         """
         super().__init__(env, parameters)
 
-        # Seed the algorithm's own randomness (epsilon coin flips, tie-breaks,
-        # random Q-init, action sampling) - the environment itself is seeded
-        # by the EnvironmentManager
+        # Per-instance RNG for the algorithm's own randomness (epsilon coin
+        # flips, tie-breaks, random Q-init) - a global np.random.seed would
+        # reseed concurrently running sessions and break their reproducibility.
+        # The environment itself is seeded by the EnvironmentManager.
         seed = parameters.get('seed')
+        self.rng = np.random.default_rng(None if seed is None else int(seed))
         if seed is not None:
-            np.random.seed(int(seed))
             env.action_space.seed(int(seed))
 
         # Extract parameters
@@ -117,7 +118,7 @@ class QLearning(BaseAlgorithm):
                 raise ValueError(
                     f"Invalid Q-value initialization: min ({min_val}) must be less than max ({max_val})"
                 )
-            return np.random.uniform(min_val, max_val, (num_states, num_actions))
+            return self.rng.uniform(min_val, max_val, (num_states, num_actions))
         else:
             raise ValueError(f"Unknown Q-value initialization strategy: {strategy}")
 
@@ -135,7 +136,7 @@ class QLearning(BaseAlgorithm):
         """
         max_value = np.max(q_values)
         max_actions = np.where(q_values == max_value)[0]
-        return np.random.choice(max_actions)
+        return self.rng.choice(max_actions)
 
     def train(self, callback: Optional[Callable] = None, stop_event=None) -> None:
         """
@@ -162,7 +163,7 @@ class QLearning(BaseAlgorithm):
             # Run episode
             while not done and steps < max_steps_per_episode:
                 # Epsilon-greedy action selection
-                if np.random.random() < self.exploration_rate:
+                if self.rng.random() < self.exploration_rate:
                     action = self.env.action_space.sample()
                 else:
                     action = self._argmax_random_tiebreak(self.q_table[state])

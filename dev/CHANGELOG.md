@@ -23,7 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - **Backend Docker image grows to ~2.2 GB uncompressed** (PyTorch CPU + stable-baselines3; verified with a local arm64 build). CPU-only torch wheels are pinned via `[tool.uv.sources]` for Linux. **Workshop participants must `docker compose pull` after the new image is published.**
 - Reward chart x-axis auto-scales when the total episode count is unknown upfront (timestep-budgeted algorithms)
-- **SSE episode events are coalesced in the frontend** (applied at most ~6x/second): fast training emits dozens of episodes per second, and re-rendering charts + frame per event exhausted browser memory (Safari killed the page). No data is lost - chart points are identical; chart animation disabled to reduce churn
+- **SSE episode events are coalesced in the frontend** (applied at most ~6x/second): fast training emits dozens of episodes per second, and re-rendering charts + frame per event exhausted browser memory (Safari killed the page). All reward data is kept (chart points identical); diagnostics are sampled but plotted at their true episode index; chart animation disabled to reduce churn
+- **Code-review fixes**: terminal frames are rendered/encoded at most ~6x/second server-side (previously every episode, mostly discarded); training auto-stops when the client disconnects (closed tab no longer burns CPU for the full budget); loss chart x-axis now shows real episode numbers aligned with the reward chart; Q-Learning uses a per-instance RNG (global seeding reseeded concurrent sessions); fixed a schema-fetch race that could pair one algorithm with another's parameters; Stop clicks before the session exists are ignored instead of orphaning the run; chart updates are StrictMode-safe
 - Long policy playbacks (>60 frames) animate at 50 ms/frame instead of 200 ms
 
 ---

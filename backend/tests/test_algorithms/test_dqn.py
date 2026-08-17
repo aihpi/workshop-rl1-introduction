@@ -76,8 +76,13 @@ class TestDQNTraining:
         for episode, reward, learning_data, frame in events:
             assert isinstance(reward, float)
             json.dumps(learning_data)  # raises on numpy scalar leaks
-            assert isinstance(frame, np.ndarray)
-            assert frame.ndim == 3
+            # Frame rendering is time-throttled: most episodes carry None
+            assert frame is None or (isinstance(frame, np.ndarray) and frame.ndim == 3)
+            # Diagnostics carry the true episode index for chart alignment
+            assert learning_data['diagnostics']['episode'] == episode
+
+        # At least the first episode renders a frame
+        assert any(frame is not None for _, _, _, frame in events)
 
     def test_learning_data_diagnostics(self, cartpole_env):
         algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)

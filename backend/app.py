@@ -196,21 +196,18 @@ def stream_training(session_id):
         event_queue = queue.Queue()
 
         def callback(episode, reward, learning_data, frame):
-            """Callback for each episode - puts data into queue."""
-            # Convert frame to base64
-            frame_base64 = EnvironmentManager.frame_to_base64(frame)
+            """Callback for each episode - puts data into queue.
 
-            # Create event data
-            event_data = {
+            frame may be None: algorithms throttle rendering during fast
+            training and only some episodes carry a frame.
+            """
+            event_queue.put({
                 'episode': episode,
                 'reward': reward,
                 'learning_data': learning_data,
-                'frame': frame_base64,
+                'frame': EnvironmentManager.frame_to_base64(frame) if frame is not None else None,
                 'status': 'training'
-            }
-
-            # Put event into queue (instead of yielding)
-            event_queue.put(event_data)
+            })
 
         def train_in_thread():
             """Run training in a separate thread."""
@@ -249,22 +246,29 @@ def stream_training(session_id):
         training_thread.start()
 
         # Yield events from the queue
-        while True:
-            try:
-                # Get event from queue (blocks until available)
-                event_data = event_queue.get(timeout=1)
+        try:
+            while True:
+                try:
+                    # Get event from queue (blocks until available)
+                    event_data = event_queue.get(timeout=1)
 
-                if event_data is None:
-                    # End of training signal
-                    break
+                    if event_data is None:
+                        # End of training signal
+                        break
 
-                # Yield SSE event
-                yield f"data: {json.dumps(event_data)}\n\n"
+                    # Yield SSE event
+                    yield f"data: {json.dumps(event_data)}\n\n"
 
-            except queue.Empty:
-                # No data available, send keep-alive comment
-                yield ": keep-alive\n\n"
-                continue
+                except queue.Empty:
+                    # No data available, send keep-alive comment
+                    yield ": keep-alive\n\n"
+                    continue
+        finally:
+            # Runs on client disconnect too (GeneratorExit on the next yield):
+            # stop the training thread so an abandoned run doesn't keep
+            # burning CPU and filling the queue unbounded. Harmless after
+            # normal completion (the thread has already finished).
+            session['stop_event'].set()
 
     # Return SSE response with proper headers
     return Response(

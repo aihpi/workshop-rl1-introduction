@@ -101,10 +101,17 @@ const ParameterPanel = ({
 
   // Load parameter schema when algorithm or environment changes
   useEffect(() => {
+    // An environment switch plus the compatibility auto-switch fire two
+    // overlapping fetches; the stale flag makes sure only the newest one
+    // writes state (out-of-order responses would otherwise pair one
+    // algorithm's selection with another algorithm's schema/parameters)
+    let stale = false;
+
     const fetchSchema = async () => {
       try {
         setLoading(true);
         const paramSchema = await getParameterSchema(algorithm, environment);
+        if (stale) return;
         setSchema(paramSchema);
 
         // Initialize parameters with default values
@@ -116,16 +123,22 @@ const ParameterPanel = ({
 
         setError(null);
       } catch (err) {
+        if (stale) return;
         setError('Failed to load parameter schema');
         console.error(err);
       } finally {
-        setLoading(false);
+        if (!stale) {
+          setLoading(false);
+        }
       }
     };
 
     if (algorithm && environment) {
       fetchSchema();
     }
+    return () => {
+      stale = true;
+    };
   }, [algorithm, environment]);
 
   const handleParameterChange = (paramName, value) => {
