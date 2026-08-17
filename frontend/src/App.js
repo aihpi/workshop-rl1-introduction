@@ -28,13 +28,6 @@ const TURN_BASED_PLAYBACK_DELAY = {
   'FrozenLake-v1-NoSlip': 500,
 };
 
-// Keep chart series at a displayable size; the full data stays untouched
-const downsampleForDisplay = (points, maxPoints = 1000) => {
-  if (points.length <= maxPoints * 1.5) return points;
-  const stride = Math.ceil(points.length / maxPoints);
-  return points.filter((_, i) => i % stride === 0 || i === points.length - 1);
-};
-
 function App() {
   // Configuration state
   const [selectedAlgorithm, setSelectedAlgorithm] = useState('Q-Learning');
@@ -56,7 +49,6 @@ function App() {
   const [playbackAction, setPlaybackAction] = useState(null); // action taken at the shown playback frame
   const [rewards, setRewards] = useState([]);
   const [chartData, setChartData] = useState([]); // Moving average data points for chart display
-  const [lossHistory, setLossHistory] = useState([]); // per-episode loss points (DQN)
   const [windowSize, setWindowSize] = useState(10); // Adaptive window size for moving average
   const [totalEpisodes, setTotalEpisodes] = useState(0); // Total episodes for training (from config)
   const [learningData, setLearningData] = useState(null);
@@ -119,7 +111,6 @@ function App() {
     setPlaybackAction(null);
     setRewards([]);
     setChartData([]);
-    setLossHistory([]);
     setWindowSize(10);
     setTotalEpisodes(0);
     setLearningData(null);
@@ -218,7 +209,6 @@ function App() {
         frame: null,
         all: [],
         chartPoints: [],
-        loss: [],
         flushedLength: 0,
         timer: null
       };
@@ -263,7 +253,6 @@ function App() {
         setLearningData(latest.learning_data);
         setRewards(all.slice());
         setChartData(pending.chartPoints.slice());
-        setLossHistory(downsampleForDisplay([...pending.loss]));
       };
 
       // Subscribe to training updates
@@ -274,13 +263,6 @@ function App() {
           pending.latest = data;
           pending.lastLearningData = data.learning_data;
           pending.all.push(data.reward);
-          const diagnostics = data.learning_data?.diagnostics;
-          if (diagnostics && diagnostics.loss != null) {
-            pending.loss.push({
-              episode: (diagnostics.episode ?? pending.all.length - 1) + 1,
-              loss: diagnostics.loss
-            });
-          }
           if (data.frame) {
             pending.frame = data.frame;
           }
@@ -315,7 +297,6 @@ function App() {
           }
           setRewards(all.slice());
           setChartData(pending.chartPoints.slice());
-          setLossHistory(downsampleForDisplay([...pending.loss]));
           setLearningData(pending.lastLearningData);
           if (pending.frame) {
             setCurrentFrame(pending.frame);
@@ -518,7 +499,6 @@ function App() {
           />
           <LearningVisualization
             learningData={learningData}
-            lossHistory={lossHistory}
             algorithm={selectedAlgorithm}
             environment={selectedEnvironment}
           />

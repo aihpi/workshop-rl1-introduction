@@ -13,7 +13,6 @@ describe('LearningVisualization dispatcher', () => {
 
   const dqnData = {
     diagnostics: {
-      loss: 0.02,
       exploration_rate: 0.5,
       episode_length: 137,
       total_timesteps: 8450
@@ -44,19 +43,6 @@ describe('LearningVisualization dispatcher', () => {
     expect(screen.getByText(/dqn training diagnostics/i)).toBeInTheDocument();
     expect(screen.getByText(/exploration/i)).toBeInTheDocument();
     expect(screen.getByText('8450')).toBeInTheDocument();
-  });
-
-  test('renders loss curve from provided history instead of placeholder', () => {
-    render(
-      <LearningVisualization
-        algorithm="DQN"
-        environment="CartPole-v1"
-        learningData={dqnData}
-        lossHistory={[{ episode: 1, loss: 0.1 }, { episode: 2, loss: 0.2 }]}
-      />
-    );
-
-    expect(screen.queryByText(/loss curve will appear/i)).not.toBeInTheDocument();
   });
 
   test('renders placeholder when no learning data', () => {

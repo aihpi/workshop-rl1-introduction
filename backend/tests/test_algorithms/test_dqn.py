@@ -90,7 +90,6 @@ class TestDQNTraining:
         algo.train(callback=lambda e, r, ld, f: events.append(ld))
 
         diagnostics = events[-1]['diagnostics']
-        assert 'loss' in diagnostics
         assert 'exploration_rate' in diagnostics
         assert 'total_timesteps' in diagnostics
         assert 'episode_length' in diagnostics

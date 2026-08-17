@@ -103,13 +103,9 @@ class SB3Algorithm(BaseAlgorithm):
             render_terminal_fn=self._render_terminal_frame,
         )
 
-        # log_interval huge on purpose: SB3's Logger.dump() clears its
-        # name_to_value dict, and _get_diagnostics() reads train/loss from it.
-        # With no dumps the latest recorded loss is always available.
         self.model.learn(
             total_timesteps=total_timesteps,
             callback=sb3_callback,
-            log_interval=10**9,
             progress_bar=False,
         )
 
@@ -175,9 +171,7 @@ class SB3Algorithm(BaseAlgorithm):
 
     def _get_diagnostics(self) -> Dict[str, Any]:
         """SB3 diagnostics; exploration_rate only exists on some models (DQN)."""
-        loss = self.model.logger.name_to_value.get('train/loss')
         diagnostics = {
-            'loss': float(loss) if loss is not None else None,
             'total_timesteps': int(self.model.num_timesteps),
         }
         exploration_rate = getattr(self.model, 'exploration_rate', None)
