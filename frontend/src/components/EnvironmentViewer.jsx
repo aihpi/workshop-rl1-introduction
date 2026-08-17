@@ -1,9 +1,11 @@
 import React from 'react';
 import './EnvironmentViewer.css';
 
-const EnvironmentViewer = ({ frame, episode, timesteps, isTraining, isPlayback, trainingComplete }) => {
+const EnvironmentViewer = ({ frame, episode, timesteps, playbackStep, isTraining, isPlayback, trainingComplete }) => {
   const getStatusText = () => {
-    if (isPlayback) return 'Playing Policy';
+    if (isPlayback) {
+      return playbackStep != null ? `Playing Policy - Timestep ${playbackStep}` : 'Playing Policy';
+    }
     if (isTraining) {
       // Timestep count is only reported by timestep-budgeted algorithms (e.g. DQN)
       const timestepInfo = timesteps != null ? ` - Timestep ${timesteps}` : '';

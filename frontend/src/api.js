@@ -101,8 +101,9 @@ export const subscribeToPlayback = (sessionId, onFrames, onError) => {
       const data = JSON.parse(event.data);
 
       if (data.status === 'complete') {
-        // Playback frames received
-        onFrames(data.frames);
+        // Playback frames received (frame_steps holds each frame's
+        // environment timestep - frames may be a strided subset)
+        onFrames(data.frames, data.frame_steps);
         eventSource.close();
       } else if (data.status === 'error') {
         // Error occurred

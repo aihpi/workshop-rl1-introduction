@@ -199,7 +199,7 @@ class QLearning(BaseAlgorithm):
             callback: Called after each step with (frame)
 
         Returns:
-            List of all frames from the episode
+            List of (frame, timestep) tuples from the episode
         """
         max_steps = 100  # Prevent infinite loops
         frames = []
@@ -217,7 +217,7 @@ class QLearning(BaseAlgorithm):
 
             # CRITICAL: Render AFTER every step
             frame = self.env.render()
-            frames.append(frame)
+            frames.append((frame, steps + 1))
 
             if callback:
                 callback(frame)

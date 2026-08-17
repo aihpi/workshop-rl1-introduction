@@ -136,6 +136,7 @@ class SB3Algorithm(BaseAlgorithm):
         return self.env.render()
 
     def play_policy(self, callback: Optional[Callable] = None) -> list:
+        """Execute the greedy policy; returns a list of (frame, timestep) tuples."""
         frames = []
         obs, _ = self.env.reset()
         done = False
@@ -150,7 +151,7 @@ class SB3Algorithm(BaseAlgorithm):
             # but always include the final frame
             if steps % self.FRAME_STRIDE == 0 or done:
                 frame = self.env.render()
-                frames.append(frame)
+                frames.append((frame, steps + 1))
                 if callback:
                     callback(frame)
 

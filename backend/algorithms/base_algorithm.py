@@ -40,16 +40,17 @@ class BaseAlgorithm(ABC):
         pass
 
     @abstractmethod
-    def play_policy(self, callback: Optional[Callable] = None) -> list:
+    def play_policy(self, callback: Optional[Callable] = None) -> "list[tuple]":
         """
-        Execute the learned policy and return all frames.
+        Execute the learned policy and return all rendered frames.
 
         Args:
             callback: Optional callback function called after each step.
                      Signature: callback(frame)
 
         Returns:
-            List of frames (base64 encoded strings) from the episode
+            List of (frame, timestep) tuples - frame is a numpy RGB array,
+            timestep the 1-based environment step it was rendered at
         """
         pass
 

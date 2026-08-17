@@ -36,6 +36,7 @@ function App() {
   // Data state
   const [currentFrame, setCurrentFrame] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(0);
+  const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
   const [rewards, setRewards] = useState([]);
   const [chartData, setChartData] = useState([]); // Moving average data points for chart display
   const [windowSize, setWindowSize] = useState(10); // Adaptive window size for moving average
@@ -90,6 +91,7 @@ function App() {
     setIsPlayback(false);
     setTrainingComplete(false);
     setCurrentEpisode(0);
+    setPlaybackStep(null);
     setRewards([]);
     setChartData([]);
     setWindowSize(10);
@@ -282,7 +284,7 @@ function App() {
       const es = subscribeToPlayback(
         sessionId,
         // onFrames
-        (frames) => {
+        (frames, frameSteps) => {
           // Animate through frames; long playbacks (e.g. a full CartPole
           // episode) run faster so they stay watchable
           const delay = frames.length > 60 ? 50 : 200;
@@ -290,11 +292,13 @@ function App() {
           const interval = setInterval(() => {
             if (frameIndex < frames.length) {
               setCurrentFrame(frames[frameIndex]);
+              setPlaybackStep(frameSteps?.[frameIndex] ?? null);
               frameIndex++;
             } else {
               clearInterval(interval);
               setPlaybackInterval(null);
               setIsPlayback(false);
+              setPlaybackStep(null);
             }
           }, delay);
 
@@ -326,6 +330,7 @@ function App() {
 
     // Stop playback
     setIsPlayback(false);
+    setPlaybackStep(null);
 
     // Close EventSource
     if (eventSource) {
@@ -392,6 +397,7 @@ function App() {
             frame={currentFrame}
             episode={currentEpisode}
             timesteps={learningData?.diagnostics?.total_timesteps}
+            playbackStep={playbackStep}
             isTraining={isTraining}
             isPlayback={isPlayback}
             trainingComplete={trainingComplete}

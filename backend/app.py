@@ -317,16 +317,14 @@ def stream_playback(session_id):
     def generate():
         """Generator function for SSE events."""
         try:
-            # Execute policy and collect all frames
+            # Execute policy and collect all (frame, timestep) pairs
             frames = trainer.play_policy(session_id)
 
-            # Convert all frames to base64
-            frames_base64 = [EnvironmentManager.frame_to_base64(frame) for frame in frames]
-
-            # Send all frames in one event
+            # Send all frames plus their environment timesteps in one event
             event_data = {
-                'frames': frames_base64,
-                'num_frames': len(frames_base64),
+                'frames': [EnvironmentManager.frame_to_base64(frame) for frame, _ in frames],
+                'frame_steps': [int(step) for _, step in frames],
+                'num_frames': len(frames),
                 'status': 'complete'
             }
             yield f"data: {json.dumps(event_data)}\n\n"
