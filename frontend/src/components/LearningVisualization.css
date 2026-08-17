@@ -109,3 +109,19 @@
   padding: 2rem;
   color: #999;
 }
+
+/* Policy evaluation verdict line */
+.eval-verdict {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: #fff4e6;
+  color: #b25400;
+}
+
+.eval-verdict.solved {
+  background: #eaf7ea;
+  color: #1e7d32;
+}

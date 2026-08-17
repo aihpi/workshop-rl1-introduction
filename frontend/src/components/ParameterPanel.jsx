@@ -26,8 +26,10 @@ const ParameterPanel = ({
   onStopTraining,
   onPlayPolicy,
   onStopPlayback,
+  onEvaluatePolicy,
   isTraining,
   isPlayback,
+  isEvaluating = false,
   canPlayPolicy,
   disabled,
   liveCharts = true,
@@ -261,8 +263,10 @@ const ParameterPanel = ({
         onStopTraining={onStopTraining}
         onPlayPolicy={onPlayPolicy}
         onStopPlayback={onStopPlayback}
+        onEvaluatePolicy={onEvaluatePolicy}
         isTraining={isTraining}
         isPlayback={isPlayback}
+        isEvaluating={isEvaluating}
         canPlayPolicy={canPlayPolicy}
         disabled={disabled}
       />

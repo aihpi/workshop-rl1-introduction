@@ -81,7 +81,8 @@
         "description": "+1 for every timestep the pole stays up - so the episode return equals the episode length, and the reward chart directly shows how long the agent balances."
       },
       "stochasticity": "Deterministic dynamics; only the initial state is slightly randomized.",
-      "difficulty": "Considered solved at an average return of 475+ over 100 episodes (max 500)."
+      "difficulty": "Considered solved at an average return of 475+ over 100 episodes (max 500).",
+      "solvedThreshold": 475
     },
     "links": [
       {

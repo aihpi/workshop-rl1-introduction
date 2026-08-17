@@ -103,6 +103,35 @@ class TrainingCoordinator:
         # Mark as trained
         session['trained'] = True
 
+    def evaluate(
+        self,
+        session_id: str,
+        num_episodes: int = 100,
+        callback: Optional[callable] = None
+    ):
+        """
+        Evaluate a trained session's policy (greedy, no rendering).
+
+        Args:
+            session_id: Session UUID
+            num_episodes: Number of evaluation episodes
+            callback: Optional per-episode callback (index, episode_return)
+
+        Returns:
+            Evaluation summary dict
+
+        Raises:
+            ValueError: If the session is unknown or not yet trained
+        """
+        if session_id not in self.sessions:
+            raise ValueError(f"Session '{session_id}' not found")
+
+        session = self.sessions[session_id]
+        if not session['trained']:
+            raise ValueError(f"Session '{session_id}' has not been trained yet")
+
+        return session['algorithm'].evaluate(num_episodes, callback)
+
     def request_stop(self, session_id: str) -> bool:
         """
         Request a graceful stop of a running training session.

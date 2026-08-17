@@ -365,6 +365,68 @@ def stream_playback(session_id):
     )
 
 
+@app.route('/api/evaluate/stream/<session_id>', methods=['GET'])
+def stream_evaluation(session_id):
+    """
+    Evaluate a trained policy via Server-Sent Events: N greedy episodes
+    (no exploration, no rendering), streaming per-episode progress and a
+    final statistics summary.
+
+    Query Parameters:
+        episodes: Number of evaluation episodes (default 100, max 1000)
+
+    Returns:
+        SSE stream of evaluation progress + summary
+    """
+    if not trainer.session_exists(session_id):
+        return jsonify({'error': 'Session not found'}), 404
+
+    num_episodes = max(1, min(1000, int(request.args.get('episodes', 100))))
+
+    def generate():
+        """Generator function for SSE events."""
+        event_queue = queue.Queue()
+
+        def on_episode(index, episode_return):
+            event_queue.put({
+                'status': 'evaluating',
+                'episode': index + 1,
+                'total': num_episodes,
+                'return': episode_return
+            })
+
+        def evaluate_in_thread():
+            try:
+                summary = trainer.evaluate(session_id, num_episodes, on_episode)
+                event_queue.put({'status': 'complete', **summary})
+            except Exception as e:
+                event_queue.put({'status': 'error', 'message': str(e)})
+            finally:
+                event_queue.put(None)
+
+        eval_thread = threading.Thread(target=evaluate_in_thread, daemon=True)
+        eval_thread.start()
+
+        while True:
+            try:
+                event_data = event_queue.get(timeout=1)
+                if event_data is None:
+                    break
+                yield f"data: {json.dumps(event_data)}\n\n"
+            except queue.Empty:
+                yield ": keep-alive\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive'
+        }
+    )
+
+
 @app.route('/api/reset', methods=['POST'])
 def reset_training():
     """

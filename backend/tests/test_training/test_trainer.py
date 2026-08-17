@@ -74,6 +74,24 @@ class TestSessionManagement:
         finally:
             coordinator.reset_all_sessions()
 
+    def test_evaluate_requires_trained_session(self):
+        coordinator = TrainingCoordinator()
+        session_id = coordinator.create_session(
+            'Q-Learning', 'FrozenLake-v1-NoSlip', FAST_QL_PARAMS
+        )
+        try:
+            import pytest
+            with pytest.raises(ValueError, match='not been trained'):
+                coordinator.evaluate(session_id, num_episodes=2)
+
+            coordinator.train(session_id)
+            summary = coordinator.evaluate(session_id, num_episodes=10)
+            assert summary['num_episodes'] == 10
+            # FrozenLake returns are 0/1, so the mean is the success rate
+            assert 0.0 <= summary['mean_return'] <= 1.0
+        finally:
+            coordinator.reset_all_sessions()
+
     def test_reset_sets_stop_events(self):
         coordinator = TrainingCoordinator()
         session_id = coordinator.create_session(

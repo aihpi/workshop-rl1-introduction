@@ -189,6 +189,10 @@ class QLearning(BaseAlgorithm):
             if callback:
                 callback(episode, total_reward, self.get_learning_data(), frame)
 
+    def _greedy_action(self, observation) -> int:
+        """Greedy action from the Q-table (random tie-breaking)."""
+        return int(self._argmax_random_tiebreak(self.q_table[observation]))
+
     def play_policy(self, callback: Optional[Callable] = None) -> list:
         """
         Execute learned policy and collect all frames.

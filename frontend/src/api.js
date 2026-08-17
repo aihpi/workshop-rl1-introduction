@@ -126,6 +126,42 @@ export const subscribeToPlayback = (sessionId, onFrame, onComplete, onError) => 
 };
 
 /**
+ * Subscribe to policy evaluation via SSE: N greedy episodes with
+ * per-episode progress events, then a statistics summary
+ */
+export const subscribeToEvaluation = (sessionId, numEpisodes, onProgress, onComplete, onError) => {
+  const eventSource = new EventSource(
+    `${API_BASE_URL}/evaluate/stream/${sessionId}?episodes=${numEpisodes}`
+  );
+
+  eventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+
+      if (data.status === 'evaluating') {
+        onProgress(data);
+      } else if (data.status === 'complete') {
+        onComplete(data);
+        eventSource.close();
+      } else if (data.status === 'error') {
+        onError(new Error(data.message));
+        eventSource.close();
+      }
+    } catch (error) {
+      onError(error);
+      eventSource.close();
+    }
+  };
+
+  eventSource.onerror = (error) => {
+    onError(error);
+    eventSource.close();
+  };
+
+  return eventSource;
+};
+
+/**
  * Request a graceful stop of a running training session
  */
 export const stopTraining = async (sessionId) => {

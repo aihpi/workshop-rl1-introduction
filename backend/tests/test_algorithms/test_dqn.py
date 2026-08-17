@@ -105,6 +105,21 @@ class TestDQNTraining:
         # Stopped at the first callback check, far below the budget
         assert algo.model.num_timesteps < FAST_PARAMS['total_timesteps']
 
+    def test_evaluate(self, cartpole_env):
+        """Greedy evaluation returns a JSON-safe statistics summary."""
+        algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)
+        algo.train()
+
+        episodes_seen = []
+        summary = algo.evaluate(num_episodes=5, callback=lambda i, r: episodes_seen.append(i))
+
+        assert episodes_seen == [0, 1, 2, 3, 4]
+        assert summary['num_episodes'] == 5
+        assert len(summary['returns']) == 5
+        assert summary['min_return'] <= summary['mean_return'] <= summary['max_return']
+        assert summary['mean_length'] >= 1
+        json.dumps(summary)  # numpy leak check
+
     def test_play_policy_returns_frames(self, cartpole_env):
         algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)
         algo.train()

@@ -128,6 +128,11 @@ class SB3Algorithm(BaseAlgorithm):
                 unwrapped.state = saved_state
         return self.env.render()
 
+    def _greedy_action(self, observation) -> int:
+        """Deterministic (greedy) action from the SB3 model."""
+        action, _ = self.model.predict(observation, deterministic=True)
+        return int(action)
+
     def play_policy(self, callback: Optional[Callable] = None) -> list:
         """Execute the greedy policy; returns a list of (frame, timestep) tuples.
 

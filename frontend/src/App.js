@@ -6,7 +6,8 @@ import EnvironmentInfo from './components/EnvironmentInfo';
 import AlgorithmInfo from './components/AlgorithmInfo';
 import RewardChart from './components/RewardChart';
 import LearningVisualization from './components/LearningVisualization';
-import { startTraining, stopTraining, subscribeToTraining, subscribeToPlayback, resetTraining, getEnvironmentPreview } from './api';
+import EvaluationPanel from './components/visualizations/EvaluationPanel';
+import { startTraining, stopTraining, subscribeToTraining, subscribeToPlayback, subscribeToEvaluation, resetTraining, getEnvironmentPreview } from './api';
 import { BUDGET_KEYS, isIntAtLeast } from './components/ParameterPanel';
 
 // Calculate adaptive window size: 10% of episodes, clamped between 10 and 100
@@ -40,6 +41,11 @@ function App() {
   const [isPlayback, setIsPlayback] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
   const [playbackInterval, setPlaybackInterval] = useState(null);
+
+  // Evaluation state (greedy policy evaluation over N episodes)
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evalProgress, setEvalProgress] = useState(null);
+  const [evalResults, setEvalResults] = useState(null);
 
   // Data state
   const [currentFrame, setCurrentFrame] = useState(null);
@@ -104,6 +110,9 @@ function App() {
     setSessionId(null);
     setIsTraining(false);
     setIsPlayback(false);
+    setIsEvaluating(false);
+    setEvalProgress(null);
+    setEvalResults(null);
     setTrainingComplete(false);
     setCurrentEpisode(0);
     setCurrentTimesteps(null);
@@ -420,6 +429,38 @@ function App() {
     }
   };
 
+  const handleEvaluatePolicy = () => {
+    if (!sessionId || !trainingComplete || isEvaluating || isPlayback) return;
+
+    setError(null);
+    setEvalResults(null);
+    setEvalProgress({ episode: 0, total: 100 });
+    setIsEvaluating(true);
+
+    const es = subscribeToEvaluation(
+      sessionId,
+      100, // standard evaluation size
+      // onProgress - one event per evaluation episode
+      (data) => {
+        setEvalProgress({ episode: data.episode, total: data.total });
+      },
+      // onComplete - statistics summary
+      (data) => {
+        setEvalResults(data);
+        setEvalProgress(null);
+        setIsEvaluating(false);
+      },
+      // onError
+      (err) => {
+        setError(err.message || 'Evaluation failed');
+        setEvalProgress(null);
+        setIsEvaluating(false);
+      }
+    );
+
+    setEventSource(es);
+  };
+
   const handleStopTraining = async () => {
     // The Stop button appears as soon as Start is clicked, but the session
     // only exists once the /api/train response arrives - stopping before
@@ -466,8 +507,10 @@ function App() {
             onStopTraining={handleStopTraining}
             onPlayPolicy={handlePlayPolicy}
             onStopPlayback={handleStopPlayback}
+            onEvaluatePolicy={handleEvaluatePolicy}
             isTraining={isTraining}
             isPlayback={isPlayback}
+            isEvaluating={isEvaluating}
             canPlayPolicy={trainingComplete}
             disabled={!isValidParameters()}
             liveCharts={liveCharts}
@@ -496,6 +539,11 @@ function App() {
             chartData={chartData}
             totalEpisodes={totalEpisodes}
             windowSize={windowSize}
+          />
+          <EvaluationPanel
+            progress={evalProgress}
+            results={evalResults}
+            environment={selectedEnvironment}
           />
           <LearningVisualization
             learningData={learningData}
