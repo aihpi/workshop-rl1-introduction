@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../LearningVisualization.css';
 
@@ -9,47 +9,14 @@ const HPI_VIOLET = '#7664a0';
  * episode length and total timesteps, plus a loss-over-episodes chart.
  *
  * Receives learningData with a diagnostics key:
- * { loss: float|null, exploration_rate: float, episode_length: int, total_timesteps: int }
- *
- * The loss history is accumulated client-side (the backend only sends the
- * latest value per episode), keyed by total_timesteps to stay idempotent
- * under React re-renders.
+ * { loss: float|null, exploration_rate: float, episode_length: int,
+ *   total_timesteps: int, episode: int }
+ * and lossHistory: [{episode, loss}] accumulated (and downsampled for
+ * display) by the App-level coalescer - the episode values are real
+ * episode numbers, aligned with the reward chart's axis.
  */
-const DQNDiagnostics = ({ learningData }) => {
-  const [lossHistory, setLossHistory] = useState([]);
-  const lastTimestepRef = useRef(null);
-
+const DQNDiagnostics = ({ learningData, lossHistory = [] }) => {
   const diagnostics = learningData?.diagnostics;
-
-  useEffect(() => {
-    if (!diagnostics) {
-      // Training was reset - clear the accumulated history
-      setLossHistory([]);
-      lastTimestepRef.current = null;
-      return;
-    }
-
-    // A fresh run restarts the timestep counter - clear stale history
-    if (lastTimestepRef.current !== null && diagnostics.total_timesteps < lastTimestepRef.current) {
-      setLossHistory([]);
-    }
-
-    // Dedup: total_timesteps is monotonic within a run
-    if (diagnostics.total_timesteps === lastTimestepRef.current) {
-      return;
-    }
-    lastTimestepRef.current = diagnostics.total_timesteps;
-
-    if (diagnostics.loss !== null && diagnostics.loss !== undefined) {
-      setLossHistory(prev => [...prev, {
-        // The coalescer subsamples diagnostics (~6/s), so points are sparse;
-        // the backend-supplied episode index puts each one at its true
-        // position on the episode axis (aligned with the reward chart)
-        episode: (diagnostics.episode ?? prev.length) + 1,
-        loss: diagnostics.loss
-      }]);
-    }
-  }, [diagnostics]);
 
   if (!diagnostics) {
     return null;

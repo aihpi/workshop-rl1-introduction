@@ -20,6 +20,17 @@ const calculateMovingAverage = (rewards, windowSize) => {
   return window.reduce((sum, r) => sum + r, 0) / window.length;
 };
 
+// Budgets above these default the "Live charts" toggle to off: redrawing
+// ever-growing charts ~6x/s steals CPU from training on the same machine
+const LIVE_CHART_THRESHOLDS = { total_timesteps: 20000, num_episodes: 2000 };
+
+// Keep chart series at a displayable size; the full data stays untouched
+const downsampleForDisplay = (points, maxPoints = 1000) => {
+  if (points.length <= maxPoints * 1.5) return points;
+  const stride = Math.ceil(points.length / maxPoints);
+  return points.filter((_, i) => i % stride === 0 || i === points.length - 1);
+};
+
 function App() {
   // Configuration state
   const [selectedAlgorithm, setSelectedAlgorithm] = useState('Q-Learning');
@@ -36,12 +47,18 @@ function App() {
   // Data state
   const [currentFrame, setCurrentFrame] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(0);
+  const [currentTimesteps, setCurrentTimesteps] = useState(null); // total env steps so far (timestep-budgeted algorithms)
   const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
   const [rewards, setRewards] = useState([]);
   const [chartData, setChartData] = useState([]); // Moving average data points for chart display
+  const [lossHistory, setLossHistory] = useState([]); // per-episode loss points (DQN)
   const [windowSize, setWindowSize] = useState(10); // Adaptive window size for moving average
   const [totalEpisodes, setTotalEpisodes] = useState(0); // Total episodes for training (from config)
   const [learningData, setLearningData] = useState(null);
+
+  // Live charts: render charts/frames during training, or only at the end
+  // (full-speed mode for long runs). Auto-defaults from the budget below.
+  const [liveCharts, setLiveCharts] = useState(true);
 
   // Error state
   const [error, setError] = useState(null);
@@ -91,9 +108,11 @@ function App() {
     setIsPlayback(false);
     setTrainingComplete(false);
     setCurrentEpisode(0);
+    setCurrentTimesteps(null);
     setPlaybackStep(null);
     setRewards([]);
     setChartData([]);
+    setLossHistory([]);
     setWindowSize(10);
     setTotalEpisodes(0);
     setLearningData(null);
@@ -106,6 +125,16 @@ function App() {
     resetState();
     loadPreview();
   }, [selectedEnvironment, selectedAlgorithm]);
+
+  // Auto-default the live-charts toggle from the training budget: big runs
+  // start in full-speed mode. A manual flip sticks until the budget changes.
+  const budgetKey = BUDGET_KEYS.find(key => parameters[key] !== undefined);
+  const budgetValue = budgetKey ? parseInt(parameters[budgetKey], 10) : null;
+  useEffect(() => {
+    if (budgetKey && budgetValue !== null && !isNaN(budgetValue)) {
+      setLiveCharts(budgetValue <= LIVE_CHART_THRESHOLDS[budgetKey]);
+    }
+  }, [budgetKey, budgetValue]);
 
   // Validation function for training parameters
   const isValidParameters = () => {
@@ -174,15 +203,28 @@ function App() {
       setWindowSize(calculatedWindowSize);
       setTotalEpisodes(episodeCount);
 
+      // The mode is fixed per run (the toggle is disabled while training)
+      const liveChartsThisRun = liveCharts;
+
       // Coalesce episode events before rendering: fast training finishes
       // dozens of episodes per second, and re-rendering the charts and the
       // frame on every single one exhausts browser memory (Safari kills the
       // page). Events are buffered and applied at most ~6x per second.
-      // All rewards accumulate in `pending.all` (plain JS, single source of
+      // Everything accumulates in `pending` (plain JS, single source of
       // truth) and chart points are computed OUTSIDE the setState updaters -
       // updaters must stay pure (StrictMode double-invokes them and impure
-      // ones duplicate chart points).
-      const pending = { latest: null, frame: null, all: [], flushedLength: 0, timer: null };
+      // ones duplicate chart points). With live charts off, only the status
+      // line updates during training; charts render once at completion.
+      const pending = {
+        latest: null,
+        lastLearningData: null,
+        frame: null,
+        all: [],
+        chartPoints: [],
+        loss: [],
+        flushedLength: 0,
+        timer: null
+      };
 
       const flushUpdates = () => {
         pending.timer = null;
@@ -192,22 +234,16 @@ function App() {
         const latest = pending.latest;
         pending.latest = null;
 
-        // Frames are throttled server-side (frame=null on most episodes
-        // during fast training); show the newest one received
-        if (pending.frame) {
-          setCurrentFrame(pending.frame);
-          pending.frame = null;
-        }
+        // Status line updates are cheap text - always live
         setCurrentEpisode(latest.episode);
-        setLearningData(latest.learning_data);
+        setCurrentTimesteps(latest.learning_data?.diagnostics?.total_timesteps ?? null);
 
-        // Add a chart point at every windowSize boundary crossed since the last flush
+        // Chart boundary points accumulate regardless of mode
         const all = pending.all;
-        const newPoints = [];
         const firstBoundary =
           (Math.floor(pending.flushedLength / calculatedWindowSize) + 1) * calculatedWindowSize;
         for (let m = firstBoundary; m <= all.length; m += calculatedWindowSize) {
-          newPoints.push({
+          pending.chartPoints.push({
             episode: m,
             avgReward: calculateMovingAverage(
               all.slice(Math.max(0, m - calculatedWindowSize), m),
@@ -217,10 +253,20 @@ function App() {
         }
         pending.flushedLength = all.length;
 
-        setRewards(all.slice());
-        if (newPoints.length > 0) {
-          setChartData(prevChart => [...prevChart, ...newPoints]);
+        if (!liveChartsThisRun) {
+          return; // full-speed mode: charts and frames render at completion
         }
+
+        // Frames are throttled server-side (frame=null on most episodes
+        // during fast training); show the newest one received
+        if (pending.frame) {
+          setCurrentFrame(pending.frame);
+          pending.frame = null;
+        }
+        setLearningData(latest.learning_data);
+        setRewards(all.slice());
+        setChartData(pending.chartPoints.slice());
+        setLossHistory(downsampleForDisplay([...pending.loss]));
       };
 
       // Subscribe to training updates
@@ -229,7 +275,15 @@ function App() {
         // onUpdate - called for each episode during training
         (data) => {
           pending.latest = data;
+          pending.lastLearningData = data.learning_data;
           pending.all.push(data.reward);
+          const diagnostics = data.learning_data?.diagnostics;
+          if (diagnostics && diagnostics.loss != null) {
+            pending.loss.push({
+              episode: (diagnostics.episode ?? pending.all.length - 1) + 1,
+              loss: diagnostics.loss
+            });
+          }
           if (data.frame) {
             pending.frame = data.frame;
           }
@@ -250,10 +304,24 @@ function App() {
           // Add final chart point if needed (when episode count isn't a multiple of windowSize)
           const all = pending.all;
           if (all.length > 0 && all.length % calculatedWindowSize !== 0) {
-            setChartData(prev => [...prev, {
+            pending.chartPoints.push({
               episode: all.length,
               avgReward: calculateMovingAverage(all, calculatedWindowSize)
-            }]);
+            });
+          }
+
+          // Render everything accumulated. In live mode most of this is
+          // already on screen; in full-speed mode this is the single render.
+          if (all.length > 0) {
+            setCurrentEpisode(all.length - 1);
+            setCurrentTimesteps(pending.lastLearningData?.diagnostics?.total_timesteps ?? null);
+          }
+          setRewards(all.slice());
+          setChartData(pending.chartPoints.slice());
+          setLossHistory(downsampleForDisplay([...pending.loss]));
+          setLearningData(pending.lastLearningData);
+          if (pending.frame) {
+            setCurrentFrame(pending.frame);
           }
         },
         // onError
@@ -417,6 +485,8 @@ function App() {
             isPlayback={isPlayback}
             canPlayPolicy={trainingComplete}
             disabled={!isValidParameters()}
+            liveCharts={liveCharts}
+            onLiveChartsChange={setLiveCharts}
           />
         </div>
 
@@ -424,7 +494,7 @@ function App() {
           <EnvironmentViewer
             frame={currentFrame}
             episode={currentEpisode}
-            timesteps={learningData?.diagnostics?.total_timesteps}
+            timesteps={currentTimesteps}
             playbackStep={playbackStep}
             isTraining={isTraining}
             isPlayback={isPlayback}
@@ -442,6 +512,7 @@ function App() {
           />
           <LearningVisualization
             learningData={learningData}
+            lossHistory={lossHistory}
             algorithm={selectedAlgorithm}
             environment={selectedEnvironment}
           />

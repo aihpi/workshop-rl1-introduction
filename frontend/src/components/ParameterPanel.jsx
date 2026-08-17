@@ -29,7 +29,9 @@ const ParameterPanel = ({
   isTraining,
   isPlayback,
   canPlayPolicy,
-  disabled
+  disabled,
+  liveCharts = true,
+  onLiveChartsChange = () => {}
 }) => {
   const [schema, setSchema] = useState(null);
   const [environments, setEnvironments] = useState([]);
@@ -234,6 +236,24 @@ const ParameterPanel = ({
           )}
         </div>
       )}
+
+      {/* Live charts toggle - big budgets default to full-speed mode */}
+      <div className="parameter-group">
+        <label>
+          <input
+            type="checkbox"
+            checked={liveCharts}
+            onChange={(e) => onLiveChartsChange(e.target.checked)}
+            disabled={isTraining}
+          />
+          {' '}Live charts
+        </label>
+        <p className="hint">
+          {liveCharts
+            ? 'Charts and frames update during training.'
+            : 'Training runs at full speed; charts appear when it finishes.'}
+        </p>
+      </div>
 
       {/* Control Buttons */}
       <ControlButtons
