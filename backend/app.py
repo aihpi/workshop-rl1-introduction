@@ -323,12 +323,13 @@ def stream_playback(session_id):
         """
         frame_queue = queue.Queue()
 
-        def on_frame(frame, step):
+        def on_frame(frame, step, action):
             """Called per rendered frame - encode and enqueue immediately."""
             frame_queue.put({
                 'status': 'frame',
                 'frame': EnvironmentManager.frame_to_base64(frame),
-                'step': int(step)
+                'step': int(step),
+                'action': int(action)
             })
 
         def play_in_thread():

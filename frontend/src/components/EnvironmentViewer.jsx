@@ -1,7 +1,13 @@
 import React from 'react';
 import './EnvironmentViewer.css';
 
-const EnvironmentViewer = ({ frame, episode, timesteps, playbackStep, isTraining, isPlayback, trainingComplete }) => {
+// Arrow overlay per environment: index = action. Only environments listed
+// here show the action arrow during playback (CartPole/DQN only for now).
+const ACTION_ARROWS = {
+  'CartPole-v1': ['⬅', '➡'],
+};
+
+const EnvironmentViewer = ({ frame, episode, timesteps, playbackStep, playbackAction, environment, isTraining, isPlayback, trainingComplete }) => {
   const getStatusText = () => {
     if (isPlayback) {
       return playbackStep != null ? `Playing Policy - Timestep ${playbackStep}` : 'Playing Policy';
@@ -39,6 +45,13 @@ const EnvironmentViewer = ({ frame, episode, timesteps, playbackStep, isTraining
           <div className="placeholder">
             <p>No frame to display</p>
             <p className="hint">Start training to see the environment</p>
+          </div>
+        )}
+
+        {/* The action the agent takes at the shown playback frame */}
+        {frame && playbackAction != null && ACTION_ARROWS[environment]?.[playbackAction] && (
+          <div className="action-arrow" title="Action taken by the agent">
+            {ACTION_ARROWS[environment][playbackAction]}
           </div>
         )}
       </div>

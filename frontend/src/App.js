@@ -45,6 +45,7 @@ function App() {
   const [currentEpisode, setCurrentEpisode] = useState(0);
   const [currentTimesteps, setCurrentTimesteps] = useState(null); // total env steps so far (timestep-budgeted algorithms)
   const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
+  const [playbackAction, setPlaybackAction] = useState(null); // action taken at the shown playback frame
   const [rewards, setRewards] = useState([]);
   const [chartData, setChartData] = useState([]); // Moving average data points for chart display
   const [lossHistory, setLossHistory] = useState([]); // per-episode loss points (DQN)
@@ -107,6 +108,7 @@ function App() {
     setCurrentEpisode(0);
     setCurrentTimesteps(null);
     setPlaybackStep(null);
+    setPlaybackAction(null);
     setRewards([]);
     setChartData([]);
     setLossHistory([]);
@@ -354,6 +356,7 @@ function App() {
             setPlaybackInterval(null);
             setIsPlayback(false);
             setPlaybackStep(null);
+            setPlaybackAction(null);
             return;
           }
           // Stream still running but no frame buffered yet - check again shortly
@@ -361,9 +364,10 @@ function App() {
           return;
         }
 
-        const { frame, step } = buffer.shift();
+        const { frame, step, action } = buffer.shift();
         setCurrentFrame(frame);
         setPlaybackStep(step);
+        setPlaybackAction(action ?? null);
 
         // Once the rollout is clearly long, play near real-time and stay there
         if (buffer.length > 60) {
@@ -391,6 +395,7 @@ function App() {
           setError(err.message || 'Playback failed');
           setIsPlayback(false);
           setPlaybackStep(null);
+          setPlaybackAction(null);
           setPlaybackInterval(null);
         }
       );
@@ -414,6 +419,7 @@ function App() {
     // Stop playback
     setIsPlayback(false);
     setPlaybackStep(null);
+    setPlaybackAction(null);
 
     // Close EventSource
     if (eventSource) {
@@ -483,6 +489,8 @@ function App() {
             episode={currentEpisode}
             timesteps={currentTimesteps}
             playbackStep={playbackStep}
+            playbackAction={playbackAction}
+            environment={selectedEnvironment}
             isTraining={isTraining}
             isPlayback={isPlayback}
             trainingComplete={trainingComplete}

@@ -220,7 +220,7 @@ class QLearning(BaseAlgorithm):
             frames.append((frame, steps + 1))
 
             if callback:
-                callback(frame, steps + 1)
+                callback(frame, steps + 1, int(action))
 
             steps += 1
 

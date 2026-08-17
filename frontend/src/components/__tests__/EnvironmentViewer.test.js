@@ -141,3 +141,37 @@ describe('EnvironmentViewer', () => {
     expect(image).toHaveAttribute('src', `data:image/png;base64,${mockFrameData}`);
   });
 });
+
+describe('EnvironmentViewer action arrow', () => {
+  const playbackProps = {
+    frame: 'base64string',
+    episode: 0,
+    isTraining: false,
+    isPlayback: true,
+    trainingComplete: true,
+    playbackStep: 10
+  };
+
+  test('shows the action arrow for CartPole during playback', () => {
+    const { container } = render(
+      <EnvironmentViewer {...playbackProps} environment="CartPole-v1" playbackAction={1} />
+    );
+    const arrow = container.querySelector('.action-arrow');
+    expect(arrow).toBeInTheDocument();
+    expect(arrow).toHaveTextContent('➡');
+  });
+
+  test('shows no arrow for environments without a mapping', () => {
+    const { container } = render(
+      <EnvironmentViewer {...playbackProps} environment="FrozenLake-v1" playbackAction={1} />
+    );
+    expect(container.querySelector('.action-arrow')).not.toBeInTheDocument();
+  });
+
+  test('shows no arrow outside playback (no action)', () => {
+    const { container } = render(
+      <EnvironmentViewer {...playbackProps} environment="CartPole-v1" playbackAction={null} />
+    );
+    expect(container.querySelector('.action-arrow')).not.toBeInTheDocument();
+  });
+});

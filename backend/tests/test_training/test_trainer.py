@@ -37,8 +37,13 @@ class TestSessionManagement:
 
             session = coordinator.get_session(session_id)
             assert session['trained'] is True
-            frames = coordinator.play_policy(session_id)
+            actions = []
+            frames = coordinator.play_policy(
+                session_id, callback=lambda f, s, a: actions.append(a)
+            )
             assert isinstance(frames, list)
+            # Q-Learning playback reports int actions (FrozenLake: 0-3)
+            assert all(isinstance(a, int) and 0 <= a <= 3 for a in actions)
         finally:
             coordinator.reset_all_sessions()
 

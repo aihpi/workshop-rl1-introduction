@@ -145,13 +145,14 @@ class SB3Algorithm(BaseAlgorithm):
 
         while not done and steps < self.MAX_PLAYBACK_STEPS:
             action, _ = self.model.predict(obs, deterministic=True)
-            obs, _, terminated, truncated, _ = self.env.step(int(action))
+            action = int(action)
+            obs, _, terminated, truncated, _ = self.env.step(action)
             done = terminated or truncated
 
             frame = self.env.render()
             frames.append((frame, steps + 1))
             if callback:
-                callback(frame, steps + 1)
+                callback(frame, steps + 1, action)
 
             steps += 1
 

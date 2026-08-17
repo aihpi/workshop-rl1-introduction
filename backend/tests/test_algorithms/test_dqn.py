@@ -110,9 +110,13 @@ class TestDQNTraining:
         algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)
         algo.train()
 
-        frames = algo.play_policy()
+        actions = []
+        frames = algo.play_policy(callback=lambda f, s, a: actions.append(a))
 
         assert 1 <= len(frames) <= DQNAlgorithm.MAX_PLAYBACK_STEPS
         # Every step is rendered: (frame, 1-based consecutive env timestep)
         assert all(isinstance(f, np.ndarray) and isinstance(s, int) for f, s in frames)
         assert [s for _, s in frames] == list(range(1, len(frames) + 1))
+        # The callback reports the action taken at each step
+        assert len(actions) == len(frames)
+        assert all(isinstance(a, int) and a in (0, 1) for a in actions)
