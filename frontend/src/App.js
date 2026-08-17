@@ -280,40 +280,68 @@ function App() {
       setError(null);
       setIsPlayback(true);
 
+      // Frames stream in one SSE event each (faster than watchable speed);
+      // the buffer decouples arrival rate from display rate, so playback
+      // starts on the first frame while the rollout is still running
+      const buffer = [];
+      let streamDone = false;
+      let fast = false; // sticky: long rollouts switch to near-real-time speed
+      let timerId = null;
+
+      const schedule = (delay) => {
+        timerId = setTimeout(showNext, delay);
+        setPlaybackInterval(timerId);
+      };
+
+      const showNext = () => {
+        if (buffer.length === 0) {
+          if (streamDone) {
+            setPlaybackInterval(null);
+            setIsPlayback(false);
+            setPlaybackStep(null);
+            return;
+          }
+          // Stream still running but no frame buffered yet - check again shortly
+          schedule(50);
+          return;
+        }
+
+        const { frame, step } = buffer.shift();
+        setCurrentFrame(frame);
+        setPlaybackStep(step);
+
+        // Once the rollout is clearly long, play near real-time and stay there
+        if (buffer.length > 60) {
+          fast = true;
+        }
+        schedule(fast ? 30 : 200);
+      };
+
       // Subscribe to playback stream
       const es = subscribeToPlayback(
         sessionId,
-        // onFrames
-        (frames, frameSteps) => {
-          // Animate through frames; long playbacks (e.g. a full CartPole
-          // episode) run faster so they stay watchable
-          const delay = frames.length > 60 ? 50 : 200;
-          let frameIndex = 0;
-          const interval = setInterval(() => {
-            if (frameIndex < frames.length) {
-              setCurrentFrame(frames[frameIndex]);
-              setPlaybackStep(frameSteps?.[frameIndex] ?? null);
-              frameIndex++;
-            } else {
-              clearInterval(interval);
-              setPlaybackInterval(null);
-              setIsPlayback(false);
-              setPlaybackStep(null);
-            }
-          }, delay);
-
-          // Store interval reference so we can stop it
-          setPlaybackInterval(interval);
+        // onFrame - buffer each streamed frame
+        (data) => {
+          buffer.push(data);
+        },
+        // onComplete - rollout finished server-side (animation may still run)
+        () => {
+          streamDone = true;
         },
         // onError
         (err) => {
+          if (timerId) {
+            clearTimeout(timerId);
+          }
           setError(err.message || 'Playback failed');
           setIsPlayback(false);
+          setPlaybackStep(null);
           setPlaybackInterval(null);
         }
       );
 
       setEventSource(es);
+      showNext();
     } catch (err) {
       setError(err.message || 'Failed to play policy');
       setIsPlayback(false);
@@ -322,9 +350,9 @@ function App() {
   };
 
   const handleStopPlayback = () => {
-    // Clear the animation interval
+    // Clear the pending animation timer
     if (playbackInterval) {
-      clearInterval(playbackInterval);
+      clearTimeout(playbackInterval);
       setPlaybackInterval(null);
     }
 

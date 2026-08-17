@@ -93,17 +93,18 @@ export const subscribeToTraining = (sessionId, onUpdate, onComplete, onError) =>
 /**
  * Subscribe to policy playback via SSE
  */
-export const subscribeToPlayback = (sessionId, onFrames, onError) => {
+export const subscribeToPlayback = (sessionId, onFrame, onComplete, onError) => {
   const eventSource = new EventSource(`${API_BASE_URL}/play-policy/stream/${sessionId}`);
 
   eventSource.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
 
-      if (data.status === 'complete') {
-        // Playback frames received (frame_steps holds each frame's
-        // environment timestep - frames may be a strided subset)
-        onFrames(data.frames, data.frame_steps);
+      if (data.status === 'frame') {
+        // One frame per event, streamed while the rollout executes
+        onFrame(data);
+      } else if (data.status === 'complete') {
+        onComplete(data);
         eventSource.close();
       } else if (data.status === 'error') {
         // Error occurred

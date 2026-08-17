@@ -315,27 +315,42 @@ def stream_playback(session_id):
         return jsonify({'error': 'Session not found'}), 404
 
     def generate():
-        """Generator function for SSE events."""
-        try:
-            # Execute policy and collect all (frame, timestep) pairs
-            frames = trainer.play_policy(session_id)
+        """Generator function for SSE events.
 
-            # Send all frames plus their environment timesteps in one event
-            event_data = {
-                'frames': [EnvironmentManager.frame_to_base64(frame) for frame, _ in frames],
-                'frame_steps': [int(step) for _, step in frames],
-                'num_frames': len(frames),
-                'status': 'complete'
-            }
-            yield f"data: {json.dumps(event_data)}\n\n"
+        Streams one event per rendered frame while the rollout executes
+        (playback starts immediately, peak memory is one frame), then a
+        completion event.
+        """
+        frame_queue = queue.Queue()
 
-        except Exception as e:
-            # Send error event
-            error_data = {
-                'status': 'error',
-                'message': str(e)
-            }
-            yield f"data: {json.dumps(error_data)}\n\n"
+        def on_frame(frame, step):
+            """Called per rendered frame - encode and enqueue immediately."""
+            frame_queue.put({
+                'status': 'frame',
+                'frame': EnvironmentManager.frame_to_base64(frame),
+                'step': int(step)
+            })
+
+        def play_in_thread():
+            try:
+                frames = trainer.play_policy(session_id, on_frame)
+                frame_queue.put({'status': 'complete', 'num_frames': len(frames)})
+            except Exception as e:
+                frame_queue.put({'status': 'error', 'message': str(e)})
+            finally:
+                frame_queue.put(None)
+
+        playback_thread = threading.Thread(target=play_in_thread, daemon=True)
+        playback_thread.start()
+
+        while True:
+            try:
+                event_data = frame_queue.get(timeout=1)
+                if event_data is None:
+                    break
+                yield f"data: {json.dumps(event_data)}\n\n"
+            except queue.Empty:
+                yield ": keep-alive\n\n"
 
     # Return SSE response with proper headers
     return Response(

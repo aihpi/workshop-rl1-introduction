@@ -46,7 +46,7 @@ class BaseAlgorithm(ABC):
 
         Args:
             callback: Optional callback function called after each step.
-                     Signature: callback(frame)
+                     Signature: callback(frame, timestep)
 
         Returns:
             List of (frame, timestep) tuples - frame is a numpy RGB array,

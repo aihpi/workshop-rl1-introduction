@@ -112,10 +112,7 @@ class TestDQNTraining:
 
         frames = algo.play_policy()
 
-        assert len(frames) >= 1
-        # Stride-2 rendering caps frames at ~half the max playback steps (+ final frame)
-        assert len(frames) <= DQNAlgorithm.MAX_PLAYBACK_STEPS // DQNAlgorithm.FRAME_STRIDE + 1
-        # Each entry is (frame, 1-based env timestep), timesteps strictly increasing
+        assert 1 <= len(frames) <= DQNAlgorithm.MAX_PLAYBACK_STEPS
+        # Every step is rendered: (frame, 1-based consecutive env timestep)
         assert all(isinstance(f, np.ndarray) and isinstance(s, int) for f, s in frames)
-        steps = [s for _, s in frames]
-        assert steps == sorted(steps) and steps[0] >= 1
+        assert [s for _, s in frames] == list(range(1, len(frames) + 1))

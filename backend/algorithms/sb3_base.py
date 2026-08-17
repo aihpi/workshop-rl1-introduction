@@ -80,9 +80,6 @@ class SB3Algorithm(BaseAlgorithm):
     Subclasses implement _create_model() and get_parameter_schema().
     """
 
-    # Render every Nth step during playback (SB3 envs have long episodes;
-    # CartPole runs up to 500 steps -> ~250 frames at stride 2)
-    FRAME_STRIDE = 2
     MAX_PLAYBACK_STEPS = 500
 
     def __init__(self, env, parameters: Dict[str, Any]):
@@ -136,7 +133,11 @@ class SB3Algorithm(BaseAlgorithm):
         return self.env.render()
 
     def play_policy(self, callback: Optional[Callable] = None) -> list:
-        """Execute the greedy policy; returns a list of (frame, timestep) tuples."""
+        """Execute the greedy policy; returns a list of (frame, timestep) tuples.
+
+        Renders every step - playback frames are streamed one SSE event
+        each, so there is no payload reason to subsample.
+        """
         frames = []
         obs, _ = self.env.reset()
         done = False
@@ -147,13 +148,10 @@ class SB3Algorithm(BaseAlgorithm):
             obs, _, terminated, truncated, _ = self.env.step(int(action))
             done = terminated or truncated
 
-            # Render a subset of steps to keep the playback payload small,
-            # but always include the final frame
-            if steps % self.FRAME_STRIDE == 0 or done:
-                frame = self.env.render()
-                frames.append((frame, steps + 1))
-                if callback:
-                    callback(frame)
+            frame = self.env.render()
+            frames.append((frame, steps + 1))
+            if callback:
+                callback(frame, steps + 1)
 
             steps += 1
 
