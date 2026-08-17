@@ -20,6 +20,14 @@ const calculateMovingAverage = (rewards, windowSize) => {
   return window.reduce((sum, r) => sum + r, 0) / window.length;
 };
 
+// Playback pace for turn-based environments (ms per step) - each move is a
+// discrete decision worth seeing. Environments not listed use the adaptive
+// speed (200ms, near-real-time for long rollouts like CartPole).
+const TURN_BASED_PLAYBACK_DELAY = {
+  'FrozenLake-v1': 500,
+  'FrozenLake-v1-NoSlip': 500,
+};
+
 // Keep chart series at a displayable size; the full data stays untouched
 const downsampleForDisplay = (points, maxPoints = 1000) => {
   if (points.length <= maxPoints * 1.5) return points;
@@ -369,11 +377,14 @@ function App() {
         setPlaybackStep(step);
         setPlaybackAction(action ?? null);
 
-        // Once the rollout is clearly long, play near real-time and stay there
+        // Turn-based environments play at a fixed, watchable pace;
+        // otherwise: once the rollout is clearly long, switch to
+        // near-real-time and stay there
+        const fixedDelay = TURN_BASED_PLAYBACK_DELAY[selectedEnvironment];
         if (buffer.length > 60) {
           fast = true;
         }
-        schedule(fast ? 30 : 200);
+        schedule(fixedDelay ?? (fast ? 30 : 200));
       };
 
       // Subscribe to playback stream
