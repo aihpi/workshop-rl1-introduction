@@ -12,7 +12,12 @@
       "actionSpace": {
         "type": "Discrete",
         "size": 4,
-        "actions": ["⬅️ Left (0)", "⬇️ Down (1)", "➡️ Right (2)", "⬆️ Up (3)"]
+        "actions": [
+          "⬅️ Left (0)",
+          "⬇️ Down (1)",
+          "➡️ Right (2)",
+          "⬆️ Up (3)"
+        ]
       },
       "rewards": {
         "goal": 1.0,
@@ -43,7 +48,12 @@
       "actionSpace": {
         "type": "Discrete",
         "size": 4,
-        "actions": ["⬅️ Left (0)", "⬇️ Down (1)", "➡️ Right (2)", "⬆️ Up (3)"]
+        "actions": [
+          "⬅️ Left (0)",
+          "⬇️ Down (1)",
+          "➡️ Right (2)",
+          "⬆️ Up (3)"
+        ]
       },
       "rewards": {
         "goal": 1.0,
@@ -74,7 +84,10 @@
       "actionSpace": {
         "type": "Discrete",
         "size": 2,
-        "actions": ["⬅️ Push cart left (0)", "➡️ Push cart right (1)"]
+        "actions": [
+          "⬅️ Push cart left (0)",
+          "➡️ Push cart right (1)"
+        ]
       },
       "rewards": {
         "step": 1.0,
@@ -116,7 +129,7 @@
         "description": "-1 for every timestep until the flag is reached (episode cap: 200 steps). The return therefore equals minus the episode length - faster solutions score higher, and an agent that never reaches the flag gets -200."
       },
       "stochasticity": "Deterministic dynamics; only the initial position is slightly randomized.",
-      "difficulty": "Hard exploration: random actions almost never reach the flag, so the agent sees no reward signal for a long time. Considered solved at an average return of -110 or better over 100 episodes.",
+      "difficulty": "Hard exploration: random actions almost never reach the flag, so the agent sees no reward signal for a long time. Considered solved at an average return of -110 or better over 100 episodes. Try PPO here: it will most likely FAIL. PPO is on-policy - it learns only from its own most recent episodes - and since random behavior essentially never reaches the flag, every episode returns exactly -200: all advantages are zero and the policy gradient carries no information at all. DQN escapes this trap with its replay buffer (one lucky success is stored and reused for thousands of updates) and its optimistic initial value estimates; PPO has neither.",
       "solvedThreshold": -110,
       "lengthEqualsReturn": true
     },
