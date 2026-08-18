@@ -31,9 +31,7 @@ const ParameterPanel = ({
   isPlayback,
   isEvaluating = false,
   canPlayPolicy,
-  disabled,
-  liveCharts = true,
-  onLiveChartsChange = () => {}
+  disabled
 }) => {
   const [schema, setSchema] = useState(null);
   const [environments, setEnvironments] = useState([]);
@@ -238,24 +236,6 @@ const ParameterPanel = ({
           )}
         </div>
       )}
-
-      {/* Live charts toggle - opt out to train at full speed on slow machines */}
-      <div className="parameter-group">
-        <label>
-          <input
-            type="checkbox"
-            checked={liveCharts}
-            onChange={(e) => onLiveChartsChange(e.target.checked)}
-            disabled={isTraining}
-          />
-          {' '}Live charts
-        </label>
-        <p className="hint">
-          {liveCharts
-            ? 'Charts and frames update during training. Disabling may speed up training on slower machines.'
-            : 'Training runs at full speed; charts appear when it finishes.'}
-        </p>
-      </div>
 
       {/* Control Buttons */}
       <ControlButtons

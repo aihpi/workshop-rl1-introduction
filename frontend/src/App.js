@@ -588,8 +588,6 @@ function App() {
             isEvaluating={isEvaluating}
             canPlayPolicy={trainingComplete}
             disabled={!isValidParameters()}
-            liveCharts={liveCharts}
-            onLiveChartsChange={setLiveCharts}
           />
         </div>
 
@@ -635,6 +633,24 @@ function App() {
             results={evalResults}
             environment={selectedEnvironment}
           />
+
+          {/* Compact live-charts opt-out (full-speed training on slow machines) */}
+          <div className="live-charts-toggle">
+            <label>
+              <input
+                type="checkbox"
+                checked={liveCharts}
+                onChange={(e) => setLiveCharts(e.target.checked)}
+                disabled={isTraining}
+              />
+              {' '}Live charts
+            </label>
+            {!liveCharts && (
+              <span className="toggle-hint">
+                Full speed: charts appear when training finishes.
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

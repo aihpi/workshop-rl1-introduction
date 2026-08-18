@@ -118,3 +118,25 @@ body {
     order: 3;
   }
 }
+
+/* Compact live-charts toggle at the bottom of the right column */
+.live-charts-toggle {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.live-charts-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.live-charts-toggle .toggle-hint {
+  font-style: italic;
+  color: #999;
+}
