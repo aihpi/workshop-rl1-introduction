@@ -100,10 +100,6 @@
       {
         "text": "Stable-Baselines3 DQN Documentation",
         "url": "https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html"
-      },
-      {
-        "text": "Gymnasium CartPole Documentation",
-        "url": "https://gymnasium.farama.org/environments/classic_control/cart_pole/"
       }
     ]
   },

@@ -374,18 +374,19 @@ function App() {
 
           // Render everything accumulated. In live mode most of this is
           // already on screen; in full-speed mode this is the single render.
+          // Prefer the final learning data sent with the complete/stopped
+          // event: the last per-episode snapshot can be stale (training
+          // continues past the last episode boundary on timestep budgets)
+          const finalData = data.learning_data ?? pending.lastLearningData;
           if (all.length > 0) {
             setCurrentEpisode(all.length - 1);
-            setCurrentTimesteps(pending.lastLearningData?.diagnostics?.total_timesteps ?? null);
+            setCurrentTimesteps(finalData?.diagnostics?.total_timesteps ?? null);
           }
           setChartData(pending.chartPoints.slice());
           setLengthChartData(pending.lengthPoints.slice());
           setEpsilonHistory(downsampleForDisplay([...pending.eps]));
-          // Prefer the final policy sent with the complete/stopped event:
-          // the last per-episode snapshot can be stale (training continues
-          // past the last episode boundary on timestep budgets)
-          setLearningData(data.learning_data ?? pending.lastLearningData);
-          setCurrentEpsilon(pending.lastLearningData?.diagnostics?.exploration_rate ?? null);
+          setLearningData(finalData);
+          setCurrentEpsilon(finalData?.diagnostics?.exploration_rate ?? null);
           if (pending.frame) {
             setCurrentFrame(pending.frame);
           }
