@@ -67,15 +67,15 @@ const AlgorithmInfo = ({ algorithm }) => {
           </section>
 
           <section>
-            {/* <h4>Key Concepts</h4> */}
+            {/* Key concepts: rendered generically so each algorithm brings
+                its own terms (Q-values vs policy gradients etc.) */}
             <dl>
-              <dt>Q-Value</dt>
-              <dd>{sections.keyConcepts.qValue}</dd>
-              <dt>Exploration vs Exploitation</dt>
-              <dd>{sections.keyConcepts.exploration}</dd>
-              <dd>{sections.keyConcepts.exploitation}</dd>
-              <dt>Epsilon-Greedy Policy</dt>
-              <dd>{sections.keyConcepts.epsilonGreedy}</dd>
+              {Object.entries(sections.keyConcepts).map(([term, definition]) => (
+                <React.Fragment key={term}>
+                  <dt>{term}</dt>
+                  <dd>{definition}</dd>
+                </React.Fragment>
+              ))}
             </dl>
           </section>
 

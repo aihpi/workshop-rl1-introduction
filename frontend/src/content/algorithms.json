@@ -13,10 +13,9 @@
         "Repeat from step 2"
       ],
       "keyConcepts": {
-        "qValue": "Expected cumulative reward for taking action 'a' in state 's'",
-        "exploration": "Trying random actions to discover new strategies",
-        "exploitation": "Using current knowledge to maximize reward",
-        "epsilonGreedy": "A policy that chooses a random action with probability ε and the best-known action with probability 1-ε"
+        "Q-Value": "Expected cumulative reward for taking action 'a' in state 's'",
+        "Exploration vs Exploitation": "Trying random actions to discover new strategies - versus using current knowledge to maximize reward",
+        "Epsilon-Greedy Policy": "A policy that chooses a random action with probability ε and the best-known action with probability 1-ε"
       },
       "parameters": {
         "learningRate": {
@@ -66,10 +65,9 @@
         "Repeat from step 2"
       ],
       "keyConcepts": {
-        "qValue": "Estimated by the neural network: input state, output one Q-value per action",
-        "exploration": "Trying random actions to discover new strategies. DQN starts fully random (ε = 1) and anneals ε down as it learns",
-        "exploitation": "Using the network's current Q-estimates to pick the best action",
-        "epsilonGreedy": "Same as Q-Learning, but ε decays linearly over the first part of training instead of staying fixed"
+        "Q-Value": "Estimated by the neural network: input state, output one Q-value per action",
+        "Exploration vs Exploitation": "DQN starts fully random (ε = 1) and anneals ε down as it learns, shifting from exploring to exploiting the network's Q-estimates",
+        "Epsilon-Greedy Policy": "Same as Q-Learning, but ε decays linearly over the first part of training instead of staying fixed"
       },
       "parameters": {
         "learningRate": {
@@ -101,6 +99,59 @@
       {
         "text": "Gymnasium CartPole Documentation",
         "url": "https://gymnasium.farama.org/environments/classic_control/cart_pole/"
+      }
+    ]
+  },
+  "PPO": {
+    "name": "PPO (Proximal Policy Optimization)",
+    "description": "Learns the policy directly instead of action values: a neural network outputs action probabilities and is nudged toward actions that worked better than expected. The workhorse of modern RL (robotics, game AI, RLHF for language models).",
+    "sections": {
+      "whatIsIt": "Q-Learning and DQN learn how GOOD each action is and derive behavior from that. PPO belongs to the other big family - policy gradients: its network directly outputs the probability of each action, and training shifts probability toward actions that led to better-than-expected returns. A second network (the critic) estimates how good each state is, providing the 'expected' baseline. The 'proximal' part is PPO's safety mechanism: each update may move the policy only a little (the clip range), which keeps training remarkably stable - one reason PPO is the default choice in modern applications, including the RLHF training of language models.",
+      "howItWorks": [
+        "Initialize policy network (actor) and value network (critic)",
+        "Collect a batch of experience by acting with the current (stochastic) policy",
+        "For each action taken, compute the advantage: did it turn out better or worse than the critic expected?",
+        "Increase the probability of better-than-expected actions, decrease worse ones",
+        "Clip each update so the new policy stays close to the old one (proximal)",
+        "Repeat from step 2 with fresh experience"
+      ],
+      "keyConcepts": {
+        "Policy": "The network's direct output: a probability for each action in the current state",
+        "Advantage": "How much better an action turned out compared to the critic's expectation - the learning signal",
+        "Clipping": "Updates are limited to a small trusted step (the clip range), preventing destructive policy changes",
+        "Exploration": "Comes for free from the stochastic policy - no ε needed; the entropy bonus can keep it more random for longer"
+      },
+      "parameters": {
+        "learningRate": {
+          "symbol": "α (alpha)",
+          "range": "0.00005 ≤ α ≤ 0.003",
+          "description": "Step size of the gradient updates. Higher = faster but less stable."
+        },
+        "discountFactor": {
+          "symbol": "γ (gamma)",
+          "range": "0.9 ≤ γ < 1",
+          "description": "Importance of future rewards. Higher = more long-term planning."
+        },
+        "clipRange": {
+          "symbol": "ε_clip",
+          "range": "0.05 ≤ ε_clip ≤ 0.5",
+          "description": "How far a single update may move the policy. Smaller = more careful, slower learning."
+        },
+        "entropyCoefficient": {
+          "symbol": "c_ent",
+          "range": "0 ≤ c_ent ≤ 0.1",
+          "description": "Bonus for keeping the policy random - more exploration, later commitment."
+        }
+      }
+    },
+    "links": [
+      {
+        "text": "Schulman et al. 2017: Proximal Policy Optimization Algorithms",
+        "url": "https://arxiv.org/abs/1707.06347"
+      },
+      {
+        "text": "Stable-Baselines3 PPO Documentation",
+        "url": "https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html"
       }
     ]
   }

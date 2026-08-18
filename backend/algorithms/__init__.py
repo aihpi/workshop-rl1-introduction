@@ -2,6 +2,7 @@ from typing import Dict, Any, List
 from .base_algorithm import BaseAlgorithm
 from .q_learning import QLearning
 from .dqn import DQNAlgorithm
+from .ppo import PPOAlgorithm
 
 
 class AlgorithmFactory:
@@ -13,10 +14,10 @@ class AlgorithmFactory:
     """
 
     # Registry of available algorithms
-    # Future: Add more algorithms (SARSA, PPO, etc.)
     ALGORITHMS = {
         'Q-Learning': QLearning,
         'DQN': DQNAlgorithm,
+        'PPO': PPOAlgorithm,
     }
 
     @staticmethod
@@ -108,4 +109,4 @@ class AlgorithmFactory:
 
 
 # Export for easier imports
-__all__ = ['AlgorithmFactory', 'BaseAlgorithm', 'QLearning', 'DQNAlgorithm']
+__all__ = ['AlgorithmFactory', 'BaseAlgorithm', 'QLearning', 'DQNAlgorithm', 'PPOAlgorithm']

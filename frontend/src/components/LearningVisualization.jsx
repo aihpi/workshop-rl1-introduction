@@ -22,8 +22,8 @@ const LearningVisualization = ({ learningData, algorithm }) => {
     );
   }
 
-  if (algorithm === 'DQN') {
-    // DQN's training numbers and curves live in the Training Progress panel
+  if (algorithm === 'DQN' || algorithm === 'PPO') {
+    // Deep-RL training numbers and curves live in the Training Progress panel
     return null;
   }
 
