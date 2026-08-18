@@ -89,6 +89,6 @@ class DQNAlgorithm(SB3Algorithm):
             'seed': {
                 'type': 'int',
                 'default': '',
-                'description': 'Empty = random run. Set a number to make runs reproducible (same seed = same run).'
+                'description': 'Same seed = same run. Click the dice to draw a new random seed.'
             },
         }

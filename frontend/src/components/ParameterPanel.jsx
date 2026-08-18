@@ -10,6 +10,10 @@ export const BUDGET_KEYS = ['num_episodes', 'total_timesteps'];
 // Parameters with bespoke rendering; everything else renders generically
 const SPECIAL_KEYS = [...BUDGET_KEYS, 'seed', 'q_init_strategy', 'q_init_value', 'q_init_min', 'q_init_max'];
 
+// Sticky visible seeds: a concrete number is drawn once (and via the 🎲
+// button); every session - preview, play, evaluate, train - uses it verbatim
+const generateSeed = () => Math.floor(Math.random() * 2 ** 31);
+
 // True when value is an integer >= min (values arrive as strings from text inputs)
 export const isIntAtLeast = (value, min) =>
   value !== undefined && value !== '' && !isNaN(value) &&
@@ -116,10 +120,13 @@ const ParameterPanel = ({
         if (stale) return;
         setSchema(paramSchema);
 
-        // Initialize parameters with default values
+        // Initialize parameters with default values; the seed gets a
+        // freshly drawn concrete number (regenerated on env/algo switch)
         const defaultParams = {};
         Object.keys(paramSchema).forEach(key => {
-          defaultParams[key] = paramSchema[key].default;
+          defaultParams[key] = key === 'seed'
+            ? String(generateSeed())
+            : paramSchema[key].default;
         });
         onParametersChange(defaultParams);
 
@@ -210,28 +217,32 @@ const ParameterPanel = ({
         <p className="hint">Select algorithm</p>
       </div>
 
-      {/* Random seed - directly below the environment/algorithm choice */}
+      {/* Random seed - always a concrete number; 🎲 draws a new one */}
       {schema && schema.seed && (
         <div className="parameter-group">
-          <label>
-            Random Seed
-            <span className="param-value">
-              {(parameters.seed ?? schema.seed.default) === '' ? 'random' : (parameters.seed ?? schema.seed.default)}
-            </span>
-          </label>
-          <input
-            type="text"
-            value={parameters.seed ?? schema.seed.default}
-            onChange={(e) => handleParameterChange('seed', e.target.value)}
-            placeholder="random"
-            className="q-value-input"
-          />
+          <label>Random Seed</label>
+          <div className="seed-input-row">
+            <input
+              type="text"
+              value={parameters.seed ?? ''}
+              onChange={(e) => handleParameterChange('seed', e.target.value)}
+              className="q-value-input"
+            />
+            <button
+              type="button"
+              className="dice-button"
+              title="Draw a new random seed"
+              onClick={() => handleParameterChange('seed', String(generateSeed()))}
+              disabled={isTraining}
+            >
+              🎲
+            </button>
+          </div>
           <p className="hint">{schema.seed.description}</p>
 
-          {/* Validation Warning: empty is fine, otherwise a non-negative integer */}
-          {parameters.seed !== undefined && parameters.seed !== '' && !isIntAtLeast(parameters.seed, 0) && (
+          {!isIntAtLeast(parameters.seed, 0) && (
             <p className="hint error">
-              ⚠️ Must be a non-negative integer (or empty for a random run)
+              ⚠️ Must be a non-negative integer — click 🎲 for a random one
             </p>
           )}
         </div>

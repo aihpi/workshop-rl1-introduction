@@ -123,3 +123,33 @@
   padding-left: 0.5rem;
   font-style: normal;
 }
+
+/* Seed input with the dice (new random seed) button */
+.seed-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.seed-input-row .q-value-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.dice-button {
+  border: 1px solid #ddd;
+  background: #f8f8fb;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.dice-button:hover:not(:disabled) {
+  background: #efeef5;
+}
+
+.dice-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

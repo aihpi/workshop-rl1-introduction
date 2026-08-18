@@ -193,6 +193,31 @@ describe('ParameterPanel', () => {
     });
   });
 
+  test('draws a concrete numeric seed as the default', async () => {
+    /**
+     * WHY: The seed is sticky and always visible - preview, play, eval
+     * and training share it; the dice button draws a new one
+     * HOW: Schema with a seed param; the initialized defaults must
+     * contain a numeric seed string, and the dice button must render
+     */
+    // Arrange
+    api.getParameterSchema.mockResolvedValue({
+      ...mockSchema,
+      seed: { type: 'int', default: '', description: 'Same seed = same run.' }
+    });
+
+    // Act
+    render(<ParameterPanel {...defaultProps} />);
+
+    // Assert
+    await waitFor(() => {
+      expect(defaultProps.onParametersChange).toHaveBeenCalledWith(
+        expect.objectContaining({ seed: expect.stringMatching(/^\d+$/) })
+      );
+    });
+    expect(screen.getByTitle(/draw a new random seed/i)).toBeInTheDocument();
+  });
+
   test('renders DQN schema generically without Q-init section', async () => {
     /**
      * WHY: New algorithm parameters must render from the schema alone,
