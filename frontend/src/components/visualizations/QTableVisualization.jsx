@@ -119,7 +119,7 @@ const QTableVisualization = ({ learningData }) => {
 
   return (
     <div className="learning-visualization">
-      <h2>Q-Table Heatmap</h2>
+      <h2>Policy: Q-Table</h2>
 
       <div className="stats">
         <div className="stat">

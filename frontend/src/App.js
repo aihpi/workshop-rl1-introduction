@@ -580,6 +580,14 @@ function App() {
         </div>
 
         <div className="column column-right">
+          {/* Q-table first: at the top it sits side by side with the
+              environment frame, making the table<->grid correspondence
+              visible (renders nothing for DQN) */}
+          <LearningVisualization
+            learningData={learningData}
+            algorithm={selectedAlgorithm}
+            environment={selectedEnvironment}
+          />
           <TrainingProgress
             episodesTrained={(isTraining || trainingComplete) ? currentEpisode + 1 : 0}
             timesteps={currentTimesteps}
@@ -595,11 +603,6 @@ function App() {
           <EvaluationPanel
             progress={evalProgress}
             results={evalResults}
-            environment={selectedEnvironment}
-          />
-          <LearningVisualization
-            learningData={learningData}
-            algorithm={selectedAlgorithm}
             environment={selectedEnvironment}
           />
         </div>

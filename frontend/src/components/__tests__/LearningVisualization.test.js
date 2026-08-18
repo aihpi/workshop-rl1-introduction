@@ -20,7 +20,7 @@ describe('LearningVisualization dispatcher', () => {
       />
     );
 
-    expect(screen.getByText(/q-table heatmap/i)).toBeInTheDocument();
+    expect(screen.getByText(/policy: q-table/i)).toBeInTheDocument();
   });
 
   test('renders nothing for DQN (its numbers live in Training Progress)', () => {
