@@ -588,6 +588,7 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
+        <div className="header-inner">
         {/* Home = reload the app */}
         <button
           type="button"
@@ -617,6 +618,7 @@ function App() {
               className="header-logo"
             />
           </a>
+        </div>
         </div>
       </header>
 
