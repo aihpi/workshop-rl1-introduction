@@ -4,7 +4,7 @@ import ParameterPanel from './components/ParameterPanel';
 import EnvironmentViewer from './components/EnvironmentViewer';
 import EnvironmentInfo from './components/EnvironmentInfo';
 import AlgorithmInfo from './components/AlgorithmInfo';
-import RewardChart from './components/RewardChart';
+import TrainingProgress from './components/TrainingProgress';
 import LearningVisualization from './components/LearningVisualization';
 import EvaluationPanel from './components/visualizations/EvaluationPanel';
 import { startTraining, stopTraining, subscribeToTraining, subscribeToPlayback, subscribeToEvaluation, resetTraining, getEnvironmentPreview } from './api';
@@ -29,6 +29,13 @@ const TURN_BASED_PLAYBACK_DELAY = {
   'FrozenLake-v1-NoSlip': 500,
 };
 
+// Keep chart series at a displayable size; the full data stays untouched
+const downsampleForDisplay = (points, maxPoints = 1000) => {
+  if (points.length <= maxPoints * 1.5) return points;
+  const stride = Math.ceil(points.length / maxPoints);
+  return points.filter((_, i) => i % stride === 0 || i === points.length - 1);
+};
+
 function App() {
   // Configuration state
   const [selectedAlgorithm, setSelectedAlgorithm] = useState('Q-Learning');
@@ -51,6 +58,9 @@ function App() {
   const [currentFrame, setCurrentFrame] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(0);
   const [currentTimesteps, setCurrentTimesteps] = useState(null); // total env steps so far (timestep-budgeted algorithms)
+  const [currentEpsilon, setCurrentEpsilon] = useState(null); // current exploration rate (DQN)
+  const [epsilonHistory, setEpsilonHistory] = useState([]); // {episode, epsilon} points (DQN)
+  const [usedSeed, setUsedSeed] = useState(null); // resolved seed of the current run (replicability)
   const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
   const [playbackAction, setPlaybackAction] = useState(null); // action taken at the shown playback frame
   const [rewards, setRewards] = useState([]);
@@ -116,6 +126,9 @@ function App() {
     setTrainingComplete(false);
     setCurrentEpisode(0);
     setCurrentTimesteps(null);
+    setCurrentEpsilon(null);
+    setEpsilonHistory([]);
+    setUsedSeed(null);
     setPlaybackStep(null);
     setPlaybackAction(null);
     setRewards([]);
@@ -191,6 +204,7 @@ function App() {
 
       const newSessionId = response.session_id;
       setSessionId(newSessionId);
+      setUsedSeed(response.seed ?? null);
 
       // Window size and total episodes are only known when the budget is
       // episode-based; timestep-budgeted algorithms (e.g. DQN) produce an
@@ -218,6 +232,7 @@ function App() {
         frame: null,
         all: [],
         chartPoints: [],
+        eps: [],
         flushedLength: 0,
         timer: null
       };
@@ -230,9 +245,10 @@ function App() {
         const latest = pending.latest;
         pending.latest = null;
 
-        // Status line updates are cheap text - always live
+        // Status/number updates are cheap text - always live
         setCurrentEpisode(latest.episode);
         setCurrentTimesteps(latest.learning_data?.diagnostics?.total_timesteps ?? null);
+        setCurrentEpsilon(latest.learning_data?.diagnostics?.exploration_rate ?? null);
 
         // Chart boundary points accumulate regardless of mode
         const all = pending.all;
@@ -262,6 +278,7 @@ function App() {
         setLearningData(latest.learning_data);
         setRewards(all.slice());
         setChartData(pending.chartPoints.slice());
+        setEpsilonHistory(downsampleForDisplay([...pending.eps]));
       };
 
       // Subscribe to training updates
@@ -272,6 +289,13 @@ function App() {
           pending.latest = data;
           pending.lastLearningData = data.learning_data;
           pending.all.push(data.reward);
+          const diagnostics = data.learning_data?.diagnostics;
+          if (diagnostics?.exploration_rate != null) {
+            pending.eps.push({
+              episode: (diagnostics.episode ?? pending.all.length - 1) + 1,
+              epsilon: diagnostics.exploration_rate
+            });
+          }
           if (data.frame) {
             pending.frame = data.frame;
           }
@@ -306,7 +330,9 @@ function App() {
           }
           setRewards(all.slice());
           setChartData(pending.chartPoints.slice());
+          setEpsilonHistory(downsampleForDisplay([...pending.eps]));
           setLearningData(pending.lastLearningData);
+          setCurrentEpsilon(pending.lastLearningData?.diagnostics?.exploration_rate ?? null);
           if (pending.frame) {
             setCurrentFrame(pending.frame);
           }
@@ -535,10 +561,15 @@ function App() {
         </div>
 
         <div className="column column-right">
-          <RewardChart
+          <TrainingProgress
+            episodesTrained={(isTraining || trainingComplete) ? currentEpisode + 1 : 0}
+            timesteps={currentTimesteps}
+            epsilon={currentEpsilon}
+            seed={usedSeed}
             chartData={chartData}
             totalEpisodes={totalEpisodes}
             windowSize={windowSize}
+            epsilonHistory={epsilonHistory}
           />
           <EvaluationPanel
             progress={evalProgress}

@@ -11,14 +11,6 @@ describe('LearningVisualization dispatcher', () => {
     q_table: Array.from({ length: 16 }, () => [0.1, 0.2, 0.3, 0.4])
   };
 
-  const dqnData = {
-    diagnostics: {
-      exploration_rate: 0.5,
-      episode_length: 137,
-      total_timesteps: 8450
-    }
-  };
-
   test('renders Q-table heatmap for Q-Learning data', () => {
     render(
       <LearningVisualization
@@ -31,18 +23,16 @@ describe('LearningVisualization dispatcher', () => {
     expect(screen.getByText(/q-table heatmap/i)).toBeInTheDocument();
   });
 
-  test('renders diagnostics for DQN data', () => {
-    render(
+  test('renders nothing for DQN (its numbers live in Training Progress)', () => {
+    const { container } = render(
       <LearningVisualization
         algorithm="DQN"
         environment="CartPole-v1"
-        learningData={dqnData}
+        learningData={{ diagnostics: { exploration_rate: 0.5 } }}
       />
     );
 
-    expect(screen.getByText(/dqn training diagnostics/i)).toBeInTheDocument();
-    expect(screen.getByText(/exploration/i)).toBeInTheDocument();
-    expect(screen.getByText('8450')).toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 
   test('renders placeholder when no learning data', () => {
@@ -51,19 +41,6 @@ describe('LearningVisualization dispatcher', () => {
         algorithm="Q-Learning"
         environment="FrozenLake-v1-NoSlip"
         learningData={null}
-      />
-    );
-
-    expect(screen.getByText(/no learning data available/i)).toBeInTheDocument();
-  });
-
-  test('renders placeholder for mismatched data shape', () => {
-    // DQN selected but stale Q-table data present
-    render(
-      <LearningVisualization
-        algorithm="DQN"
-        environment="CartPole-v1"
-        learningData={qTableData}
       />
     );
 

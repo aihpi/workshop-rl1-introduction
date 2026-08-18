@@ -166,7 +166,11 @@ def start_training():
         # Create session
         session_id = trainer.create_session(algorithm, environment, parameters)
 
-        return jsonify({'session_id': session_id})
+        # Report the resolved seed (drawn randomly when none was given),
+        # so any run can be replicated
+        used_seed = trainer.get_session(session_id)['parameters']['seed']
+
+        return jsonify({'session_id': session_id, 'seed': used_seed})
 
     except ValueError as e:
         return jsonify({'error': str(e)}), 400

@@ -130,6 +130,28 @@ class TestErrorHandling:
         assert response.status_code == 400
         assert 'does not support' in response.get_json()['error']
 
+    def test_train_reports_resolved_seed(self, client):
+        """
+        Test that POST /api/train returns the seed actually used.
+
+        WHY: Random runs must be replicable - the drawn seed is shown in the UI.
+        HOW: Start a session with an empty seed, expect an int seed in the response.
+        """
+        # Act
+        response = client.post('/api/train', json={
+            'algorithm': 'Q-Learning',
+            'environment': 'FrozenLake-v1-NoSlip',
+            'parameters': {'num_episodes': 5, 'seed': ''}
+        })
+
+        # Assert
+        assert response.status_code == 200
+        data = response.get_json()
+        assert isinstance(data['seed'], int)
+
+        # Cleanup
+        client.post('/api/reset')
+
     def test_stop_unknown_session_returns_404(self, client):
         """
         Test POST /api/train/stop/<id> with an unknown session.

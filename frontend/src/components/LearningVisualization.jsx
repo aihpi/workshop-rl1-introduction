@@ -1,6 +1,5 @@
 import React from 'react';
 import QTableVisualization from './visualizations/QTableVisualization';
-import DQNDiagnostics from './visualizations/DQNDiagnostics';
 import './LearningVisualization.css';
 
 /**
@@ -12,8 +11,9 @@ const LearningVisualization = ({ learningData, algorithm, environment }) => {
     return <QTableVisualization learningData={learningData} />;
   }
 
-  if (algorithm === 'DQN' && learningData?.diagnostics) {
-    return <DQNDiagnostics learningData={learningData} />;
+  if (algorithm === 'DQN') {
+    // DQN's training numbers and curves live in the Training Progress panel
+    return null;
   }
 
   return (
