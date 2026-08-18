@@ -15,7 +15,10 @@ from .sb3_base import SB3Algorithm
 class PPOAlgorithm(SB3Algorithm):
     """PPO wrapper implementing the BaseAlgorithm interface."""
 
-    SUPPORTED_ENVIRONMENTS = ['CartPole-v1']
+    # MountainCar is deliberately included although PPO is expected to
+    # FAIL there (a teaching contrast to DQN): on-policy learning gets no
+    # gradient signal while every rollout returns -200
+    SUPPORTED_ENVIRONMENTS = ['CartPole-v1', 'MountainCar-v0']
 
     def _create_model(self, env, parameters: Dict[str, Any]):
         return PPO(

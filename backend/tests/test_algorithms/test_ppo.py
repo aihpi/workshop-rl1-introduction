@@ -40,7 +40,7 @@ class TestPPOSchema:
             assert 'min' in schema[name] and 'max' in schema[name]
 
     def test_supported_environments(self):
-        assert PPOAlgorithm.SUPPORTED_ENVIRONMENTS == ['CartPole-v1']
+        assert PPOAlgorithm.SUPPORTED_ENVIRONMENTS == ['CartPole-v1', 'MountainCar-v0']
 
 
 class TestPPOTraining:

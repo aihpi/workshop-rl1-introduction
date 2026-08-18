@@ -14,7 +14,7 @@ class TestCompatibility:
 
         assert compat['Q-Learning'] == ['FrozenLake-v1-NoSlip', 'FrozenLake-v1']
         assert compat['DQN'] == ['CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1', 'MountainCar-v0']
-        assert compat['PPO'] == ['CartPole-v1']
+        assert compat['PPO'] == ['CartPole-v1', 'MountainCar-v0']
 
     def test_incompatible_pair_raises(self):
         env = gym.make('CartPole-v1', render_mode='rgb_array')
