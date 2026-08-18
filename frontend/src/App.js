@@ -655,7 +655,7 @@ function App() {
       </div>
 
       <footer className="app-footer">
-        <p>Phase 2: Tabular Q-Learning & Deep Q-Networks</p>
+        <p>Authors: David Goll, Jill Barvencik</p>
       </footer>
     </div>
   );

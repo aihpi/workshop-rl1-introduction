@@ -19,9 +19,6 @@ body {
 }
 
 .App {
-  /* Lock the app to the viewport: each column scrolls internally
-     (header and footer stay visible; there is no page-level scroll) */
-  height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -54,10 +51,10 @@ body {
 }
 
 .main-content {
-  flex: 1;
-  /* Allows the grid to shrink below its content height so the columns'
-     own overflow-y takes over */
-  min-height: 0;
+  /* Exactly one viewport tall: each column scrolls internally, while the
+     page itself still scrolls globally (mouse over header/gaps/footer) -
+     scrolling the big header away gives the columns the full screen */
+  height: 100vh;
   display: grid;
   grid-template-columns: 300px 400px 1fr;
   gap: 1.5rem;
@@ -73,6 +70,14 @@ body {
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow-y: auto;
+  /* Reaching a column's end must not yank the whole page */
+  overscroll-behavior: contain;
+}
+
+/* Flex children default to shrink-to-fit, which suppresses the columns'
+   scrollbars by compressing panels instead of overflowing */
+.column > * {
+  flex-shrink: 0;
 }
 
 .column-left {
@@ -96,8 +101,7 @@ body {
   background-color: #212427;
   color: white;
   text-align: center;
-  padding: 1rem;
-  margin-top: auto;
+  padding: 0.5rem;
 }
 
 .app-footer p {
@@ -109,6 +113,8 @@ body {
 @media (max-width: 1200px) {
   .main-content {
     grid-template-columns: 1fr;
+    /* Stacked columns: natural height, plain page scrolling */
+    height: auto;
   }
 
   .column-left {
