@@ -17,7 +17,8 @@ class EnvironmentManager:
     SUPPORTED_ENVIRONMENTS = [
         'FrozenLake-v1-NoSlip',
         'FrozenLake-v1',
-        'CartPole-v1'
+        'CartPole-v1',
+        'MountainCar-v0'
     ]
 
     @staticmethod

@@ -55,7 +55,7 @@ class TestDQNSchema:
 
     def test_supported_environments(self):
         assert DQNAlgorithm.SUPPORTED_ENVIRONMENTS == [
-            'CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1'
+            'CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1', 'MountainCar-v0'
         ]
 
 

@@ -16,6 +16,7 @@ class TestEnvironmentCreation:
         assert 'FrozenLake-v1' in envs
         assert 'FrozenLake-v1-NoSlip' in envs
         assert 'CartPole-v1' in envs
+        assert 'MountainCar-v0' in envs
 
     def test_create_cartpole(self):
         env = EnvironmentManager.create_environment('CartPole-v1', seed=42)
@@ -28,7 +29,7 @@ class TestEnvironmentCreation:
 
     def test_unknown_environment_rejected(self):
         with pytest.raises(ValueError, match="not supported"):
-            EnvironmentManager.create_environment('MountainCar-v0')
+            EnvironmentManager.create_environment('Acrobot-v1')
 
 
 class TestFrameConversion:

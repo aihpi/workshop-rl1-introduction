@@ -8,6 +8,7 @@ const ACTION_ARROWS = {
   'CartPole-v1': ['⬅', '➡'],
   'FrozenLake-v1': ['⬅', '⬇', '➡', '⬆'],       // LEFT, DOWN, RIGHT, UP
   'FrozenLake-v1-NoSlip': ['⬅', '⬇', '➡', '⬆'],
+  'MountainCar-v0': ['⬅', '•', '➡'],           // push left, no push, push right
 };
 
 const EnvironmentViewer = ({ frame, episode, timesteps, playbackStep, playbackAction, environment, isTraining, isPlayback, trainingComplete }) => {

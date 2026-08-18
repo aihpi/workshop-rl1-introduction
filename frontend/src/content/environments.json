@@ -91,5 +91,40 @@
         "url": "https://gymnasium.farama.org/environments/classic_control/cart_pole/"
       }
     ]
+  },
+  "MountainCar-v0": {
+    "name": "MountainCar",
+    "description": "Drive an underpowered car out of a valley. The engine is too weak to climb directly - the agent must learn to build momentum by swinging back and forth.",
+    "sections": {
+      "goal": "Reach the flag on the right hill. The car's engine cannot climb the slope directly, so the agent must first drive away from the goal to gain momentum - a strategy it has to discover on its own.",
+      "stateSpace": {
+        "type": "Continuous (Box)",
+        "size": 2,
+        "description": "Two continuous values: the car's position along the track and its velocity. Continuous states rule out a Q-table - a neural network (DQN) is needed."
+      },
+      "actionSpace": {
+        "type": "Discrete",
+        "size": 3,
+        "actions": [
+          "⬅️ Accelerate left (0)",
+          "• Don't accelerate (1)",
+          "➡️ Accelerate right (2)"
+        ]
+      },
+      "rewards": {
+        "step": -1.0,
+        "description": "-1 for every timestep until the flag is reached (episode cap: 200 steps). The return therefore equals minus the episode length - faster solutions score higher, and an agent that never reaches the flag gets -200."
+      },
+      "stochasticity": "Deterministic dynamics; only the initial position is slightly randomized.",
+      "difficulty": "Hard exploration: random actions almost never reach the flag, so the agent sees no reward signal for a long time. Considered solved at an average return of -110 or better over 100 episodes.",
+      "solvedThreshold": -110,
+      "lengthEqualsReturn": true
+    },
+    "links": [
+      {
+        "text": "Gymnasium MountainCar Documentation",
+        "url": "https://gymnasium.farama.org/environments/classic_control/mountain_car/"
+      }
+    ]
   }
 }

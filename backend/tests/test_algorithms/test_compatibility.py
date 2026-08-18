@@ -13,7 +13,7 @@ class TestCompatibility:
         compat = AlgorithmFactory.get_compatibility()
 
         assert compat['Q-Learning'] == ['FrozenLake-v1-NoSlip', 'FrozenLake-v1']
-        assert compat['DQN'] == ['CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1']
+        assert compat['DQN'] == ['CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1', 'MountainCar-v0']
         assert compat['PPO'] == ['CartPole-v1']
 
     def test_incompatible_pair_raises(self):

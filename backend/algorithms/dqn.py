@@ -17,7 +17,26 @@ from .sb3_base import SB3Algorithm
 class DQNAlgorithm(SB3Algorithm):
     """Deep Q-Network wrapper implementing the BaseAlgorithm interface."""
 
-    SUPPORTED_ENVIRONMENTS = ['CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1']
+    SUPPORTED_ENVIRONMENTS = ['CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1', 'MountainCar-v0']
+
+    # Hidden hyperparameters per environment (rl-zoo tuned); overridable
+    # via parameters (used by tests for fast runs)
+    HIDDEN_DEFAULTS = {
+        'MountainCar-v0': {
+            'buffer_size': 10_000,
+            'learning_starts': 1000,
+            'target_update_interval': 600,
+            'train_freq': 16,
+            'gradient_steps': 8,
+        },
+    }
+    HIDDEN_DEFAULTS_BASE = {
+        'buffer_size': 100_000,
+        'learning_starts': 1000,
+        'target_update_interval': 10,
+        'train_freq': 256,
+        'gradient_steps': 128,
+    }
 
     def get_learning_data(self, **kwargs) -> Dict[str, Any]:
         data = super().get_learning_data(**kwargs)
@@ -33,6 +52,10 @@ class DQNAlgorithm(SB3Algorithm):
         return data
 
     def _create_model(self, env, parameters: Dict[str, Any]):
+        hidden = {
+            **self.HIDDEN_DEFAULTS_BASE,
+            **self.HIDDEN_DEFAULTS.get(env.spec.id, {}),
+        }
         return DQN(
             'MlpPolicy',
             env,
@@ -41,13 +64,11 @@ class DQNAlgorithm(SB3Algorithm):
             batch_size=int(parameters.get('batch_size', 64)),
             exploration_fraction=float(parameters.get('exploration_fraction', 0.16)),
             exploration_final_eps=float(parameters.get('exploration_final_eps', 0.04)),
-            # rl-zoo tuned values; hidden from the UI but overridable
-            # via parameters (used by tests for fast runs)
-            buffer_size=int(parameters.get('buffer_size', 100_000)),
-            learning_starts=int(parameters.get('learning_starts', 1000)),
-            target_update_interval=int(parameters.get('target_update_interval', 10)),
-            train_freq=int(parameters.get('train_freq', 256)),
-            gradient_steps=int(parameters.get('gradient_steps', 128)),
+            buffer_size=int(parameters.get('buffer_size', hidden['buffer_size'])),
+            learning_starts=int(parameters.get('learning_starts', hidden['learning_starts'])),
+            target_update_interval=int(parameters.get('target_update_interval', hidden['target_update_interval'])),
+            train_freq=int(parameters.get('train_freq', hidden['train_freq'])),
+            gradient_steps=int(parameters.get('gradient_steps', hidden['gradient_steps'])),
             policy_kwargs={'net_arch': parameters.get('net_arch', [256, 256])},
             seed=parameters.get('seed', 42),
             device='cpu',
@@ -56,21 +77,34 @@ class DQNAlgorithm(SB3Algorithm):
 
     @staticmethod
     def get_parameter_schema(environment: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
-        # Environment-specific defaults: FrozenLake's sparse 0/1 reward
-        # needs a longer exploration phase; episodes are short, so budgets
-        # differ from CartPole's
-        budget_defaults = {
-            'FrozenLake-v1': 100000,
-            'FrozenLake-v1-NoSlip': 30000,
+        # Environment-specific defaults (rl-zoo tuned where available):
+        # FrozenLake's sparse 0/1 reward needs a long exploration phase;
+        # MountainCar's sparse goal needs its own tuned recipe entirely
+        base = {
+            'total_timesteps': 50000,
+            'learning_rate': 0.0023,
+            'discount_factor': 0.99,
+            'batch_size': 64,
+            'exploration_fraction': 0.16,
+            'exploration_final_eps': 0.04,
         }
-        exploration_fraction_defaults = {
-            'FrozenLake-v1': 0.5,
-            'FrozenLake-v1-NoSlip': 0.5,
+        overrides = {
+            'FrozenLake-v1': {'total_timesteps': 100000, 'exploration_fraction': 0.5},
+            'FrozenLake-v1-NoSlip': {'total_timesteps': 30000, 'exploration_fraction': 0.5},
+            'MountainCar-v0': {
+                'total_timesteps': 120000,
+                'learning_rate': 0.004,
+                'discount_factor': 0.98,
+                'batch_size': 128,
+                'exploration_fraction': 0.2,
+                'exploration_final_eps': 0.07,
+            },
         }
+        d = {**base, **overrides.get(environment, {})}
         return {
             'total_timesteps': {
                 'type': 'int',
-                'default': budget_defaults.get(environment, 50000),
+                'default': d['total_timesteps'],
                 'description': 'Training budget in environment steps. Must be an integer.'
             },
             'learning_rate': {
@@ -78,7 +112,7 @@ class DQNAlgorithm(SB3Algorithm):
                 'min': 0.0001,
                 'max': 0.01,
                 'step': 0.0001,
-                'default': 0.0023,
+                'default': d['learning_rate'],
                 'description': 'Adam optimizer step size for the Q-network'
             },
             'discount_factor': {
@@ -86,7 +120,7 @@ class DQNAlgorithm(SB3Algorithm):
                 'min': 0.9,
                 'max': 0.999,
                 'step': 0.001,
-                'default': 0.99,
+                'default': d['discount_factor'],
                 'description': '0 ≤ γ < 1 - importance of future rewards'
             },
             'exploration_fraction': {
@@ -94,7 +128,7 @@ class DQNAlgorithm(SB3Algorithm):
                 'min': 0.05,
                 'max': 1.0,
                 'step': 0.01,
-                'default': exploration_fraction_defaults.get(environment, 0.16),
+                'default': d['exploration_fraction'],
                 'description': 'Fraction of training over which ε decays from 1.0'
             },
             'exploration_final_eps': {
@@ -102,7 +136,7 @@ class DQNAlgorithm(SB3Algorithm):
                 'min': 0.0,
                 'max': 0.5,
                 'step': 0.01,
-                'default': 0.04,
+                'default': d['exploration_final_eps'],
                 'description': 'Final ε after decay'
             },
             'batch_size': {
@@ -110,7 +144,7 @@ class DQNAlgorithm(SB3Algorithm):
                 'min': 16,
                 'max': 256,
                 'step': 16,
-                'default': 64,
+                'default': d['batch_size'],
                 'description': 'Minibatch size per gradient step'
             },
             'seed': {
