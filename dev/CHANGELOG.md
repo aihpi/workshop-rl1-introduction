@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
+## [0.9.0] - 2026-08-18
+
+### Added
+- **PPO (stable-baselines3)** on CartPole (SB3 defaults, 50k steps validated to 500/500) — the first policy-gradient algorithm; ε-chart auto-hides, About panel explains policy/advantage/clipping
+- **DQN on FrozenLake** (both variants): the network's Q-values for all 16 states are rendered in the existing Q-table visualization — same picture as tabular Q-Learning, produced by a network
+- **MountainCar-v0** with DQN (rl-zoo tuned recipe, 100k steps) — hard-exploration environment; content explains the momentum trick and the -110 solved threshold
+- **PPO on MountainCar as a deliberate failure demo**: on-policy learning gets a zero-information gradient while every rollout returns -200; the environment page explains why and contrasts DQN's replay buffer
+- **Evaluate Policy**: 100 greedy episodes with progress stream; mean return ± 95% CI and σ, compared against the environment's solved threshold; works on untrained sessions (baseline)
+- **Sticky seeds**: the seed field always holds a concrete number, used verbatim by preview/play/eval/train; dice button draws a new one; preview, play-before-training and training are all bit-reproducible
+- **Initial value estimate (Q₀) parameter for DQN**: optimistic/pessimistic initialization via a final-layer bias shift (c=0 = stock SB3); slider ranges scaled per environment; teaches why zero-init accidentally solves MountainCar (all-negative rewards make it optimistic)
+- **Play policy before training** shows the untrained/random baseline; playback overlays the chosen action (arrows, coast dot for MountainCar)
+- **Initial learning-data preview**: the untrained Q-table (or DQN network readout) renders before training and reacts to init-parameter changes (debounced)
+- Unified **Training Progress** panel: return, episode length (hidden where length ≡ return) and exploration charts plus data-driven stat tiles
+- Header with AISC/BMFTR logos and home button
+
+### Changed
+- **Per-environment tuned DQN defaults, seed-swept**: FrozenLake got its own right-sized config (64×64 net, 10k buffer, train_freq 4/4, ε floor 0.15) after sweeps showed CartPole's burst-update config can unlearn a solved policy; budgets: NoSlip 30k→5k (5/5 seeds), slippery 100k→30k, PPO CartPole 100k→50k, MountainCar 120k→100k
+- **Q-Learning masks terminal states in the Bellman update** (SB3-style `r if terminated`) instead of relying on zeroed init rows; the FrozenLake-specific terminal-state detection was deleted; truncation still bootstraps
+- **Terminal tiles in the Q-table visualization are muted** (grey, no greedy highlight, excluded from min/max/avg) — their values are never used or updated; which states are terminal is display metadata in environments.json
+- **Docker images slimmed: backend 2.22GB→1.27GB, frontend 767MB→97MB** (no apt packages — pygame wheels vendor SDL; no uv cache layer; multi-stage frontend served by nginx). `docker-compose.yml` is now the self-contained participant mode; new `docker-compose.dev.yml` opt-in for maintainers (bind mounts, hot reload, FLASK_DEBUG=1). CI rebuilds on any source change with a registry build cache; docs updated (`docker compose pull` step, 3030:80 mapping)
+
+### Fixed
+- **Stale policy display after training**: the complete/stopped SSE event now carries the final learning data — timestep-budget algorithms keep training past the last episode-boundary snapshot, so the displayed greedy actions could disagree with playback (reproduced: table showed →, agent played ↑)
+- **DQN training frames on FrozenLake showed the reset state**: the terminal-frame trick only handled classic control's `unwrapped.state`; toy-text envs keep it in `unwrapped.s`
+- ε/timesteps stat tiles read the final diagnostics instead of the last episode snapshot
+
 ## [0.8.0] - 2026-08-12
 
 ### Added
