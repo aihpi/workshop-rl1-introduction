@@ -150,13 +150,12 @@ function App() {
     loadPreview();
   }, [selectedEnvironment, selectedAlgorithm]);
 
-  // Before any training, show the INITIAL Q-table: participants see the
-  // starting point (and how the q_init parameters shape it) instead of a
-  // table that pops into existence mid-training. Q-Learning only - DQN
-  // has no pre-training visualization. Debounced; mid-typing parameter
-  // values may be invalid and are ignored quietly.
+  // Before any training, show the INITIAL learning data: participants see
+  // the starting point (Q-Learning's q_init table; DQN's random network
+  // read out as a table on FrozenLake) instead of it popping into
+  // existence mid-training. Debounced; mid-typing parameter values may
+  // be invalid and are ignored quietly.
   useEffect(() => {
-    if (selectedAlgorithm !== 'Q-Learning') return;
     if (isTraining || trainingComplete) return;
 
     let stale = false;
@@ -660,7 +659,7 @@ function App() {
         <div className="column column-right">
           {/* Q-table first: at the top it sits side by side with the
               environment frame, making the table<->grid correspondence
-              visible (renders nothing for DQN) */}
+              visible (renders only when the algorithm reports a q_table) */}
           <LearningVisualization
             learningData={learningData}
             algorithm={selectedAlgorithm}

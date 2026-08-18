@@ -6,6 +6,9 @@ CartPole-v1, so the workshop defaults train reliably on CPU.
 """
 from typing import Dict, Any, Optional
 
+import gymnasium as gym
+import numpy as np
+import torch
 from stable_baselines3 import DQN
 
 from .sb3_base import SB3Algorithm
@@ -14,7 +17,20 @@ from .sb3_base import SB3Algorithm
 class DQNAlgorithm(SB3Algorithm):
     """Deep Q-Network wrapper implementing the BaseAlgorithm interface."""
 
-    SUPPORTED_ENVIRONMENTS = ['CartPole-v1']
+    SUPPORTED_ENVIRONMENTS = ['CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1']
+
+    def get_learning_data(self, **kwargs) -> Dict[str, Any]:
+        data = super().get_learning_data(**kwargs)
+        # Discrete-observation environments (FrozenLake) are enumerable:
+        # read the network's Q-values for EVERY state - the exact same
+        # picture as tabular Q-Learning's table, produced by a network
+        if isinstance(self.env.observation_space, gym.spaces.Discrete):
+            states = np.arange(self.env.observation_space.n)
+            obs_tensor, _ = self.model.policy.obs_to_tensor(states)
+            with torch.no_grad():
+                q_values = self.model.q_net(obs_tensor).cpu().numpy()
+            data['q_table'] = [[float(v) for v in row] for row in q_values]
+        return data
 
     def _create_model(self, env, parameters: Dict[str, Any]):
         return DQN(
@@ -40,10 +56,21 @@ class DQNAlgorithm(SB3Algorithm):
 
     @staticmethod
     def get_parameter_schema(environment: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+        # Environment-specific defaults: FrozenLake's sparse 0/1 reward
+        # needs a longer exploration phase; episodes are short, so budgets
+        # differ from CartPole's
+        budget_defaults = {
+            'FrozenLake-v1': 100000,
+            'FrozenLake-v1-NoSlip': 30000,
+        }
+        exploration_fraction_defaults = {
+            'FrozenLake-v1': 0.5,
+            'FrozenLake-v1-NoSlip': 0.5,
+        }
         return {
             'total_timesteps': {
                 'type': 'int',
-                'default': 50000,
+                'default': budget_defaults.get(environment, 50000),
                 'description': 'Training budget in environment steps. Must be an integer.'
             },
             'learning_rate': {
@@ -67,7 +94,7 @@ class DQNAlgorithm(SB3Algorithm):
                 'min': 0.05,
                 'max': 1.0,
                 'step': 0.01,
-                'default': 0.16,
+                'default': exploration_fraction_defaults.get(environment, 0.16),
                 'description': 'Fraction of training over which ε decays from 1.0'
             },
             'exploration_final_eps': {

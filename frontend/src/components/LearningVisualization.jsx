@@ -7,10 +7,15 @@ import './LearningVisualization.css';
  * New algorithms (PPO, ...) add a case here.
  */
 const LearningVisualization = ({ learningData, algorithm }) => {
+  // Any algorithm reporting a q_table gets the table view: tabular
+  // Q-Learning always, and DQN on enumerable-state environments
+  // (FrozenLake), where the network's Q-values for all states are the
+  // same picture - produced by a network instead of a table
+  if (learningData?.q_table) {
+    return <QTableVisualization learningData={learningData} />;
+  }
+
   if (algorithm === 'Q-Learning') {
-    if (learningData?.q_table) {
-      return <QTableVisualization learningData={learningData} />;
-    }
     // The initial table is being fetched (brief)
     return (
       <div className="learning-visualization">
@@ -22,19 +27,8 @@ const LearningVisualization = ({ learningData, algorithm }) => {
     );
   }
 
-  if (algorithm === 'DQN' || algorithm === 'PPO') {
-    // Deep-RL training numbers and curves live in the Training Progress panel
-    return null;
-  }
-
-  return (
-    <div className="learning-visualization">
-      <h2>Learning Data</h2>
-      <div className="placeholder">
-        <p>No learning data available</p>
-      </div>
-    </div>
-  );
+  // Deep RL on continuous-state envs: numbers live in Training Progress
+  return null;
 };
 
 export default LearningVisualization;

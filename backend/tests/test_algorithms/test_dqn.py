@@ -54,7 +54,9 @@ class TestDQNSchema:
         assert schema['learning_rate']['step'] == 0.0001
 
     def test_supported_environments(self):
-        assert DQNAlgorithm.SUPPORTED_ENVIRONMENTS == ['CartPole-v1']
+        assert DQNAlgorithm.SUPPORTED_ENVIRONMENTS == [
+            'CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1'
+        ]
 
 
 class TestDQNTraining:
@@ -119,6 +121,26 @@ class TestDQNTraining:
         assert summary['min_return'] <= summary['mean_return'] <= summary['max_return']
         assert summary['mean_length'] >= 1
         json.dumps(summary)  # numpy leak check
+
+    def test_frozenlake_learning_data_contains_network_q_table(self):
+        """On enumerable-state envs the network's Q-values for all states
+        are exposed as a q_table - same shape as tabular Q-Learning's."""
+        env = gym.make('FrozenLake-v1', render_mode='rgb_array', is_slippery=False)
+        try:
+            algo = DQNAlgorithm(env, {**FAST_PARAMS, 'net_arch': [32, 32]})
+            data = algo.get_learning_data()
+
+            q_table = data['q_table']
+            assert len(q_table) == 16 and len(q_table[0]) == 4
+            assert all(isinstance(v, float) for row in q_table for v in row)
+            json.dumps(data)
+        finally:
+            env.close()
+
+    def test_cartpole_learning_data_has_no_q_table(self, cartpole_env):
+        """Continuous-state envs cannot be enumerated - no q_table."""
+        algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)
+        assert 'q_table' not in algo.get_learning_data()
 
     def test_play_policy_returns_frames(self, cartpole_env):
         algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)
