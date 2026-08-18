@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import aiscLogo from './assets/logo_aisc_150dpi.png';
+import bmftrLogo from './assets/logo_bmftr_de.png';
 import ParameterPanel from './components/ParameterPanel';
 import EnvironmentViewer from './components/EnvironmentViewer';
 import EnvironmentInfo from './components/EnvironmentInfo';
@@ -587,8 +589,23 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        <h1>RL Lab</h1>
-        <p className="subtitle">Interactive Reinforcement Learning Visualization</p>
+        {/* Logo doubles as a home/reload button (logo-as-home convention) */}
+        <img
+          src={aiscLogo}
+          alt="KI-Servicezentrum Berlin-Brandenburg by Hasso-Plattner-Institut"
+          title="Reload RL Lab"
+          className="header-logo header-logo-clickable"
+          onClick={() => window.location.reload()}
+        />
+        <div className="header-title">
+          <h1>RL Lab</h1>
+          <p className="subtitle">Interactive Reinforcement Learning Visualization</p>
+        </div>
+        <img
+          src={bmftrLogo}
+          alt="Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt"
+          className="header-logo"
+        />
       </header>
 
       {error && (

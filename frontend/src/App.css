@@ -26,9 +26,38 @@ body {
 .app-header {
   background: linear-gradient(135deg, var(--hpi-orange) 0%, var(--hpi-violet) 100%);
   color: white;
-  padding: 2rem;
-  text-align: center;
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+}
+
+/* Funder/host logos: white chips keep the dark-on-white artwork legible
+   on the gradient */
+.header-logo {
+  height: 68px;
+  width: auto;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-sizing: content-box;
+}
+
+.header-logo-clickable {
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .header-logo {
+    display: none; /* protect the title on narrow screens */
+  }
 }
 
 .app-header h1 {
