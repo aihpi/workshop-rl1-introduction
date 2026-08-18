@@ -38,10 +38,12 @@ git clone https://github.com/aihpi/workshop-rl1-introduction.git
 cd workshop-rl1-introduction
 ```
 
-3. Is Docker running? Then you can start the app (detached mode)
+3. Is Docker running? Then pull the latest images and start the app (detached mode)
 ```bash
+docker compose pull
 docker compose up -d
 ```
+(`docker compose pull` matters especially if you have run RL Lab before: `up` alone keeps using old images.)
 
 4. Open browser to http://localhost:3030
 
@@ -75,6 +77,7 @@ docker compose up -d
 Once installed, here are some helpful commands:
 
 ```bash
+docker compose pull            # Update to the latest images
 docker compose up -d           # Start the application (detached mode)
 docker compose down            # Stop the application
 docker compose logs -f         # View live logs (for debugging, in separate terminal)
