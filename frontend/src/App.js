@@ -589,23 +589,43 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        {/* Logo doubles as a home/reload button (logo-as-home convention) */}
-        <img
-          src={aiscLogo}
-          alt="KI-Servicezentrum Berlin-Brandenburg by Hasso-Plattner-Institut"
+        {/* Home = reload the app */}
+        <button
+          type="button"
+          className="home-button"
           title="Reload RL Lab"
-          className="header-logo header-logo-clickable"
+          aria-label="Reload RL Lab"
           onClick={() => window.location.reload()}
-        />
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5.5 9.5V21h13V9.5" />
+            <path d="M10 21v-6h4v6" />
+          </svg>
+        </button>
+
         <div className="header-title">
           <h1>RL Lab</h1>
           <p className="subtitle">Interactive Reinforcement Learning Visualization</p>
         </div>
-        <img
-          src={bmftrLogo}
-          alt="Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt"
-          className="header-logo"
-        />
+
+        <div className="header-logos">
+          <a href="https://hpi.de/en/ai-service-centre/" target="_blank" rel="noopener noreferrer">
+            <img
+              src={aiscLogo}
+              alt="KI-Servicezentrum Berlin-Brandenburg by Hasso-Plattner-Institut"
+              className="header-logo"
+            />
+          </a>
+          <a href="https://www.bmbf.de/" target="_blank" rel="noopener noreferrer">
+            <img
+              src={bmftrLogo}
+              alt="Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt"
+              className="header-logo header-logo-bmftr"
+            />
+          </a>
+        </div>
       </header>
 
       {error && (

@@ -39,10 +39,17 @@ body {
   text-align: center;
 }
 
-/* Funder/host logos: white chips keep the dark-on-white artwork legible
-   on the gradient */
+/* Funder/host logos (right cluster): white chips keep the dark-on-white
+   artwork legible on the gradient; each links to its website */
+.header-logos {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .header-logo {
-  height: 68px;
+  display: block;
+  height: 64px;
   width: auto;
   background: white;
   border-radius: 8px;
@@ -50,12 +57,32 @@ body {
   box-sizing: content-box;
 }
 
-.header-logo-clickable {
+/* The BMFTR artwork carries small print ("Gefördert durch:") - render larger */
+.header-logo-bmftr {
+  height: 92px;
+  padding: 4px 10px;
+}
+
+/* Home/reload button */
+.home-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
   cursor: pointer;
 }
 
+.home-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 @media (max-width: 900px) {
-  .header-logo {
+  .header-logos {
     display: none; /* protect the title on narrow screens */
   }
 }
