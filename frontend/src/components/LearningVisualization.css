@@ -8,7 +8,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   margin: 1.5rem auto;
-  max-width: 500px;
+  max-width: 450px; /* 10% smaller tiles: table + environment fit side by side */
 }
 
 .q-cell {
