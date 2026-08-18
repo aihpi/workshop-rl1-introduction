@@ -19,7 +19,9 @@ body {
 }
 
 .App {
-  min-height: 100vh;
+  /* Lock the app to the viewport: each column scrolls internally
+     (header and footer stay visible; there is no page-level scroll) */
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -53,6 +55,9 @@ body {
 
 .main-content {
   flex: 1;
+  /* Allows the grid to shrink below its content height so the columns'
+     own overflow-y takes over */
+  min-height: 0;
   display: grid;
   grid-template-columns: 300px 400px 1fr;
   gap: 1.5rem;
