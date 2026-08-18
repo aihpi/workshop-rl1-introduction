@@ -6,7 +6,7 @@ import './LearningVisualization.css';
  * Dispatcher: picks the visualization matching the selected algorithm.
  * New algorithms (PPO, ...) add a case here.
  */
-const LearningVisualization = ({ learningData, algorithm, environment }) => {
+const LearningVisualization = ({ learningData, algorithm }) => {
   if (algorithm === 'Q-Learning') {
     if (learningData?.q_table) {
       return <QTableVisualization learningData={learningData} />;

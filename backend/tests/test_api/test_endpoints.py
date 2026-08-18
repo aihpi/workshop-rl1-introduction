@@ -153,8 +153,6 @@ class TestErrorHandling:
         assert len(q_table) == 16 and len(q_table[0]) == 4
         assert q_table[0][0] == 0.5           # non-terminal: init value
         assert all(v == 0.0 for v in q_table[5])  # state 5 is a hole -> zeroed
-        # The resolved seed is reported so untrained sessions can reuse it
-        assert data['seed'] == 1
 
     def test_train_reports_resolved_seed(self, client):
         """

@@ -30,6 +30,9 @@ const TURN_BASED_PLAYBACK_DELAY = {
   'FrozenLake-v1-NoSlip': 500,
 };
 
+// Standard evaluation size (greedy episodes per Evaluate Policy click)
+const EVAL_EPISODES = 100;
+
 // Keep chart series at a displayable size; the full data stays untouched
 const downsampleForDisplay = (points, maxPoints = 1000) => {
   if (points.length <= maxPoints * 1.5) return points;
@@ -65,7 +68,6 @@ function App() {
   const [usedSeed, setUsedSeed] = useState(null); // seed of the LAST run (the field shows the next run's)
   const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
   const [playbackAction, setPlaybackAction] = useState(null); // action taken at the shown playback frame
-  const [rewards, setRewards] = useState([]);
   const [chartData, setChartData] = useState([]); // Moving average data points for chart display
   const [windowSize, setWindowSize] = useState(10); // Adaptive window size for moving average
   const [totalEpisodes, setTotalEpisodes] = useState(0); // Total episodes for training (from config)
@@ -134,7 +136,6 @@ function App() {
     setUsedSeed(null);
     setPlaybackStep(null);
     setPlaybackAction(null);
-    setRewards([]);
     setChartData([]);
     setWindowSize(10);
     setTotalEpisodes(0);
@@ -178,6 +179,19 @@ function App() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAlgorithm, selectedEnvironment, parameters, isTraining, trainingComplete]);
+
+  // Create a fresh backend session from the current parameters. The visible
+  // seed is used verbatim - preview, play, eval and training all share it.
+  const createSession = async () => {
+    const response = await startTraining({
+      algorithm: selectedAlgorithm,
+      environment: selectedEnvironment,
+      parameters: parameters
+    });
+    setSessionId(response.session_id);
+    setUsedSeed(response.seed ?? null);
+    return response.session_id;
+  };
 
   // Validation function for training parameters
   const isValidParameters = () => {
@@ -226,17 +240,7 @@ function App() {
       // Set training flag
       setIsTraining(true);
 
-      // Start new training session (seed travels inside parameters;
-      // an empty seed means the backend draws one randomly)
-      const response = await startTraining({
-        algorithm: selectedAlgorithm,
-        environment: selectedEnvironment,
-        parameters: parameters
-      });
-
-      const newSessionId = response.session_id;
-      setSessionId(newSessionId);
-      setUsedSeed(response.seed ?? null);
+      const newSessionId = await createSession();
 
       // Window size and total episodes are only known when the budget is
       // episode-based; timestep-budgeted algorithms (e.g. DQN) produce an
@@ -320,7 +324,6 @@ function App() {
           pending.frame = null;
         }
         setLearningData(latest.learning_data);
-        setRewards(all.slice());
         setChartData(pending.chartPoints.slice());
         setLengthChartData(pending.lengthPoints.slice());
         setEpsilonHistory(downsampleForDisplay([...pending.eps]));
@@ -376,7 +379,6 @@ function App() {
             setCurrentEpisode(all.length - 1);
             setCurrentTimesteps(pending.lastLearningData?.diagnostics?.total_timesteps ?? null);
           }
-          setRewards(all.slice());
           setChartData(pending.chartPoints.slice());
           setLengthChartData(pending.lengthPoints.slice());
           setEpsilonHistory(downsampleForDisplay([...pending.eps]));
@@ -411,17 +413,7 @@ function App() {
       return sessionId;
     }
     await resetTraining(); // clear stale backend sessions
-
-    // The visible seed is used verbatim - preview, play, eval and training
-    // all share it, so the displayed initialization is the one that acts
-    const response = await startTraining({
-      algorithm: selectedAlgorithm,
-      environment: selectedEnvironment,
-      parameters: parameters
-    });
-    setSessionId(response.session_id);
-    setUsedSeed(response.seed ?? null);
-    return response.session_id;
+    return createSession();
   };
 
   const handlePlayPolicy = async () => {
@@ -538,12 +530,12 @@ function App() {
       return;
     }
     setEvalResults(null);
-    setEvalProgress({ episode: 0, total: 100 });
+    setEvalProgress({ episode: 0, total: EVAL_EPISODES });
     setIsEvaluating(true);
 
     const es = subscribeToEvaluation(
       evalSessionId,
-      100, // standard evaluation size
+      EVAL_EPISODES,
       // onProgress - one event per evaluation episode
       (data) => {
         setEvalProgress({ episode: data.episode, total: data.total });
@@ -645,7 +637,6 @@ function App() {
             isTraining={isTraining}
             isPlayback={isPlayback}
             isEvaluating={isEvaluating}
-            canPlayPolicy={isValidParameters()}
             disabled={!isValidParameters()}
           />
         </div>
@@ -673,7 +664,6 @@ function App() {
           <LearningVisualization
             learningData={learningData}
             algorithm={selectedAlgorithm}
-            environment={selectedEnvironment}
           />
           <TrainingProgress
             episodesTrained={(isTraining || trainingComplete) ? currentEpisode + 1 : 0}

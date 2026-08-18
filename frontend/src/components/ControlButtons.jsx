@@ -10,7 +10,6 @@ const ControlButtons = ({
   isTraining,
   isPlayback,
   isEvaluating = false,
-  canPlayPolicy,
   disabled = false
 }) => {
   return (
@@ -33,7 +32,7 @@ const ControlButtons = ({
       <button
         className="btn btn-secondary"
         onClick={isPlayback ? onStopPlayback : onPlayPolicy}
-        disabled={isTraining || isEvaluating || !canPlayPolicy}
+        disabled={isTraining || isEvaluating || disabled}
       >
         {isPlayback ? 'Stop Playback' : 'Play Policy'}
       </button>
@@ -41,7 +40,7 @@ const ControlButtons = ({
       <button
         className="btn btn-secondary"
         onClick={onEvaluatePolicy}
-        disabled={isTraining || isPlayback || isEvaluating || !canPlayPolicy}
+        disabled={isTraining || isPlayback || isEvaluating || disabled}
       >
         {isEvaluating ? 'Evaluating…' : 'Evaluate Policy'}
       </button>

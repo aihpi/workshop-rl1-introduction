@@ -34,7 +34,6 @@ const ParameterPanel = ({
   isTraining,
   isPlayback,
   isEvaluating = false,
-  canPlayPolicy,
   disabled
 }) => {
   const [schema, setSchema] = useState(null);
@@ -258,7 +257,6 @@ const ParameterPanel = ({
         isTraining={isTraining}
         isPlayback={isPlayback}
         isEvaluating={isEvaluating}
-        canPlayPolicy={canPlayPolicy}
         disabled={disabled}
       />
 
