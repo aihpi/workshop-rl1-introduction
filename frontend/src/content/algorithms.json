@@ -84,6 +84,11 @@
           "symbol": "ε decay",
           "range": "0.05 ≤ f ≤ 1",
           "description": "Fraction of the timestep budget over which ε decays linearly from 1.0 to its final value."
+        },
+        "initialValueEstimate": {
+          "symbol": "Q₀",
+          "range": "environment-dependent",
+          "description": "What the untrained network guesses every state is worth. Guessing too high (optimistic) makes unvisited states look attractive and drives exploration even after ε has decayed; guessing too low kills it. The classic “optimistic initial values” trick."
         }
       }
     },

@@ -69,7 +69,7 @@ class DQNAlgorithm(SB3Algorithm):
             **self.HIDDEN_DEFAULTS_BASE,
             **self.HIDDEN_DEFAULTS.get(env.spec.id, {}),
         }
-        return DQN(
+        model = DQN(
             'MlpPolicy',
             env,
             learning_rate=float(parameters.get('learning_rate', 0.0023)),
@@ -88,6 +88,18 @@ class DQNAlgorithm(SB3Algorithm):
             verbose=0,
         )
 
+        # Optimistic/pessimistic initialization: shift the final layer's
+        # bias so the network initially estimates Q(s,a) ~ c everywhere.
+        # Init above the true values drives systematic exploration (visited
+        # regions get corrected downward, unvisited ones keep looking
+        # good); below kills it. c=0 is exactly stock SB3 behavior.
+        c = float(parameters.get('initial_value_estimate', 0.0))
+        if c != 0.0:
+            with torch.no_grad():
+                for net in (model.q_net, model.q_net_target):
+                    net.q_net[-1].bias += c
+        return model
+
     @staticmethod
     def get_parameter_schema(environment: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
         # Environment-specific defaults (rl-zoo tuned where available):
@@ -100,6 +112,9 @@ class DQNAlgorithm(SB3Algorithm):
             'batch_size': 64,
             'exploration_fraction': 0.16,
             'exploration_final_eps': 0.04,
+            # Slider range for the initial value estimate, scaled to the
+            # environment's true value range
+            'init_min': -100, 'init_max': 100, 'init_step': 5,
         }
         overrides = {
             # Seed-swept values (see commit message): the ε floor of 0.15
@@ -109,19 +124,24 @@ class DQNAlgorithm(SB3Algorithm):
                 'total_timesteps': 30000,
                 'exploration_fraction': 0.5,
                 'exploration_final_eps': 0.15,
+                'init_min': -2, 'init_max': 2, 'init_step': 0.1,
             },
             'FrozenLake-v1-NoSlip': {
                 'total_timesteps': 5000,
                 'exploration_fraction': 0.5,
                 'exploration_final_eps': 0.15,
+                'init_min': -2, 'init_max': 2, 'init_step': 0.1,
             },
             'MountainCar-v0': {
-                'total_timesteps': 120000,
+                'total_timesteps': 100000,
                 'learning_rate': 0.004,
                 'discount_factor': 0.98,
                 'batch_size': 128,
                 'exploration_fraction': 0.2,
                 'exploration_final_eps': 0.07,
+                # Returns live in [-200 (never reach the flag), ~-100
+                # (optimal)]; the default 0 is already the optimistic end
+                'init_min': -200, 'init_max': 0, 'init_step': 5,
             },
         }
         d = {**base, **overrides.get(environment, {})}
@@ -170,6 +190,16 @@ class DQNAlgorithm(SB3Algorithm):
                 'step': 16,
                 'default': d['batch_size'],
                 'description': 'Minibatch size per gradient step'
+            },
+            'initial_value_estimate': {
+                'type': 'float',
+                'min': d['init_min'],
+                'max': d['init_max'],
+                'step': d['init_step'],
+                'default': 0.0,
+                'description': 'The network\'s initial Q-value guess for all states. '
+                               'Above the true values = optimistic (drives exploration), '
+                               'below = pessimistic (kills it).'
             },
             'seed': {
                 'type': 'int',

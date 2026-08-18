@@ -137,6 +137,26 @@ class TestDQNTraining:
         finally:
             env.close()
 
+    def test_initial_value_estimate_shifts_network_output(self):
+        """Optimistic init: the untrained network's Q-values sit near the
+        requested estimate c (bias shift on the final layer), for both the
+        online and the target net. c=0 must remain stock behavior."""
+        env = gym.make('FrozenLake-v1', render_mode='rgb_array', is_slippery=False)
+        try:
+            algo = DQNAlgorithm(env, {**FAST_PARAMS, 'initial_value_estimate': 5.0})
+            q_table = np.array(algo.get_learning_data()['q_table'])
+            assert np.all(np.abs(q_table - 5.0) < 1.0), \
+                "untrained Q-values should sit near the initial estimate"
+
+            import torch
+            obs_tensor, _ = algo.model.policy.obs_to_tensor(np.arange(16))
+            with torch.no_grad():
+                target_q = algo.model.q_net_target(obs_tensor).cpu().numpy()
+            assert np.all(np.abs(target_q - 5.0) < 1.0), \
+                "target network must be shifted too"
+        finally:
+            env.close()
+
     def test_cartpole_learning_data_has_no_q_table(self, cartpole_env):
         """Continuous-state envs cannot be enumerated - no q_table."""
         algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)
