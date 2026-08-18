@@ -1,4 +1,5 @@
 import React from 'react';
+import environmentContent from '../../content/environments.json';
 import '../LearningVisualization.css';
 
 // HPI brand gradient for the value heatmap
@@ -22,15 +23,24 @@ const getColorFromGradient = (normalizedValue) => {
  * (FrozenLake 4x4). Receives learningData with a q_table key:
  * a [numStates][numActions] nested array.
  */
-const QTableVisualization = ({ learningData }) => {
+const QTableVisualization = ({ learningData, environment }) => {
   const qTable = learningData.q_table;
 
   // For FrozenLake 4x4: 16 states, 4 actions (LEFT=0, DOWN=1, RIGHT=2, UP=3)
   const numStates = qTable.length;
   const gridSize = Math.sqrt(numStates);
 
-  // Calculate statistics
-  const allValues = qTable.flat();
+  // Terminal states (holes/goal) are never acted from: their entries are
+  // never updated and hold meaningless init values (tabular) or network
+  // extrapolation (DQN). Mute them and keep them out of the statistics.
+  const terminalStates = new Set(
+    environmentContent[environment]?.sections?.terminalStates ?? []
+  );
+
+  // Statistics over non-terminal states only
+  const allValues = qTable
+    .filter((_, state) => !terminalStates.has(state))
+    .flat();
   const minQ = Math.min(...allValues);
   const maxQ = Math.max(...allValues);
   const avgQ = allValues.reduce((sum, val) => sum + val, 0) / allValues.length;
@@ -64,6 +74,7 @@ const QTableVisualization = ({ learningData }) => {
       for (let col = 0; col < gridSize; col++) {
         const state = row * gridSize + col;
         const qValues = qTable[state];
+        const isTerminal = terminalStates.has(state);
 
         // FrozenLake action order: [LEFT, DOWN, RIGHT, UP]
         const left = qValues[0];
@@ -71,17 +82,18 @@ const QTableVisualization = ({ learningData }) => {
         const right = qValues[2];
         const up = qValues[3];
 
-        // Normalize Q-values globally
+        // Normalize Q-values globally; terminal tiles get a flat grey
         const colors = qValues.map(val =>
-          getColorFromGradient(normalizeGlobal(val))
+          isTerminal ? '#c8c8c8' : getColorFromGradient(normalizeGlobal(val))
         );
 
-        // Get best action(s) - empty array if tie
-        const bestActions = getBestActions(qValues);
+        // Get best action(s) - empty array if tie; no greedy highlight
+        // on terminal tiles (the agent never acts from them)
+        const bestActions = isTerminal ? [] : getBestActions(qValues);
         const isBestAction = (actionIdx) => bestActions.includes(actionIdx);
 
         cells.push(
-          <div key={state} className="q-cell">
+          <div key={state} className={`q-cell${isTerminal ? ' terminal' : ''}`}>
             <div className="state-number">{state}</div>
             <div className="q-values-cross">
               <div
@@ -154,6 +166,8 @@ const QTableVisualization = ({ learningData }) => {
       <p className="hint">
         Arrow colors show Q-values across the entire table (violet = global min, orange = global max).
         Cyan borders highlight the greedy action (highest Q-value) for each state (not shown if there's a tie).
+        Grey tiles are terminal states (holes/goal): their values are never used or updated, so they keep
+        whatever the initialization gave them and are excluded from the statistics.
       </p>
     </div>
   );

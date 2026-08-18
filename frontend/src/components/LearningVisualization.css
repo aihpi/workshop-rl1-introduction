@@ -25,6 +25,12 @@
   background-color: #000000;
 }
 
+/* Terminal states (holes/goal): values never used or updated - muted */
+.q-cell.terminal {
+  background-color: #888;
+  opacity: 0.55;
+}
+
 .q-cell:hover {
   transform: scale(1.05);
   z-index: 10;

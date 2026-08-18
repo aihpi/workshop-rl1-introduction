@@ -26,7 +26,14 @@
         "description": "Sparse reward: +1 for reaching goal, 0 otherwise."
       },
       "stochasticity": "Slippery surface: 33% chance of moving perpendicular to intended direction.",
-      "difficulty": "The 4×4 version has ~0.7 optimal success rate due to stochasticity."
+      "difficulty": "The 4×4 version has ~0.7 optimal success rate due to stochasticity.",
+      "terminalStates": [
+        5,
+        7,
+        11,
+        12,
+        15
+      ]
     },
     "links": [
       {
@@ -62,7 +69,14 @@
         "description": "Sparse reward: +1 for reaching goal, 0 otherwise."
       },
       "stochasticity": "Deterministic: Agent always moves in the intended direction.",
-      "difficulty": "Easier than slippery version. Optimal policy achieves 100% success rate."
+      "difficulty": "Easier than slippery version. Optimal policy achieves 100% success rate.",
+      "terminalStates": [
+        5,
+        7,
+        11,
+        12,
+        15
+      ]
     },
     "links": [
       {

@@ -667,6 +667,7 @@ function App() {
           <LearningVisualization
             learningData={learningData}
             algorithm={selectedAlgorithm}
+            environment={selectedEnvironment}
           />
           <TrainingProgress
             episodesTrained={(isTraining || trainingComplete) ? currentEpisode + 1 : 0}

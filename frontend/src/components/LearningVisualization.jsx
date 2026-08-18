@@ -6,13 +6,13 @@ import './LearningVisualization.css';
  * Dispatcher: picks the visualization matching the selected algorithm.
  * New algorithms (PPO, ...) add a case here.
  */
-const LearningVisualization = ({ learningData, algorithm }) => {
+const LearningVisualization = ({ learningData, algorithm, environment }) => {
   // Any algorithm reporting a q_table gets the table view: tabular
   // Q-Learning always, and DQN on enumerable-state environments
   // (FrozenLake), where the network's Q-values for all states are the
   // same picture - produced by a network instead of a table
   if (learningData?.q_table) {
-    return <QTableVisualization learningData={learningData} />;
+    return <QTableVisualization learningData={learningData} environment={environment} />;
   }
 
   if (algorithm === 'Q-Learning') {
