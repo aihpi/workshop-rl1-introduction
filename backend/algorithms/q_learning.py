@@ -58,37 +58,6 @@ class QLearning(BaseAlgorithm):
         self.total_steps = 0
         self.last_episode_length = 0
 
-        # Identify and handle terminal states
-        self.terminal_states = self._get_terminal_states(env)
-
-        # Force terminal state Q-values to 0 (by RL theory, terminal states have value 0)
-        for state in self.terminal_states:
-            self.q_table[state, :] = 0.0
-
-    def _get_terminal_states(self, env) -> set:
-        """
-        Identify terminal states (holes and goals) from the environment.
-
-        Args:
-            env: Gymnasium environment
-
-        Returns:
-            Set of state indices that are terminal
-        """
-        desc = env.unwrapped.desc.astype(str)
-        nrow = env.unwrapped.nrow
-        ncol = env.unwrapped.ncol
-
-        terminal_states = set()
-        for row in range(nrow):
-            for col in range(ncol):
-                cell_type = desc[row, col]
-                if cell_type in ['H', 'G']:  # Holes or Goal
-                    state_idx = row * ncol + col
-                    terminal_states.add(state_idx)
-
-        return terminal_states
-
     def _initialize_q_table(
         self,
         num_states: int,
@@ -177,9 +146,16 @@ class QLearning(BaseAlgorithm):
                 done = terminated or truncated
                 total_reward += reward
 
-                # Q-learning update rule (use regular argmax here for speed)
-                best_next_action = self._argmax_random_tiebreak(self.q_table[next_state])
-                td_target = reward + self.discount_factor * self.q_table[next_state, best_next_action]
+                # Q-learning update rule (use regular argmax here for speed).
+                # Terminal states are masked out of the bootstrap (their
+                # Q-entries are never used or updated - the table may show
+                # their untouched init values). Truncation (time limit) is
+                # NOT terminal: bootstrapping continues through it.
+                if terminated:
+                    td_target = reward
+                else:
+                    best_next_action = self._argmax_random_tiebreak(self.q_table[next_state])
+                    td_target = reward + self.discount_factor * self.q_table[next_state, best_next_action]
                 td_error = td_target - self.q_table[state, action]
                 self.q_table[state, action] += self.learning_rate * td_error
 

@@ -136,8 +136,9 @@ class TestErrorHandling:
 
         WHY: The UI shows the starting Q-table before training, reflecting
         the q_init parameters, so participants see how the table evolves.
-        HOW: Request a preview with fixed init 0.5, check values and
-        terminal-state zeroing.
+        HOW: Request a preview with fixed init 0.5, check values. Terminal
+        states keep their init value too: they are masked out of the
+        Bellman update instead of being zeroed (SB3-style).
         """
         # Act
         response = client.post('/api/learning-data/preview', json={
@@ -151,8 +152,8 @@ class TestErrorHandling:
         data = response.get_json()
         q_table = data['q_table']
         assert len(q_table) == 16 and len(q_table[0]) == 4
-        assert q_table[0][0] == 0.5           # non-terminal: init value
-        assert all(v == 0.0 for v in q_table[5])  # state 5 is a hole -> zeroed
+        assert q_table[0][0] == 0.5           # init value
+        assert all(v == 0.5 for v in q_table[5])  # holes too: never touched
 
     def test_train_reports_resolved_seed(self, client):
         """

@@ -44,6 +44,41 @@ class TestQLearningBasics:
 
         env.close()
 
+    def test_terminal_states_masked_from_bootstrap(self):
+        """
+        Test that terminal Q-entries never bleed into Bellman updates.
+
+        WHY: The target for a terminating transition must be just r
+        (SB3-style masking), regardless of what the table holds at the
+        terminal state - important with random initialization.
+        HOW: Init the whole table near 1, train on deterministic
+        FrozenLake, check Q(14, RIGHT) converged to 1.0, not 1 + gamma*Q(goal).
+        Terminal rows must keep their init values (never written).
+        """
+        env = gym.make('FrozenLake-v1', render_mode='rgb_array', is_slippery=False)
+        q_learning = QLearning(env, {
+            'learning_rate': 0.5,
+            'discount_factor': 0.9,
+            'exploration_rate': 0.3,
+            'num_episodes': 2000,
+            'q_init_strategy': 'random',
+            'q_init_min': 0.9,
+            'q_init_max': 1.0,
+            'seed': 1,
+        })
+        initial_hole_row = q_learning.q_table[5].copy()
+
+        q_learning.train()
+
+        # State 14 + RIGHT reaches the goal: reward 1, no bootstrap term
+        assert q_learning.q_table[14, 2] == pytest.approx(1.0, abs=0.01), \
+            "Terminal Q-values leaked into the update target"
+        # Terminal rows are never acted from, so never updated
+        assert np.array_equal(q_learning.q_table[5], initial_hole_row), \
+            "Terminal state's Q-row was written during training"
+
+        env.close()
+
     def test_parameters_stored_correctly(self):
         """
         Test that parameters are stored in the algorithm.
