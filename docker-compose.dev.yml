@@ -17,6 +17,11 @@ services:
       - /app/.venv
     environment:
       - FLASK_DEBUG=1
+    # The werkzeug debugger must not be reachable from the LAN:
+    # bind the dev backend to localhost only (!override replaces the
+    # base mapping instead of merging with it)
+    ports: !override
+      - "127.0.0.1:5001:5001"
 
   frontend:
     # Local dev image name - must NOT reuse the Docker Hub tag, or the

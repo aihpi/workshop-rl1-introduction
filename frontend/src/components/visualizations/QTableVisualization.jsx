@@ -27,8 +27,14 @@ const QTableVisualization = ({ learningData, environment }) => {
   const qTable = learningData.q_table;
 
   // For FrozenLake 4x4: 16 states, 4 actions (LEFT=0, DOWN=1, RIGHT=2, UP=3)
-  const numStates = qTable.length;
+  const numStates = qTable?.length ?? 0;
   const gridSize = Math.sqrt(numStates);
+
+  // Guard against malformed data (empty or non-square state count):
+  // rendering would index a fractional grid and produce NaN statistics
+  if (numStates === 0 || !Number.isInteger(gridSize)) {
+    return null;
+  }
 
   // Terminal states (holes/goal) are never acted from: their entries are
   // never updated and hold meaningless init values (tabular) or network
@@ -41,6 +47,9 @@ const QTableVisualization = ({ learningData, environment }) => {
   const allValues = qTable
     .filter((_, state) => !terminalStates.has(state))
     .flat();
+  if (allValues.length === 0) {
+    return null; // metadata marked every state terminal - nothing to scale
+  }
   const minQ = Math.min(...allValues);
   const maxQ = Math.max(...allValues);
   const avgQ = allValues.reduce((sum, val) => sum + val, 0) / allValues.length;

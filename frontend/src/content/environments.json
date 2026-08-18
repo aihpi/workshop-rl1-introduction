@@ -93,7 +93,7 @@
       "stateSpace": {
         "type": "Continuous (Box)",
         "size": 4,
-        "description": "Four continuous values: cart position, cart velocity, pole angle, pole angular velocity. Because the state is continuous, a Q-table is impossible - this is why a neural network (DQN) is needed."
+        "description": "Four continuous values: cart position, cart velocity, pole angle, pole angular velocity. Because the state is continuous, a Q-table is impossible - this is why a neural-network algorithm (DQN or PPO) is needed."
       },
       "actionSpace": {
         "type": "Discrete",
@@ -127,7 +127,7 @@
       "stateSpace": {
         "type": "Continuous (Box)",
         "size": 2,
-        "description": "Two continuous values: the car's position along the track and its velocity. Continuous states rule out a Q-table - a neural network (DQN) is needed."
+        "description": "Two continuous values: the car's position along the track and its velocity. Continuous states rule out a Q-table - a neural-network algorithm is needed (DQN succeeds here; PPO is offered as an instructive failure)."
       },
       "actionSpace": {
         "type": "Discrete",

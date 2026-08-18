@@ -363,9 +363,14 @@ def stream_playback(session_id):
         completion event.
         """
         frame_queue = queue.Queue()
+        cancelled = threading.Event()
 
         def on_frame(frame, step, action):
             """Called per rendered frame - encode and enqueue immediately."""
+            if cancelled.is_set():
+                # Client disconnected: unwind the rollout thread instead
+                # of finishing (and encoding) up to 500 unwatched frames
+                raise RuntimeError('playback client disconnected')
             frame_queue.put({
                 'status': 'frame',
                 'frame': EnvironmentManager.frame_to_base64(frame),
@@ -385,14 +390,19 @@ def stream_playback(session_id):
         playback_thread = threading.Thread(target=play_in_thread, daemon=True)
         playback_thread.start()
 
-        while True:
-            try:
-                event_data = frame_queue.get(timeout=1)
-                if event_data is None:
-                    break
-                yield f"data: {json.dumps(event_data)}\n\n"
-            except queue.Empty:
-                yield ": keep-alive\n\n"
+        try:
+            while True:
+                try:
+                    event_data = frame_queue.get(timeout=1)
+                    if event_data is None:
+                        break
+                    yield f"data: {json.dumps(event_data)}\n\n"
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+        finally:
+            # Runs on client disconnect too (GeneratorExit on the next
+            # yield): stop the rollout thread via on_frame
+            cancelled.set()
 
     # Return SSE response with proper headers
     return Response(
@@ -422,13 +432,20 @@ def stream_evaluation(session_id):
     if not trainer.session_exists(session_id):
         return jsonify({'error': 'Session not found'}), 404
 
-    num_episodes = max(1, min(1000, int(request.args.get('episodes', 100))))
+    try:
+        num_episodes = max(1, min(1000, int(request.args.get('episodes', 100))))
+    except ValueError:
+        return jsonify({'error': 'episodes must be an integer'}), 400
 
     def generate():
         """Generator function for SSE events."""
         event_queue = queue.Queue()
+        cancelled = threading.Event()
 
         def on_episode(index, episode_return):
+            if cancelled.is_set():
+                # Client disconnected: abort the remaining episodes
+                raise RuntimeError('evaluation client disconnected')
             event_queue.put({
                 'status': 'evaluating',
                 'episode': index + 1,
@@ -448,14 +465,18 @@ def stream_evaluation(session_id):
         eval_thread = threading.Thread(target=evaluate_in_thread, daemon=True)
         eval_thread.start()
 
-        while True:
-            try:
-                event_data = event_queue.get(timeout=1)
-                if event_data is None:
-                    break
-                yield f"data: {json.dumps(event_data)}\n\n"
-            except queue.Empty:
-                yield ": keep-alive\n\n"
+        try:
+            while True:
+                try:
+                    event_data = event_queue.get(timeout=1)
+                    if event_data is None:
+                        break
+                    yield f"data: {json.dumps(event_data)}\n\n"
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+        finally:
+            # Client disconnect stops the evaluation thread via on_episode
+            cancelled.set()
 
     return Response(
         stream_with_context(generate()),

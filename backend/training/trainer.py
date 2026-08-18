@@ -103,6 +103,13 @@ class TrainingCoordinator:
         session = self.sessions[session_id]
         algorithm = session['algorithm']
 
+        # A reused session starts fresh: an earlier stop must not abort
+        # the new run at its first episode boundary
+        session['stop_event'].clear()
+        # Track the thread so reset_all_sessions can wait for it before
+        # closing the environment out from under a live training loop
+        session['thread'] = threading.current_thread()
+
         # Train with callback; a stopped run still counts as trained
         # (a partially-trained policy is playable)
         algorithm.train(callback, stop_event=session['stop_event'])
@@ -195,6 +202,15 @@ class TrainingCoordinator:
         # Signal running trainings to stop before closing their envs
         for session in self.sessions.values():
             session['stop_event'].set()
+
+        # Stops apply at the next episode boundary: wait for training
+        # threads to actually exit, or closing the env below would pull
+        # it out from under a live step()/render() call (pygame can
+        # crash the process on that, not just raise)
+        for session in self.sessions.values():
+            thread = session.get('thread')
+            if thread and thread is not threading.current_thread():
+                thread.join(timeout=10)
 
         # Close all environments
         for session in self.sessions.values():

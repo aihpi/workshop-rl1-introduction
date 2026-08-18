@@ -148,6 +148,7 @@ function App() {
   useEffect(() => {
     resetState();
     loadPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEnvironment, selectedAlgorithm]);
 
   // Before any training, show the INITIAL learning data: participants see

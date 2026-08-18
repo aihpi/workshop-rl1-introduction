@@ -155,7 +155,7 @@ const ParameterPanel = ({
 
     if (paramSpec.type === 'int') {
       // Budget and seed are text inputs: keep as string to allow typing
-      // intermediate states (and an empty seed, which means "random run")
+      // intermediate states (an empty field is invalid, not "random")
       if (BUDGET_KEYS.includes(paramName) || paramName === 'seed') {
         parsedValue = value; // Keep as string
       } else {

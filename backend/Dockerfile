@@ -13,7 +13,7 @@ COPY pyproject.toml uv.lock* ./
 
 # --all-extras includes pytest: the test suite runs inside this container.
 # --no-cache keeps the wheel cache out of the image layer (~750MB).
-RUN uv sync --all-extras --no-cache
+RUN uv sync --all-extras --locked --no-cache
 
 # Application code
 COPY . .

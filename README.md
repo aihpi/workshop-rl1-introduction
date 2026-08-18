@@ -1,5 +1,5 @@
 <div style="background-color: #ffffff; color: #000000; padding: 10px;">
-<img src="00_aisc/img/logo_aisc_bmftr.jpg">
+<img src="00_aisc/img/logo_aisc_bmftr.jpg" alt="AI Service Center Berlin-Brandenburg and BMFTR logos">
 <h1> Workshop: Reinforcement Learning I - Introduction
 </div>
 
@@ -28,7 +28,7 @@ This repository contains the material used in the "Reinforcement Learning I - In
 
 ### Quick Start (Experienced Users)
 
-Already have git and Docker installed? Get started in 3 commands:
+Already have git and Docker installed? Get started in 4 commands:
 
 1. Clone the repository
 ```bash

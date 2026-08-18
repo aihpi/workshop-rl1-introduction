@@ -186,7 +186,7 @@ describe('EnvironmentViewer action arrow', () => {
     expect(container.querySelector('.action-arrow')).not.toBeInTheDocument();
   });
 
-  test('shows no arrow outside playback (no action)', () => {
+  test('shows no arrow during playback when no action is provided', () => {
     const { container } = render(
       <EnvironmentViewer {...playbackProps} environment="CartPole-v1" playbackAction={null} />
     );

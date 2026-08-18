@@ -81,6 +81,8 @@ class BaseAlgorithm(ABC):
             Dict with num_episodes, mean/std/min/max return, mean episode
             length, and the raw per-episode returns
         """
+        if num_episodes <= 0 or max_steps_per_episode <= 0:
+            raise ValueError('num_episodes and max_steps_per_episode must be positive')
         returns = []
         lengths = []
         for i in range(num_episodes):

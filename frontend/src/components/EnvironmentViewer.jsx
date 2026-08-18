@@ -54,7 +54,12 @@ const EnvironmentViewer = ({ frame, episode, timesteps, playbackStep, playbackAc
 
         {/* The action the agent takes at the shown playback frame */}
         {frame && playbackAction != null && ACTION_ARROWS[environment]?.[playbackAction] && (
-          <div className="action-arrow" title="Action taken by the agent">
+          <div
+            className="action-arrow"
+            role="img"
+            aria-label="Action taken by the agent"
+            title="Action taken by the agent"
+          >
             {ACTION_ARROWS[environment][playbackAction]}
           </div>
         )}
