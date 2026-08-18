@@ -20,7 +20,7 @@ import threading
 
 from algorithms import AlgorithmFactory
 from environments.environment_manager import EnvironmentManager
-from training.trainer import TrainingCoordinator
+from training.trainer import TrainingCoordinator, resolve_seed
 
 app = Flask(__name__)
 
@@ -132,6 +132,39 @@ def get_parameters(algorithm):
         return jsonify(schema)
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
+
+
+@app.route('/api/learning-data/preview', methods=['POST'])
+def preview_learning_data():
+    """
+    Learning data of a freshly initialized, untrained algorithm - e.g.
+    the initial Q-table - so the UI can show the starting point before
+    training and reflect initialization parameters live.
+
+    Request body: {"algorithm": ..., "environment": ..., "parameters": {...}}
+
+    Returns:
+        JSON learning data (same shape as during training)
+    """
+    try:
+        data = request.json
+        algorithm = data.get('algorithm')
+        environment = data.get('environment')
+        parameters = resolve_seed(data.get('parameters', {}))
+
+        env = EnvironmentManager.create_environment(environment, parameters['seed'])
+        try:
+            algo = AlgorithmFactory.create_algorithm(
+                algorithm, env, parameters, environment_name=environment
+            )
+            return jsonify(algo.get_learning_data())
+        finally:
+            env.close()
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Internal error: {str(e)}'}), 500
 
 
 @app.route('/api/train', methods=['POST'])

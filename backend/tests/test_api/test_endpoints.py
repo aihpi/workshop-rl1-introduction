@@ -130,6 +130,29 @@ class TestErrorHandling:
         assert response.status_code == 400
         assert 'does not support' in response.get_json()['error']
 
+    def test_learning_data_preview(self, client):
+        """
+        Test POST /api/learning-data/preview returns the initialized Q-table.
+
+        WHY: The UI shows the starting Q-table before training, reflecting
+        the q_init parameters, so participants see how the table evolves.
+        HOW: Request a preview with fixed init 0.5, check values and
+        terminal-state zeroing.
+        """
+        # Act
+        response = client.post('/api/learning-data/preview', json={
+            'algorithm': 'Q-Learning',
+            'environment': 'FrozenLake-v1-NoSlip',
+            'parameters': {'q_init_strategy': 'fixed', 'q_init_value': 0.5, 'seed': 1}
+        })
+
+        # Assert
+        assert response.status_code == 200
+        q_table = response.get_json()['q_table']
+        assert len(q_table) == 16 and len(q_table[0]) == 4
+        assert q_table[0][0] == 0.5           # non-terminal: init value
+        assert all(v == 0.0 for v in q_table[5])  # state 5 is a hole -> zeroed
+
     def test_train_reports_resolved_seed(self, client):
         """
         Test that POST /api/train returns the seed actually used.

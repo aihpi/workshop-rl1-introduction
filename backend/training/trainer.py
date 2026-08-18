@@ -6,6 +6,17 @@ from algorithms import AlgorithmFactory
 from environments.environment_manager import EnvironmentManager
 
 
+def resolve_seed(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Return a copy of parameters with 'seed' resolved to an int
+    (drawn randomly when empty/missing - a non-reproducible run).
+    """
+    raw_seed = parameters.get('seed')
+    if raw_seed in (None, ''):
+        raw_seed = random.randint(0, 2**31 - 1)
+    return {**parameters, 'seed': int(raw_seed)}
+
+
 class TrainingCoordinator:
     """
     Manages training sessions with UUID-based identification.
@@ -42,16 +53,12 @@ class TrainingCoordinator:
             ValueError: If algorithm or environment is invalid
         """
         # Resolve the seed: explicit value -> reproducible run,
-        # empty/missing -> draw one randomly
-        raw_seed = parameters.get('seed')
-        if raw_seed in (None, ''):
-            raw_seed = random.randint(0, 2**31 - 1)
-        resolved_seed = int(raw_seed)
-        # Algorithms read the seed from their parameters
-        parameters = {**parameters, 'seed': resolved_seed}
+        # empty/missing -> draw one randomly. Algorithms read it
+        # from their parameters.
+        parameters = resolve_seed(parameters)
 
         # Create environment
-        env = EnvironmentManager.create_environment(environment_name, resolved_seed)
+        env = EnvironmentManager.create_environment(environment_name, parameters['seed'])
 
         # Create algorithm instance (validates algorithm/environment compatibility)
         algorithm = AlgorithmFactory.create_algorithm(

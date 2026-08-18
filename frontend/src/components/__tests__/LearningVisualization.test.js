@@ -35,7 +35,7 @@ describe('LearningVisualization dispatcher', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  test('renders placeholder when no learning data', () => {
+  test('renders loading placeholder for Q-Learning while the initial table is fetched', () => {
     render(
       <LearningVisualization
         algorithm="Q-Learning"
@@ -44,6 +44,7 @@ describe('LearningVisualization dispatcher', () => {
       />
     );
 
-    expect(screen.getByText(/no learning data available/i)).toBeInTheDocument();
+    expect(screen.getByText(/policy: q-table/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading initial q-table/i)).toBeInTheDocument();
   });
 });

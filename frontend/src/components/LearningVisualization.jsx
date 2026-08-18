@@ -7,8 +7,19 @@ import './LearningVisualization.css';
  * New algorithms (PPO, ...) add a case here.
  */
 const LearningVisualization = ({ learningData, algorithm, environment }) => {
-  if (algorithm === 'Q-Learning' && learningData?.q_table) {
-    return <QTableVisualization learningData={learningData} />;
+  if (algorithm === 'Q-Learning') {
+    if (learningData?.q_table) {
+      return <QTableVisualization learningData={learningData} />;
+    }
+    // The initial table is being fetched (brief)
+    return (
+      <div className="learning-visualization">
+        <h2>Policy: Q-Table</h2>
+        <div className="placeholder">
+          <p>Loading initial Q-table…</p>
+        </div>
+      </div>
+    );
   }
 
   if (algorithm === 'DQN') {

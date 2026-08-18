@@ -7,7 +7,7 @@ import AlgorithmInfo from './components/AlgorithmInfo';
 import TrainingProgress from './components/TrainingProgress';
 import LearningVisualization from './components/LearningVisualization';
 import EvaluationPanel from './components/visualizations/EvaluationPanel';
-import { startTraining, stopTraining, subscribeToTraining, subscribeToPlayback, subscribeToEvaluation, resetTraining, getEnvironmentPreview } from './api';
+import { startTraining, stopTraining, subscribeToTraining, subscribeToPlayback, subscribeToEvaluation, resetTraining, getEnvironmentPreview, getLearningDataPreview } from './api';
 import { BUDGET_KEYS, isIntAtLeast } from './components/ParameterPanel';
 
 // Calculate adaptive window size: 10% of episodes, clamped between 10 and 100
@@ -147,6 +147,36 @@ function App() {
     resetState();
     loadPreview();
   }, [selectedEnvironment, selectedAlgorithm]);
+
+  // Before any training, show the INITIAL Q-table: participants see the
+  // starting point (and how the q_init parameters shape it) instead of a
+  // table that pops into existence mid-training. Q-Learning only - DQN
+  // has no pre-training visualization. Debounced; mid-typing parameter
+  // values may be invalid and are ignored quietly.
+  useEffect(() => {
+    if (selectedAlgorithm !== 'Q-Learning') return;
+    if (isTraining || trainingComplete || sessionId) return;
+
+    let stale = false;
+    const timer = setTimeout(async () => {
+      try {
+        const data = await getLearningDataPreview(
+          selectedAlgorithm, selectedEnvironment, parameters
+        );
+        if (!stale) {
+          setLearningData(data);
+        }
+      } catch (err) {
+        // invalid intermediate parameters - keep the previous preview
+      }
+    }, 300);
+
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAlgorithm, selectedEnvironment, parameters, isTraining, trainingComplete, sessionId]);
 
   // Validation function for training parameters
   const isValidParameters = () => {

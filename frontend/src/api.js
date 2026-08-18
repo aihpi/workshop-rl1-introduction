@@ -46,6 +46,19 @@ export const getParameterSchema = async (algorithm, environment) => {
 };
 
 /**
+ * Learning data of a freshly initialized, untrained algorithm
+ * (e.g. the initial Q-table, reflecting the q_init parameters)
+ */
+export const getLearningDataPreview = async (algorithm, environment, parameters) => {
+  const response = await axios.post(`${API_BASE_URL}/learning-data/preview`, {
+    algorithm,
+    environment,
+    parameters
+  });
+  return response.data;
+};
+
+/**
  * Start a training session
  */
 export const startTraining = async (config) => {
