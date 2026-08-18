@@ -40,7 +40,7 @@ class PPOAlgorithm(SB3Algorithm):
         return {
             'total_timesteps': {
                 'type': 'int',
-                'default': 100000,
+                'default': 50000,
                 'description': 'Training budget in environment steps. Must be an integer.'
             },
             'learning_rate': {
