@@ -27,44 +27,38 @@ body {
   background: linear-gradient(135deg, var(--hpi-orange) 0%, var(--hpi-violet) 100%);
   color: white;
   padding: 1.25rem 2rem;
-  display: flex;
+  /* 1fr | auto | 1fr keeps the title truly centered regardless of how
+     wide the home button and the logo are */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .header-title {
-  flex: 1;
   text-align: center;
 }
 
 /* Funder/host logos (right cluster): white chips keep the dark-on-white
    artwork legible on the gradient; each links to its website */
 .header-logos {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  justify-self: end;
 }
 
 .header-logo {
   display: block;
-  height: 64px;
+  height: 84px;
   width: auto;
   background: white;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   box-sizing: content-box;
-}
-
-/* The BMFTR artwork carries small print ("Gefördert durch:") - render larger */
-.header-logo-bmftr {
-  height: 92px;
-  padding: 4px 10px;
 }
 
 /* Home/reload button */
 .home-button {
+  justify-self: start;
   display: flex;
   align-items: center;
   justify-content: center;

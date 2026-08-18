@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import aiscLogo from './assets/logo_aisc_150dpi.png';
-import bmftrLogo from './assets/logo_bmftr_de.png';
+import aiscBmftrLogo from './assets/logo_aisc_bmftr.jpg';
 import ParameterPanel from './components/ParameterPanel';
 import EnvironmentViewer from './components/EnvironmentViewer';
 import EnvironmentInfo from './components/EnvironmentInfo';
@@ -613,16 +612,9 @@ function App() {
         <div className="header-logos">
           <a href="https://hpi.de/en/ai-service-centre/" target="_blank" rel="noopener noreferrer">
             <img
-              src={aiscLogo}
-              alt="KI-Servicezentrum Berlin-Brandenburg by Hasso-Plattner-Institut"
+              src={aiscBmftrLogo}
+              alt="KI-Servicezentrum Berlin-Brandenburg by Hasso-Plattner-Institut - gefördert durch das Bundesministerium für Forschung, Technologie und Raumfahrt"
               className="header-logo"
-            />
-          </a>
-          <a href="https://www.bmbf.de/" target="_blank" rel="noopener noreferrer">
-            <img
-              src={bmftrLogo}
-              alt="Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt"
-              className="header-logo header-logo-bmftr"
             />
           </a>
         </div>
