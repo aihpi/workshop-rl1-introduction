@@ -1,5 +1,5 @@
 <div style="background-color: #ffffff; color: #000000; padding: 10px;">
-<img src="00_aisc\img\logo_aisc_bmftr.jpg">
+<img src="00_aisc/img/logo_aisc_bmftr.jpg">
 <h1> Workshop: Reinforcement Learning I - Introduction
 </div>
 
@@ -10,12 +10,14 @@ This repository contains the material used in the "Reinforcement Learning I - In
 ## Features
 
 - **Environments**:
-   - [Gymnasium FrozenLake-v1](https://gymnasium.farama.org/environments/toy_text/frozen_lake/) (4x4) with `is_slippery=True`
-   - [Gymnasium FrozenLake-v1](https://gymnasium.farama.org/environments/toy_text/frozen_lake/) (4x4) with `is_slippery=False`
+   - [Gymnasium FrozenLake-v1](https://gymnasium.farama.org/environments/toy_text/frozen_lake/) (4x4) with `is_slippery=False` (deterministic) and `is_slippery=True` (stochastic)
    - [Gymnasium CartPole-v1](https://gymnasium.farama.org/environments/classic_control/cart_pole/)
+   - [Gymnasium MountainCar-v0](https://gymnasium.farama.org/environments/classic_control/mountain_car/)
 - **Algorithms**:
-   - Q-learning (custom build) — for FrozenLake
-   - DQN ([stable-baselines3](https://stable-baselines3.readthedocs.io/)) — for CartPole
+   - Q-Learning (custom build) — FrozenLake (tabular; discrete states only)
+   - DQN ([stable-baselines3](https://stable-baselines3.readthedocs.io/)) — all four environments; on FrozenLake the network's Q-values are rendered as the familiar Q-table
+   - PPO ([stable-baselines3](https://stable-baselines3.readthedocs.io/)) — CartPole, plus MountainCar as a deliberate failure demo (on-policy learning starves on sparse rewards)
+- **Workshop features**: live training charts, greedy policy playback with action overlay, 100-episode policy evaluation with confidence interval, sticky seeds for reproducible runs, per-environment tuned defaults, optimistic/pessimistic value initialization (DQN) to explore the exploration-exploitation tradeoff
 
 ## Setup and Installation
 
@@ -93,18 +95,23 @@ docker compose restart         # Restart services
 
 1. **Open the application** in your browser at http://localhost:3030
 
-2. **Adjust parameters** using the sliders:
-   - **Number of Episodes**: Training duration
-   - **Exploration Rate (ε)**: Probability of random exploration
+2. **Pick an environment and an algorithm** — the algorithm list only offers compatible choices. Info panels explain both.
+
+3. **Adjust parameters** using the sliders (the set depends on the algorithm), e.g.:
+   - **Training budget**: episodes (Q-Learning) or timesteps (DQN/PPO)
    - **Learning Rate (α)**: How fast the agent learns
    - **Discount Factor (γ)**: Importance of future rewards
+   - **Exploration (ε)**: fixed rate (Q-Learning) or decay schedule (DQN)
+   - **Seed**: every run is reproducible; the dice draws a new one
 
-3. **Start training**: Click "Start Training" and watch real-time visualizations:
-   - **Environment viewer**: Renders agent's last position of a training episode
-   - **Reward chart**: Tracks training progress with statistics
-   - **Q-table heatmap**: Visualizes learned action values (4×4 grid)
+4. **Start training**: Click "Start Training" and watch real-time visualizations:
+   - **Environment viewer**: Renders the end of training episodes as they happen
+   - **Training progress**: return, episode length and exploration charts
+   - **Policy: Q-Table**: the learned action values on FrozenLake (Q-Learning's table, or the DQN network read out state by state)
 
-4. **Play policy**: After training completes, click "Play Policy" to watch the trained agent execute its learned behavior step-by-step.
+5. **Play policy**: Click "Play Policy" to watch the greedy policy step-by-step, with the chosen action overlaid. This also works *before* training — useful to show what a random/untrained policy does.
+
+6. **Evaluate policy**: Runs 100 greedy episodes and reports the mean return with a 95% confidence interval, against the environment's "solved" threshold.
 
 ### Hands-On Coding (Optional)
 
@@ -121,7 +128,10 @@ workshop-rl1-introduction/
 ├── backend/               # Python Flask backend
 │   ├── algorithms/        # RL algorithm implementations
 │   │   ├── base_algorithm.py      # Abstract base class
-│   │   └── q_learning.py          # Q-Learning implementation
+│   │   ├── q_learning.py          # Q-Learning (custom, tabular)
+│   │   ├── sb3_base.py            # Shared stable-baselines3 wrapper
+│   │   ├── dqn.py                 # DQN (stable-baselines3)
+│   │   └── ppo.py                 # PPO (stable-baselines3)
 │   ├── environments/      # Gymnasium environment handling
 │   ├── training/          # Session management
 │   ├── tests/             # Backend test suite
@@ -143,19 +153,21 @@ workshop-rl1-introduction/
 │   ├── INSTALLATION_MACOS.md   # macOS installation guide
 │   ├── INSTALLATION_WINDOWS.md # Windows installation guide
 │   └── screenshots/            # Documentation screenshots
-└── docker-compose.yml     # Multi-container orchestration
+├── docker-compose.yml     # Participant setup (self-contained images)
+└── docker-compose.dev.yml # Maintainer override (bind mounts, hot reload)
 ```
 
 ## Limitations
 
-- Two environments (FrozenLake 4x4, CartPole) and two algorithms (Q-Learning, DQN)
-- Each algorithm supports specific environments (Q-Learning: FrozenLake; DQN: CartPole)
+- Four environments (FrozenLake 4x4 ×2, CartPole, MountainCar) and three algorithms (Q-Learning, DQN, PPO)
+- Each algorithm supports specific environments (Q-Learning needs discrete states; PPO on MountainCar is included as an instructive failure)
 - Requires Docker for running the application
 
 ## References
 
 - [Gymnasium Library Documentation](https://gymnasium.farama.org)
-- [FrozenLake Environment](https://gymnasium.farama.org/environments/toy_text/frozen_lake/)
+- [Stable-Baselines3 Documentation](https://stable-baselines3.readthedocs.io/)
+- Environments: [FrozenLake](https://gymnasium.farama.org/environments/toy_text/frozen_lake/) · [CartPole](https://gymnasium.farama.org/environments/classic_control/cart_pole/) · [MountainCar](https://gymnasium.farama.org/environments/classic_control/mountain_car/)
 
 ## Author
 
