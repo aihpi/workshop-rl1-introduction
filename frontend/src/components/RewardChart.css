@@ -3,6 +3,15 @@
   color: #333;
 }
 
+/* Chart titles: same size/weight/color as the configuration panel's
+   Environment/Algorithm labels */
+.reward-chart h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+  margin: 1rem 0 0.5rem 0;
+}
+
 .stats {
   display: flex;
   gap: 1rem;

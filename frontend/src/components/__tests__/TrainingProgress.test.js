@@ -58,11 +58,11 @@ describe('TrainingProgress', () => {
     const { rerender } = render(
       <TrainingProgress {...lengthProps} environment="FrozenLake-v1" />
     );
-    expect(screen.getByText(/average episode length/i)).toBeInTheDocument();
+    expect(screen.getByText(/average training episode length/i)).toBeInTheDocument();
 
     // CartPole declares lengthEqualsReturn - the chart would duplicate the return curve
     rerender(<TrainingProgress {...lengthProps} environment="CartPole-v1" />);
-    expect(screen.queryByText(/average episode length/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/average training episode length/i)).not.toBeInTheDocument();
   });
 
   test('shows placeholder without training data', () => {

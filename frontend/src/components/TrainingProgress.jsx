@@ -122,7 +122,7 @@ const TrainingProgress = ({
 
       {showLengthChart && (
         <>
-          <h3>Average Episode Length</h3>
+          <h3>Average Training Episode Length</h3>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={lengthChartData}>
               <CartesianGrid strokeDasharray="3 3" />
