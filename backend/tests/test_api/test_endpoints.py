@@ -176,6 +176,35 @@ class TestErrorHandling:
         # Cleanup
         client.post('/api/reset')
 
+    def test_train_stream_final_event_carries_learning_data(self, client):
+        """
+        Test that the complete event of /api/train/stream includes the
+        FINAL learning data.
+
+        WHY: Timestep-budget algorithms keep training past the last
+        episode-boundary snapshot, so the displayed policy would be stale
+        vs. the one used in playback (greedy actions can differ).
+        HOW: Train a tiny run, parse the SSE stream, check the last event.
+        """
+        response = client.post('/api/train', json={
+            'algorithm': 'Q-Learning',
+            'environment': 'FrozenLake-v1-NoSlip',
+            'parameters': {'num_episodes': 5, 'seed': '42'}
+        })
+        session_id = response.get_json()['session_id']
+
+        stream = client.get(f'/api/train/stream/{session_id}')
+        events = [json.loads(line[len('data: '):])
+                  for line in stream.get_data(as_text=True).splitlines()
+                  if line.startswith('data: ')]
+
+        final = events[-1]
+        assert final['status'] == 'complete'
+        assert 'q_table' in final['learning_data']
+
+        # Cleanup
+        client.post('/api/reset')
+
     def test_stop_unknown_session_returns_404(self, client):
         """
         Test POST /api/train/stop/<id> with an unknown session.

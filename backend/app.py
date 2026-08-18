@@ -258,7 +258,11 @@ def stream_training(session_id):
                 stopped = session['stop_event'].is_set()
                 event_queue.put({
                     'status': 'stopped' if stopped else 'complete',
-                    'message': 'Training stopped by user' if stopped else 'Training completed successfully'
+                    'message': 'Training stopped by user' if stopped else 'Training completed successfully',
+                    # The final policy: timestep-budget algorithms keep
+                    # training past the last episode-boundary snapshot, so
+                    # the last streamed q_table can be stale vs. playback
+                    'learning_data': session['algorithm'].get_learning_data()
                 })
 
             except Exception as e:

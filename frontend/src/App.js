@@ -381,7 +381,10 @@ function App() {
           setChartData(pending.chartPoints.slice());
           setLengthChartData(pending.lengthPoints.slice());
           setEpsilonHistory(downsampleForDisplay([...pending.eps]));
-          setLearningData(pending.lastLearningData);
+          // Prefer the final policy sent with the complete/stopped event:
+          // the last per-episode snapshot can be stale (training continues
+          // past the last episode boundary on timestep budgets)
+          setLearningData(data.learning_data ?? pending.lastLearningData);
           setCurrentEpsilon(pending.lastLearningData?.diagnostics?.exploration_rate ?? null);
           if (pending.frame) {
             setCurrentFrame(pending.frame);
