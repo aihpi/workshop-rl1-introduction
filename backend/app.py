@@ -157,7 +157,10 @@ def preview_learning_data():
             algo = AlgorithmFactory.create_algorithm(
                 algorithm, env, parameters, environment_name=environment
             )
-            return jsonify(algo.get_learning_data())
+            # Report the resolved seed: the frontend reuses it for untrained
+            # play/eval sessions so the displayed initialization is exactly
+            # the one that acts
+            return jsonify({**algo.get_learning_data(), 'seed': parameters['seed']})
         finally:
             env.close()
 

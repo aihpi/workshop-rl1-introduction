@@ -62,6 +62,7 @@ function App() {
   const [epsilonHistory, setEpsilonHistory] = useState([]); // {episode, epsilon} points (DQN)
   const [lengthChartData, setLengthChartData] = useState([]); // moving-average episode lengths
   const [usedSeed, setUsedSeed] = useState(null); // resolved seed of the current run (replicability)
+  const [previewSeed, setPreviewSeed] = useState(null); // seed the initial-table preview was drawn with
   const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
   const [playbackAction, setPlaybackAction] = useState(null); // action taken at the shown playback frame
   const [rewards, setRewards] = useState([]);
@@ -131,6 +132,7 @@ function App() {
     setEpsilonHistory([]);
     setLengthChartData([]);
     setUsedSeed(null);
+    setPreviewSeed(null);
     setPlaybackStep(null);
     setPlaybackAction(null);
     setRewards([]);
@@ -165,6 +167,7 @@ function App() {
         );
         if (!stale) {
           setLearningData(data);
+          setPreviewSeed(data.seed ?? null);
         }
       } catch (err) {
         // invalid intermediate parameters - keep the previous preview
@@ -411,10 +414,19 @@ function App() {
       return sessionId;
     }
     await resetTraining(); // clear stale backend sessions
+
+    // With an empty seed field, reuse the seed the initial-table preview
+    // was drawn with - the DISPLAYED initialization must be exactly the
+    // policy that acts during untrained play/eval
+    const seedIsEmpty = parameters.seed === undefined || parameters.seed === '';
+    const effectiveParameters = (seedIsEmpty && previewSeed != null)
+      ? { ...parameters, seed: previewSeed }
+      : parameters;
+
     const response = await startTraining({
       algorithm: selectedAlgorithm,
       environment: selectedEnvironment,
-      parameters: parameters
+      parameters: effectiveParameters
     });
     setSessionId(response.session_id);
     setUsedSeed(response.seed ?? null);
