@@ -155,7 +155,7 @@ function App() {
   // values may be invalid and are ignored quietly.
   useEffect(() => {
     if (selectedAlgorithm !== 'Q-Learning') return;
-    if (isTraining || trainingComplete || sessionId) return;
+    if (isTraining || trainingComplete) return;
 
     let stale = false;
     const timer = setTimeout(async () => {
@@ -176,7 +176,7 @@ function App() {
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAlgorithm, selectedEnvironment, parameters, isTraining, trainingComplete, sessionId]);
+  }, [selectedAlgorithm, selectedEnvironment, parameters, isTraining, trainingComplete]);
 
   // Validation function for training parameters
   const isValidParameters = () => {
@@ -403,11 +403,30 @@ function App() {
     }
   };
 
+  // A trained session is reused; otherwise a FRESH session is created from
+  // the current parameters - playing/evaluating before training shows the
+  // initialized policy (the "before" of the before/after comparison)
+  const ensureSession = async () => {
+    if (trainingComplete && sessionId) {
+      return sessionId;
+    }
+    await resetTraining(); // clear stale backend sessions
+    const response = await startTraining({
+      algorithm: selectedAlgorithm,
+      environment: selectedEnvironment,
+      parameters: parameters
+    });
+    setSessionId(response.session_id);
+    setUsedSeed(response.seed ?? null);
+    return response.session_id;
+  };
+
   const handlePlayPolicy = async () => {
-    if (!sessionId || !trainingComplete) return;
+    if (isTraining || isPlayback || isEvaluating || !isValidParameters()) return;
 
     try {
       setError(null);
+      const playSessionId = await ensureSession();
       setIsPlayback(true);
 
       // Frames stream in one SSE event each (faster than watchable speed);
@@ -454,7 +473,7 @@ function App() {
 
       // Subscribe to playback stream
       const es = subscribeToPlayback(
-        sessionId,
+        playSessionId,
         // onFrame - buffer each streamed frame
         (data) => {
           buffer.push(data);
@@ -504,16 +523,23 @@ function App() {
     }
   };
 
-  const handleEvaluatePolicy = () => {
-    if (!sessionId || !trainingComplete || isEvaluating || isPlayback) return;
+  const handleEvaluatePolicy = async () => {
+    if (isTraining || isEvaluating || isPlayback || !isValidParameters()) return;
 
     setError(null);
+    let evalSessionId;
+    try {
+      evalSessionId = await ensureSession();
+    } catch (err) {
+      setError(err.message || 'Failed to create a session');
+      return;
+    }
     setEvalResults(null);
     setEvalProgress({ episode: 0, total: 100 });
     setIsEvaluating(true);
 
     const es = subscribeToEvaluation(
-      sessionId,
+      evalSessionId,
       100, // standard evaluation size
       // onProgress - one event per evaluation episode
       (data) => {
@@ -586,7 +612,7 @@ function App() {
             isTraining={isTraining}
             isPlayback={isPlayback}
             isEvaluating={isEvaluating}
-            canPlayPolicy={trainingComplete}
+            canPlayPolicy={isValidParameters()}
             disabled={!isValidParameters()}
           />
         </div>

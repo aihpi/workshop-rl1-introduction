@@ -117,7 +117,9 @@ class TrainingCoordinator:
         callback: Optional[callable] = None
     ):
         """
-        Evaluate a trained session's policy (greedy, no rendering).
+        Evaluate a session's policy (greedy, no rendering). Untrained
+        sessions are allowed on purpose: the initialized policy's score is
+        the baseline participants compare training against.
 
         Args:
             session_id: Session UUID
@@ -128,16 +130,12 @@ class TrainingCoordinator:
             Evaluation summary dict
 
         Raises:
-            ValueError: If the session is unknown or not yet trained
+            ValueError: If the session is unknown
         """
         if session_id not in self.sessions:
             raise ValueError(f"Session '{session_id}' not found")
 
-        session = self.sessions[session_id]
-        if not session['trained']:
-            raise ValueError(f"Session '{session_id}' has not been trained yet")
-
-        return session['algorithm'].evaluate(num_episodes, callback)
+        return self.sessions[session_id]['algorithm'].evaluate(num_episodes, callback)
 
     def request_stop(self, session_id: str) -> bool:
         """
@@ -161,7 +159,9 @@ class TrainingCoordinator:
         callback: Optional[callable] = None
     ) -> list:
         """
-        Execute the learned policy.
+        Execute the session's policy. Untrained sessions are allowed on
+        purpose: playing the freshly initialized policy shows what the
+        agent does before any learning.
 
         Args:
             session_id: Session UUID
@@ -171,18 +171,12 @@ class TrainingCoordinator:
             List of frames from policy execution
 
         Raises:
-            ValueError: If session ID is invalid or not trained
+            ValueError: If session ID is invalid
         """
         if session_id not in self.sessions:
             raise ValueError(f"Session '{session_id}' not found")
 
-        session = self.sessions[session_id]
-
-        if not session['trained']:
-            raise ValueError(f"Session '{session_id}' has not been trained yet")
-
-        algorithm = session['algorithm']
-        return algorithm.play_policy(callback)
+        return self.sessions[session_id]['algorithm'].play_policy(callback)
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """

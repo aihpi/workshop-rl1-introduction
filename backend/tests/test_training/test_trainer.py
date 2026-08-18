@@ -74,21 +74,26 @@ class TestSessionManagement:
         finally:
             coordinator.reset_all_sessions()
 
-    def test_evaluate_requires_trained_session(self):
+    def test_untrained_session_can_play_and_evaluate(self):
+        """Playing/evaluating the freshly initialized policy is a feature:
+        it is the baseline participants compare training against."""
         coordinator = TrainingCoordinator()
         session_id = coordinator.create_session(
             'Q-Learning', 'FrozenLake-v1-NoSlip', FAST_QL_PARAMS
         )
         try:
-            import pytest
-            with pytest.raises(ValueError, match='not been trained'):
-                coordinator.evaluate(session_id, num_episodes=2)
+            # No training happened - both must work on the initialized policy
+            frames = coordinator.play_policy(session_id)
+            assert len(frames) >= 1
 
-            coordinator.train(session_id)
             summary = coordinator.evaluate(session_id, num_episodes=10)
             assert summary['num_episodes'] == 10
             # FrozenLake returns are 0/1, so the mean is the success rate
             assert 0.0 <= summary['mean_return'] <= 1.0
+
+            coordinator.train(session_id)
+            trained = coordinator.evaluate(session_id, num_episodes=10)
+            assert trained['num_episodes'] == 10
         finally:
             coordinator.reset_all_sessions()
 
