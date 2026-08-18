@@ -1,8 +1,10 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import environmentsData from '../content/environments.json';
 import './RewardChart.css';
 
 const HPI_VIOLET = '#7664a0';
+const HPI_ORANGE = '#ff7500';
 
 /**
  * Unified training-progress panel: current numbers on top (episodes,
@@ -21,9 +23,11 @@ const TrainingProgress = ({
   epsilon,
   seed,
   chartData,
+  lengthChartData = [],
   totalEpisodes,
   windowSize,
-  epsilonHistory
+  epsilonHistory,
+  environment
 }) => {
   // Sort by episode to handle race condition where final point might arrive before last interval
   const sortedData = [...chartData].sort((a, b) => a.episode - b.episode);
@@ -38,6 +42,13 @@ const TrainingProgress = ({
     : undefined;
 
   const showEpsilonChart = epsilonHistory && epsilonHistory.length > 1;
+
+  // The length chart is skipped where return == episode length by
+  // construction (e.g. CartPole's +1/step) - it would duplicate the
+  // return curve; declared per environment in the content file
+  const lengthEqualsReturn =
+    environmentsData[environment]?.sections?.lengthEqualsReturn === true;
+  const showLengthChart = !lengthEqualsReturn && lengthChartData.length > 0;
 
   return (
     <div className="reward-chart">
@@ -107,6 +118,39 @@ const TrainingProgress = ({
           <p>No training data yet</p>
           <p className="hint">Average return will appear as training progresses</p>
         </div>
+      )}
+
+      {showLengthChart && (
+        <>
+          <h3>Average Episode Length</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={lengthChartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="episode"
+                domain={xDomain}
+                type="number"
+                ticks={ticks}
+                label={{ value: 'Episode', position: 'insideBottom', offset: 0 }}
+              />
+              <YAxis label={{ value: 'Avg Steps', angle: -90, position: 'insideLeft' }} />
+              <Tooltip formatter={(value) => Number(value).toFixed(1)} />
+              <Line
+                type="monotone"
+                dataKey="avgLength"
+                stroke={HPI_ORANGE}
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+                name={`Moving average (window: ${windowSize})`}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="hint">
+            Steps per episode. On slippery ice, shorter episodes with rising
+            returns mean the agent found a reliable route.
+          </p>
+        </>
       )}
 
       {showEpsilonChart && (

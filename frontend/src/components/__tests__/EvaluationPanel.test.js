@@ -29,11 +29,14 @@ describe('EvaluationPanel', () => {
     expect(screen.getByText(/episode 37\/100/i)).toBeInTheDocument();
   });
 
-  test('shows statistics and solved badge above the threshold', () => {
+  test('shows mean with 95% CI, spread, and solved badge above the threshold', () => {
     render(
       <EvaluationPanel progress={null} results={results} environment="CartPole-v1" />
     );
-    expect(screen.getByText(/491.3 ± 21.0/)).toBeInTheDocument();
+    // CI = 1.96 * 21 / sqrt(100) = 4.1 - the uncertainty of the mean,
+    // not the per-episode spread
+    expect(screen.getByText(/491.3 ± 4.1/)).toBeInTheDocument();
+    expect(screen.getByText('21.0')).toBeInTheDocument(); // spread shown separately
     expect(screen.getByText(/✅ Solved/)).toBeInTheDocument();
   });
 

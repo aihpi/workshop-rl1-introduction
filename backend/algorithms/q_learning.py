@@ -54,8 +54,9 @@ class QLearning(BaseAlgorithm):
             q_init_max
         )
 
-        # Cumulative environment steps across training (for the UI)
+        # Cumulative environment steps and last episode length (for the UI)
         self.total_steps = 0
+        self.last_episode_length = 0
 
         # Identify and handle terminal states
         self.terminal_states = self._get_terminal_states(env)
@@ -186,6 +187,7 @@ class QLearning(BaseAlgorithm):
                 steps += 1
 
             self.total_steps += steps
+            self.last_episode_length = steps
 
             # CRITICAL: Render only AFTER episode completes
             frame = self.env.render()
@@ -245,7 +247,8 @@ class QLearning(BaseAlgorithm):
         return {
             'q_table': self.q_table.tolist(),
             'diagnostics': {
-                'total_timesteps': int(self.total_steps)
+                'total_timesteps': int(self.total_steps),
+                'episode_length': int(self.last_episode_length)
             }
         }
 

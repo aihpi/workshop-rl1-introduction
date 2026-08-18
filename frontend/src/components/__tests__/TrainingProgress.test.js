@@ -49,6 +49,22 @@ describe('TrainingProgress', () => {
     expect(screen.getByText(/average training return/i)).toBeInTheDocument();
   });
 
+  test('shows the episode-length chart for FrozenLake but not CartPole', () => {
+    const lengthProps = {
+      ...baseProps,
+      lengthChartData: [{ episode: 10, avgLength: 24 }, { episode: 20, avgLength: 15 }]
+    };
+
+    const { rerender } = render(
+      <TrainingProgress {...lengthProps} environment="FrozenLake-v1" />
+    );
+    expect(screen.getByText(/average episode length/i)).toBeInTheDocument();
+
+    // CartPole declares lengthEqualsReturn - the chart would duplicate the return curve
+    rerender(<TrainingProgress {...lengthProps} environment="CartPole-v1" />);
+    expect(screen.queryByText(/average episode length/i)).not.toBeInTheDocument();
+  });
+
   test('shows placeholder without training data', () => {
     render(
       <TrainingProgress

@@ -60,6 +60,7 @@ function App() {
   const [currentTimesteps, setCurrentTimesteps] = useState(null); // total env steps so far (timestep-budgeted algorithms)
   const [currentEpsilon, setCurrentEpsilon] = useState(null); // current exploration rate (DQN)
   const [epsilonHistory, setEpsilonHistory] = useState([]); // {episode, epsilon} points (DQN)
+  const [lengthChartData, setLengthChartData] = useState([]); // moving-average episode lengths
   const [usedSeed, setUsedSeed] = useState(null); // resolved seed of the current run (replicability)
   const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
   const [playbackAction, setPlaybackAction] = useState(null); // action taken at the shown playback frame
@@ -128,6 +129,7 @@ function App() {
     setCurrentTimesteps(null);
     setCurrentEpsilon(null);
     setEpsilonHistory([]);
+    setLengthChartData([]);
     setUsedSeed(null);
     setPlaybackStep(null);
     setPlaybackAction(null);
@@ -233,6 +235,8 @@ function App() {
         all: [],
         chartPoints: [],
         eps: [],
+        lengths: [],
+        lengthPoints: [],
         flushedLength: 0,
         timer: null
       };
@@ -251,6 +255,7 @@ function App() {
         setCurrentEpsilon(latest.learning_data?.diagnostics?.exploration_rate ?? null);
 
         // Chart boundary points accumulate regardless of mode
+        // (return always; episode length when the algorithm reports it)
         const all = pending.all;
         const firstBoundary =
           (Math.floor(pending.flushedLength / calculatedWindowSize) + 1) * calculatedWindowSize;
@@ -262,6 +267,15 @@ function App() {
               calculatedWindowSize
             )
           });
+          if (pending.lengths.length >= m) {
+            pending.lengthPoints.push({
+              episode: m,
+              avgLength: calculateMovingAverage(
+                pending.lengths.slice(Math.max(0, m - calculatedWindowSize), m),
+                calculatedWindowSize
+              )
+            });
+          }
         }
         pending.flushedLength = all.length;
 
@@ -278,6 +292,7 @@ function App() {
         setLearningData(latest.learning_data);
         setRewards(all.slice());
         setChartData(pending.chartPoints.slice());
+        setLengthChartData(pending.lengthPoints.slice());
         setEpsilonHistory(downsampleForDisplay([...pending.eps]));
       };
 
@@ -295,6 +310,9 @@ function App() {
               episode: (diagnostics.episode ?? pending.all.length - 1) + 1,
               epsilon: diagnostics.exploration_rate
             });
+          }
+          if (diagnostics?.episode_length != null) {
+            pending.lengths.push(diagnostics.episode_length);
           }
           if (data.frame) {
             pending.frame = data.frame;
@@ -330,6 +348,7 @@ function App() {
           }
           setRewards(all.slice());
           setChartData(pending.chartPoints.slice());
+          setLengthChartData(pending.lengthPoints.slice());
           setEpsilonHistory(downsampleForDisplay([...pending.eps]));
           setLearningData(pending.lastLearningData);
           setCurrentEpsilon(pending.lastLearningData?.diagnostics?.exploration_rate ?? null);
@@ -567,9 +586,11 @@ function App() {
             epsilon={currentEpsilon}
             seed={usedSeed}
             chartData={chartData}
+            lengthChartData={lengthChartData}
             totalEpisodes={totalEpisodes}
             windowSize={windowSize}
             epsilonHistory={epsilonHistory}
+            environment={selectedEnvironment}
           />
           <EvaluationPanel
             progress={evalProgress}

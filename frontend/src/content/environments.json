@@ -82,7 +82,8 @@
       },
       "stochasticity": "Deterministic dynamics; only the initial state is slightly randomized.",
       "difficulty": "Considered solved at an average return of 475+ over 100 episodes (max 500).",
-      "solvedThreshold": 475
+      "solvedThreshold": 475,
+      "lengthEqualsReturn": true
     },
     "links": [
       {

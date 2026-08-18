@@ -18,6 +18,14 @@ const EvaluationPanel = ({ progress, results, environment }) => {
 
   const solvedThreshold = environmentsData[environment]?.sections?.solvedThreshold;
 
+  // Show the uncertainty of the MEAN (95% CI = 1.96 * std / sqrt(N)),
+  // not the per-episode spread - the spread is the environment's inherent
+  // randomness and never shrinks with more episodes
+  const ci95 = results
+    ? 1.96 * results.std_return / Math.sqrt(results.num_episodes)
+    : 0;
+  const fmt = (v) => (Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2));
+
   return (
     <div className="learning-visualization">
       <h2>Policy Evaluation</h2>
@@ -33,10 +41,14 @@ const EvaluationPanel = ({ progress, results, environment }) => {
         <>
           <div className="stats">
             <div className="stat">
-              <span className="label">Mean Return:</span>
+              <span className="label">Mean Return (95% CI):</span>
               <span className="value">
-                {results.mean_return.toFixed(1)} ± {results.std_return.toFixed(1)}
+                {fmt(results.mean_return)} ± {fmt(ci95)}
               </span>
+            </div>
+            <div className="stat">
+              <span className="label">Spread (σ):</span>
+              <span className="value">{fmt(results.std_return)}</span>
             </div>
             <div className="stat">
               <span className="label">Min / Max:</span>
@@ -64,8 +76,10 @@ const EvaluationPanel = ({ progress, results, environment }) => {
 
           <p className="hint">
             Evaluation runs the policy greedily (ε = 0) over fresh episodes —
-            the true performance of what was learned, without the random
-            exploration actions that hold the training curve down.
+            the true performance of what was learned. The ± is the confidence
+            interval of the mean (shrinks with more episodes); σ is the
+            per-episode spread — the environment's inherent randomness, which
+            no number of episodes reduces.
           </p>
         </>
       )}
