@@ -19,8 +19,12 @@ class DQNAlgorithm(SB3Algorithm):
 
     SUPPORTED_ENVIRONMENTS = ['CartPole-v1', 'FrozenLake-v1-NoSlip', 'FrozenLake-v1', 'MountainCar-v0']
 
-    # Hidden hyperparameters per environment (rl-zoo tuned); overridable
-    # via parameters (used by tests for fast runs)
+    # Hidden hyperparameters per environment, keyed by gym env id (both
+    # FrozenLake variants share one). CartPole and MountainCar are rl-zoo
+    # tuned; FrozenLake is our own seed-sweep result - CartPole's burst
+    # updates (128 gradient steps / 256 env steps on a 100k buffer) are
+    # unstable there and can unlearn a solved policy. Overridable via
+    # parameters (used by tests for fast runs).
     HIDDEN_DEFAULTS = {
         'MountainCar-v0': {
             'buffer_size': 10_000,
@@ -29,6 +33,14 @@ class DQNAlgorithm(SB3Algorithm):
             'train_freq': 16,
             'gradient_steps': 8,
         },
+        'FrozenLake-v1': {
+            'buffer_size': 10_000,
+            'learning_starts': 100,
+            'target_update_interval': 500,
+            'train_freq': 4,
+            'gradient_steps': 4,
+            'net_arch': [64, 64],
+        },
     }
     HIDDEN_DEFAULTS_BASE = {
         'buffer_size': 100_000,
@@ -36,6 +48,7 @@ class DQNAlgorithm(SB3Algorithm):
         'target_update_interval': 10,
         'train_freq': 256,
         'gradient_steps': 128,
+        'net_arch': [256, 256],
     }
 
     def get_learning_data(self, **kwargs) -> Dict[str, Any]:
@@ -69,7 +82,7 @@ class DQNAlgorithm(SB3Algorithm):
             target_update_interval=int(parameters.get('target_update_interval', hidden['target_update_interval'])),
             train_freq=int(parameters.get('train_freq', hidden['train_freq'])),
             gradient_steps=int(parameters.get('gradient_steps', hidden['gradient_steps'])),
-            policy_kwargs={'net_arch': parameters.get('net_arch', [256, 256])},
+            policy_kwargs={'net_arch': parameters.get('net_arch', hidden['net_arch'])},
             seed=parameters.get('seed', 42),
             device='cpu',
             verbose=0,
@@ -89,8 +102,19 @@ class DQNAlgorithm(SB3Algorithm):
             'exploration_final_eps': 0.04,
         }
         overrides = {
-            'FrozenLake-v1': {'total_timesteps': 100000, 'exploration_fraction': 0.5},
-            'FrozenLake-v1-NoSlip': {'total_timesteps': 30000, 'exploration_fraction': 0.5},
+            # Seed-swept values (see commit message): the ε floor of 0.15
+            # keeps the replay buffer diverse - with the SB3-default 0.04
+            # DQN can UNLEARN a solved FrozenLake policy when trained longer
+            'FrozenLake-v1': {
+                'total_timesteps': 30000,
+                'exploration_fraction': 0.5,
+                'exploration_final_eps': 0.15,
+            },
+            'FrozenLake-v1-NoSlip': {
+                'total_timesteps': 5000,
+                'exploration_fraction': 0.5,
+                'exploration_final_eps': 0.15,
+            },
             'MountainCar-v0': {
                 'total_timesteps': 120000,
                 'learning_rate': 0.004,
