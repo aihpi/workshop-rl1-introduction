@@ -500,4 +500,7 @@ if __name__ == '__main__':
     print("\nPress Ctrl+C to stop")
 
     # host='0.0.0.0' allows connections from outside the container (required for Docker)
-    app.run(host='0.0.0.0', debug=True, port=5001, threaded=True)
+    # Debug/reloader only for maintainers (docker-compose.dev.yml sets
+    # FLASK_DEBUG=1); participants run without the werkzeug debugger
+    app.run(host='0.0.0.0', debug=os.environ.get('FLASK_DEBUG') == '1',
+            port=5001, threaded=True)

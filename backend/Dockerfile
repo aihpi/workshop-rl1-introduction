@@ -1,50 +1,29 @@
-# Use Python 3.10 on Debian Linux (slim = smaller image)
+# Slim CPU-only backend image. pygame's manylinux wheels bundle SDL,
+# freetype and portmidi, so no system packages are needed at all -
+# rendering is offscreen (SDL_VIDEODRIVER=dummy, see app.py).
 FROM python:3.10-slim
 
-# Set working directory inside container
+# uv from the official distroless image (no curl, nothing left behind)
+COPY --from=ghcr.io/astral-sh/uv:0.9.6 /uv /uvx /usr/local/bin/
+
 WORKDIR /app
 
-# Install system dependencies (curl for uv installer + pygame libraries)
-RUN apt-get update && apt-get install -y \
-    curl \
-    libsdl2-dev \
-    libsdl2-image-dev \
-    libsdl2-mixer-dev \
-    libsdl2-ttf-dev \
-    libfreetype6-dev \
-    libportmidi-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install uv using official installer (pinned for reproducibility)
-# Update check: https://github.com/astral-sh/uv/releases
-RUN curl -LsSf https://astral.sh/uv/0.9.6/install.sh | sh
-
-# Add uv to PATH (installer puts it in ~/.local/bin)
-ENV PATH="/root/.local/bin:$PATH"
-
-# Copy dependency files (for Docker layer caching)
+# Dependency layer first (cached until pyproject/lock change)
 COPY pyproject.toml uv.lock* ./
 
-# Tell uv to use system Python instead of creating a virtual environment
-ENV UV_SYSTEM_PYTHON=1
+# --all-extras includes pytest: the test suite runs inside this container.
+# --no-cache keeps the wheel cache out of the image layer (~750MB).
+RUN uv sync --all-extras --no-cache
 
-# Install Python dependencies using uv
-# UV_SYSTEM_PYTHON=1 tells uv to install into system Python (no venv needed in container)
-# --all-extras: includes dev dependencies (test tools)
-RUN uv sync --all-extras
-
-# Copy all application code
+# Application code
 COPY . .
 
-# Expose port 5001
 EXPOSE 5001
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1
-
-# Add virtual environment to PATH so 'python' and 'pytest' work directly
+# The venv created by uv sync
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Command to run when container starts
-# Now we can use 'python' directly thanks to PATH
+# Flask debug/reloader stays off unless FLASK_DEBUG=1 (set by
+# docker-compose.dev.yml for maintainers)
 CMD ["python", "app.py"]
