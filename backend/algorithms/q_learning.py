@@ -54,6 +54,9 @@ class QLearning(BaseAlgorithm):
             q_init_max
         )
 
+        # Cumulative environment steps across training (for the UI)
+        self.total_steps = 0
+
         # Identify and handle terminal states
         self.terminal_states = self._get_terminal_states(env)
 
@@ -182,6 +185,8 @@ class QLearning(BaseAlgorithm):
                 state = next_state
                 steps += 1
 
+            self.total_steps += steps
+
             # CRITICAL: Render only AFTER episode completes
             frame = self.env.render()
 
@@ -232,13 +237,16 @@ class QLearning(BaseAlgorithm):
 
     def get_learning_data(self) -> Dict[str, Any]:
         """
-        Return Q-table for visualization.
+        Return Q-table plus basic diagnostics for visualization.
 
         Returns:
-            Dictionary with q_table as nested list
+            Dictionary with q_table as nested list and diagnostics
         """
         return {
-            'q_table': self.q_table.tolist()
+            'q_table': self.q_table.tolist(),
+            'diagnostics': {
+                'total_timesteps': int(self.total_steps)
+            }
         }
 
     @staticmethod
