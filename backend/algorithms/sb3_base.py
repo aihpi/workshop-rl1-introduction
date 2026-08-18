@@ -114,18 +114,20 @@ class SB3Algorithm(BaseAlgorithm):
         Render the true final frame of an episode.
 
         SB3's DummyVecEnv auto-resets before the callback runs, so a plain
-        render() would show the fresh reset state. Classic-control envs
-        render from unwrapped.state, so we temporarily restore the terminal
-        observation, render, and put the reset state back.
+        render() would show the fresh reset state. We temporarily restore
+        the terminal observation, render, and put the reset state back.
+        Classic-control envs keep it in unwrapped.state, toy-text envs
+        (FrozenLake) in unwrapped.s.
         """
         unwrapped = self.env.unwrapped
-        if terminal_obs is not None and hasattr(unwrapped, 'state'):
-            saved_state = unwrapped.state
+        attr = next((a for a in ('state', 's') if hasattr(unwrapped, a)), None)
+        if terminal_obs is not None and attr:
+            saved_state = getattr(unwrapped, attr)
             try:
-                unwrapped.state = terminal_obs
+                setattr(unwrapped, attr, terminal_obs)
                 return self.env.render()
             finally:
-                unwrapped.state = saved_state
+                setattr(unwrapped, attr, saved_state)
         return self.env.render()
 
     def _greedy_action(self, observation) -> int:

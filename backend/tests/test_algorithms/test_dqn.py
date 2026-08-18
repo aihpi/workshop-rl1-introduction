@@ -157,6 +157,24 @@ class TestDQNTraining:
         finally:
             env.close()
 
+    def test_terminal_frame_renders_true_state_on_frozenlake(self):
+        """FrozenLake stores its state in unwrapped.s (not .state): the
+        terminal-frame trick must render the episode's true end state,
+        not the auto-reset start tile, and must restore the env after."""
+        env = gym.make('FrozenLake-v1', render_mode='rgb_array', is_slippery=False)
+        try:
+            algo = DQNAlgorithm(env, FAST_PARAMS)
+            env.reset()
+            start_frame = env.render()
+
+            frame = algo._render_terminal_frame(15)  # goal tile
+
+            assert not np.array_equal(frame, start_frame), \
+                "terminal frame must differ from the reset-state frame"
+            assert env.unwrapped.s == 0, "env state must be restored"
+        finally:
+            env.close()
+
     def test_cartpole_learning_data_has_no_q_table(self, cartpole_env):
         """Continuous-state envs cannot be enumerated - no q_table."""
         algo = DQNAlgorithm(cartpole_env, FAST_PARAMS)
