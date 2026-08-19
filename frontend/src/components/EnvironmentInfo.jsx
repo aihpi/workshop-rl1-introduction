@@ -90,6 +90,13 @@ const EnvironmentInfo = ({ environment }) => {
             </section>
           )}
 
+          {sections.algorithmNotes && (
+            <section>
+              <h4>Which Algorithm?</h4>
+              <p>{sections.algorithmNotes}</p>
+            </section>
+          )}
+
           <section>
             <h4>Learn More</h4>
             <ul className="link-list">

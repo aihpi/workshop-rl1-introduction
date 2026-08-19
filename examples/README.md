@@ -1,55 +1,39 @@
-# Hands-On Q-Learning Notebook
+# Hands-On Notebooks (Optional Homework)
 
-## Prerequisites
+These notebooks are an optional add-on to the RL Lab workshop — for digging deeper at home or if you finish early. They are deliberately minimal: each one shows the few lines of code behind what you saw in RL Lab and links to the official documentation where the real depth lives.
 
-Before starting, ensure you have:
+| Notebook | What it covers | Extra setup |
+|---|---|---|
+| `notebooks/frozenlake_q_learning.ipynb` | Implement the Q-Learning update yourself — the exact rule RL Lab's tabular agent uses — and train it on FrozenLake | none |
+| `notebooks/sb3_quickstart.ipynb` | Run DQN/PPO with stable-baselines3 — the library RL Lab wraps — with the evaluate → train → evaluate workflow and two small exercises | its **first cell installs** the bigger deep-RL dependencies (~500 MB, CPU-only) |
 
-- **Python 3.9+** installed ([download here](https://www.python.org/downloads/))
-- **`uv`** package manager ([installation guide](https://docs.astral.sh/uv/getting-started/installation/))
-  - Same tool used by the backend
-  - Fast, modern Python package manager
-- Optional: **VS Code** with Jupyter extension (recommended)
-  - [Download VS Code](https://code.visualstudio.com)
-  - [Install Jupyter extension](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
+Solutions for both are in `notebooks/solutions/`.
 
-## How to get the notebook running in VS Code (optional)
+## Setup (once, ~2 minutes of terminal — everything after is click-through)
 
-1. **Navigate to examples directory**:
-   ```bash
-   cd examples
-   ```
-
-2. **Install dependencies** (first time only):
-   ```bash
-   uv sync
-   ```
-
-3. **Register Jupyter kernel** (first time only):
-   ```bash
-   uv run python -m ipykernel install --user --name=workshop-rl1-examples --display-name "Python (RL Workshop)"
-   ```
-
-   This makes the virtual environment available as a kernel in VS Code and Jupyter Lab.
-
-4. **Open in VS Code**:
-   ```bash
-   code .
-   ```
-
-5. **Open the notebook**:
-   - In VS Code, open: `notebooks/q_learning_frozenlake.ipynb`
-   - Click "Select Kernel" (top right)
-   - Click "Jupyter Kernel"
-   - Select **"Python (RL Workshop)"**
-   - Run cells with Shift+Enter
-
-## Alternative: Jupyter Lab in Browser (faster setup)
-
-If you prefer working in a browser:
+Prerequisites: **Python 3.9+** ([download](https://www.python.org/downloads/)) and the **`uv`** package manager ([install guide](https://docs.astral.sh/uv/getting-started/installation/)) — the same tool the RL Lab backend uses.
 
 ```bash
 cd examples
+uv sync
 uv run jupyter lab
 ```
 
-Browser will open automatically at http://localhost:8888
+Your browser opens at http://localhost:8888 — open a notebook and run cells with Shift+Enter. That's it: the SB3 notebook installs its own extra dependencies from inside the notebook, so you won't need the terminal again.
+
+## Alternative: VS Code
+
+If you prefer VS Code with the [Jupyter extension](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter), register the kernel once:
+
+```bash
+cd examples
+uv sync
+uv run python -m ipykernel install --user --name=workshop-rl1-examples --display-name "Python (RL Workshop)"
+code .
+```
+
+Then open a notebook, click "Select Kernel" (top right) → "Jupyter Kernel" → **"Python (RL Workshop)"**.
+
+## Note for the SB3 notebook
+
+The deep-RL dependencies (PyTorch + stable-baselines3) are an optional extra so the basic setup stays small. The notebook's first cell installs them for you by running `uv sync --extra sb3` — the exact pinned versions from the lockfile, into the same environment the kernel runs in.

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
+## [0.9.1] - 2026-08-19
+
+### Added
+- **stable-baselines3 homework notebook** (`examples/notebooks/sb3_quickstart.ipynb` + solutions): the ~15 lines of gym/SB3 code behind RL Lab's DQN/PPO, evaluate → train → evaluate with the rl-zoo hyperparameters, two exercises (MountainCar wrong-vs-tuned settings; DQN→PPO swap). Deep-RL dependencies are an optional extra (`uv sync --extra sb3`, CPU torch) installed by the notebook's first cell
+- FrozenLake gets `solvedThreshold` (0.7 slippery / 1.0 no-slip): the Evaluate panel now shows a verdict on every environment
+- New "Which Algorithm?" section on environment pages (MountainCar: the PPO-fails explanation and the Q₀ pessimism demo, with the γ-discounting note on why -50 is the hopeless-state value)
+
+### Changed
+- Q-Learning notebook: exercise teaches the terminated-masked update (matching the backend); missing ε-greedy helper restored; inconsistent policy-print cell removed; pygame `render_mode='human'` (broken on macOS) replaced by rgb_array + matplotlib; both notebooks executed end-to-end
+- Info texts reviewed: slippery FrozenLake dynamics corrected (1/3 intended direction, not "33% perpendicular"); DQN key concepts now feature Replay Buffer and Target Network; q_init/budget/final-ε/batch documented; parameter ranges show theoretical limits instead of slider bounds; paywalled Nature link replaced with the free arXiv DQN paper
+- README: accurate prerequisites (~600MB download, no Python/Node needed, pre-pull advice), early-finisher framing for the notebooks, current repo tree, Docker commands trimmed to an end-of-file cheat sheet
+- MIT LICENSE file added
+
 ## [0.9.0] - 2026-08-18
 
 ### Added

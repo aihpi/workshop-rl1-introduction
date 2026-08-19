@@ -3,7 +3,7 @@
 <h1> Workshop: Reinforcement Learning I - Introduction
 </div>
 
-This repository contains the material used in the "Reinforcement Learning I - Introduction" workshop by the AI Service Center Berlin Brandenburg. It provides an educational interface, called **RL Lab**, for building intuition about reinforcement learning fundamentals. The backend is built on the environments of the [gymnasium library](https://gymnasium.farama.org).
+This repository contains the material used in the introductory reinforcement learning workshop by the [AI Service Center Berlin Brandenburg](https://hpi.de/en/ai-service-centre/). It provides **RL Lab**, an educational interface for building intuition about reinforcement learning fundamentals. 
 
 ![Application Screenshot](docs/screenshots/app/main-interface.png)
 
@@ -23,12 +23,15 @@ This repository contains the material used in the "Reinforcement Learning I - In
 
 ### Prerequisites
 
-- Git
-- Docker Desktop running or Docker Engine
+- **Git**
+- **Docker** (Docker Desktop on Windows/macOS, Docker Desktop or Engine on Linux)
+- **Hardware**: ~1.5 GB disk for the images, 8 GB RAM recommended (4 GB minimum). Any modern Intel/AMD or Apple Silicon CPU — no GPU needed.
+
+Python and UV is only needed for the optional homework notebooks, see [`examples/`](examples/README.md).
 
 ### Quick Start (Experienced Users)
 
-Already have git and Docker installed? Get started in 4 commands:
+Already have git installed and Docker running? Get started in 4 commands:
 
 1. Clone the repository
 ```bash
@@ -45,17 +48,12 @@ cd workshop-rl1-introduction
 docker compose pull
 docker compose up -d
 ```
-(`docker compose pull` matters especially if you have run RL Lab before: `up` alone keeps using old images.)
 
-4. Open browser to http://localhost:3030
-
-**First-time setup takes ~1-2 minutes** (downloads pre-built images).
-
-**Note**: Running in detached mode (`-d`) keeps your terminal free. To view logs if needed for debugging, open a separate terminal and run `docker compose logs -f`
+1. Open browser to http://localhost:3030
 
 ### Installation Guides (Beginners)
 
-**New to programming or Docker?** Follow the installation guides:
+**New to programming or Docker?** Follow the more detailed installation guides:
 
 <table>
 <tr>
@@ -73,21 +71,6 @@ docker compose up -d
 </td>
 </tr>
 </table>
-
-**Useful Docker Commands**
-
-Once installed, here are some helpful commands:
-
-```bash
-docker compose pull            # Update to the latest images
-docker compose up -d           # Start the application (detached mode)
-docker compose down            # Stop the application
-docker compose logs -f         # View live logs (for debugging, in separate terminal)
-docker compose logs backend    # View only backend logs
-docker compose logs frontend   # View only frontend logs
-docker compose ps              # Check container status
-docker compose restart         # Restart services
-```
 
 ## User Guide
 
@@ -113,11 +96,14 @@ docker compose restart         # Restart services
 
 6. **Evaluate policy**: Runs 100 greedy episodes and reports the mean return with a 95% confidence interval, against the environment's "solved" threshold.
 
-### Hands-On Coding (Optional)
+### Finished early? Want to dig deeper at home?
 
-Want to implement Q-Learning yourself? After using RL Lab to build intuition, try the Jupyter notebook in the examples directory to implement Q-Learning yourself and see how the code works.
+RL Lab shows *what* the algorithms do — two small Jupyter notebooks in [`examples/`](examples/README.md) show the code that does it. They are minimal and link to the official [Gymnasium](https://gymnasium.farama.org) and [Stable-Baselines3](https://stable-baselines3.readthedocs.io/) documentation wherever you want more depth:
 
-Instructions for how to get the notebooks running are in [`examples/README.md`](examples/README.md).
+- **`frozenlake_q_learning.ipynb`** — implement the Q-learning update rule yourself, train it on an 8×8 map and watch your own agent play.
+- **`sb3_quickstart.ipynb`** — the ~15 lines of Stable-Baselines3 code behind RL Lab's DQN and PPO: the evaluate → train → evaluate workflow with the same tuned hyperparameters, plus two exercises (why MountainCar needs its own settings; swapping DQN for PPO). 
+
+Solutions are included. One-time setup: [`examples/README.md`](examples/README.md).
 
 ![Notebook Screenshot](docs/screenshots/app/notebook-QL-FrozenLake.png)
 
@@ -138,30 +124,38 @@ workshop-rl1-introduction/
 │   └── app.py             # Flask API server
 ├── frontend/              # React frontend
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   │   ├── ParameterPanel.jsx
-│   │   │   ├── EnvironmentViewer.jsx
-│   │   │   ├── RewardChart.jsx
-│   │   │   ├── LearningVisualization.jsx
-│   │   │   └── ControlButtons.jsx
+│   │   ├── components/    # React components (parameters, viewer, charts,
+│   │   │                  # info panels, Q-table & evaluation visualizations)
+│   │   ├── content/       # Environment & algorithm texts (About panels)
 │   │   ├── App.js         # Main application
 │   │   └── api.js         # Backend communication
 │   └── src/components/__tests__/  # Frontend test suite
+├── examples/              # Optional homework notebooks (+ solutions)
+│   ├── notebooks/
+│   │   ├── frozenlake_q_learning.ipynb   # Implement Q-Learning yourself
+│   │   ├── sb3_quickstart.ipynb          # DQN/PPO with stable-baselines3
+│   │   └── solutions/
+│   └── README.md          # Notebook setup instructions
 ├── docs/
-│   ├── DEVELOPMENT.md          # Local development setup (without Docker)
+│   ├── DEVELOPMENT.md          # Maintainer setup (dev mode, local runs)
 │   ├── INSTALLATION_LINUX.md   # Linux installation guide
 │   ├── INSTALLATION_MACOS.md   # macOS installation guide
 │   ├── INSTALLATION_WINDOWS.md # Windows installation guide
 │   └── screenshots/            # Documentation screenshots
+├── presentations/         # Workshop slides
 ├── docker-compose.yml     # Participant setup (self-contained images)
 └── docker-compose.dev.yml # Maintainer override (bind mounts, hot reload)
 ```
 
-## Limitations
+## Stopping, Updating, Troubleshooting
 
-- Four environments (FrozenLake 4x4 ×2, CartPole, MountainCar) and three algorithms (Q-Learning, DQN, PPO)
-- Each algorithm supports specific environments (Q-Learning needs discrete states; PPO on MountainCar is included as an instructive failure)
-- Requires Docker for running the application
+```bash
+docker compose down                          # Stop the application
+docker compose pull && docker compose up -d  # Update to the latest version
+docker compose logs -f                       # Live logs (for bug reports)
+```
+
+More commands and troubleshooting recipes are in the [installation guides](docs/).
 
 ## References
 
@@ -176,11 +170,11 @@ workshop-rl1-introduction/
 
 ## License
 
-MIT License - Free to use for educational purposes
+See [LICENSE](LICENSE.txt)
 
 ---
 
 ## Acknowledgements
 <img src="00_aisc/img/logo_bmftr_de.png" alt="drawing" style="width:170px;"/>
 
-The [AI Service Centre Berlin Brandenburg](http://hpi.de/kisz) is funded by the [Federal Ministry of Research, Technology and Space](https://www.bmbf.de/) under the funding code 01IS22092.
+The [AI Service Centre Berlin Brandenburg](http://hpi.de/kisz) is funded by the [Federal Ministry of Research, Technology and Space](https://www.bmbf.de/) under the funding code 16IS22092.
