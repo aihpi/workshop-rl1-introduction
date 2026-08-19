@@ -148,7 +148,7 @@
       "difficulty": "Hard exploration: random actions almost never reach the flag, so the agent sees no informative reward for a long time. Considered solved at an average return of -110 or better over 100 episodes.",
       "solvedThreshold": -110,
       "lengthEqualsReturn": true,
-      "algorithmNotes": "Try PPO here: it will most likely FAIL. PPO is on-policy - it learns only from its own most recent episodes - and while no episode reaches the flag, every rollout returns exactly -200: all advantages are zero and the policy gradient carries no information. DQN escapes the trap with its replay buffer (one lucky success is stored and reused for thousands of updates) and its optimistic initial value estimates. To see how much that optimism matters, set DQN's Initial Value Estimate to -50 (the true value of a hopeless state) and watch exploration die."
+      "algorithmNotes": "Try PPO here: it will most likely FAIL. PPO is on-policy - it learns only from its own most recent episodes - and while no episode reaches the flag, every rollout returns exactly -200: all advantages are zero and the policy gradient carries no information. DQN escapes the trap with its replay buffer (one lucky success is stored and reused for thousands of updates) and its optimistic initial value estimates. To see how much that optimism matters, set DQN's Initial Value Estimate to -50 and watch exploration die. (Why -50 and not -200? The network learns γ-discounted values: with γ = 0.98, an endless stream of -1 rewards is worth -1/(1-γ) ≈ -50. The -200 on the chart is the undiscounted return - a different scale.)"
     },
     "links": [
       {
