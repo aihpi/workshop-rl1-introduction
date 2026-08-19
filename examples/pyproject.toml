@@ -18,6 +18,8 @@ dependencies = [
 sb3 = [
     "stable-baselines3>=2.6.0",
     "torch>=2.3",
+    "tqdm>=4.65",   # progress bar during model.learn(..., progress_bar=True)
+    "rich>=13.0",
 ]
 
 # CPU-only torch on Linux (avoids the multi-GB CUDA download);
