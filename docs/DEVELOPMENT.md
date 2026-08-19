@@ -5,6 +5,20 @@
 - **Frontend**: React with Recharts for visualization
 - **Modularity**: Factory pattern for algorithms, designed for easy extension
 
+## Docker Dev Mode (Recommended)
+
+The plain `docker compose up` runs the participant setup: self-contained images, no bind mounts, no hot reload. For development, add the dev override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+This bind-mounts `backend/` and `frontend/` into the containers, enables the Flask reloader (`FLASK_DEBUG=1`) and the React dev server with hot reload. `--build` builds the local frontend dev image (`workshop-rl1-frontend-dev`) when needed.
+
+Two things to know:
+- After a dependency bump (pyproject.toml/package.json) plus image rebuild, run `docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v` once — the anonymous volumes holding `.venv`/`node_modules` persist across recreates and would keep the stale dependencies.
+- Run the backend test suite inside the container: `docker compose exec backend python -m pytest`.
+
 ## Local Setup (Without Docker)
 
 > ⚠️ **Not Recommended for General Use**

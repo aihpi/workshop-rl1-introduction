@@ -1,3 +1,9 @@
+# Participant setup: self-contained images, no bind mounts.
+#   docker compose pull   # get the latest images (needs network)
+#   docker compose up -d  # run
+#
+# Maintainers: add the dev override for bind mounts + hot reload:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 services:
   # Backend service (Flask API)
   backend:
@@ -5,42 +11,23 @@ services:
     container_name: workshop-rl1-introduction-backend
     ports:
       - "5001:5001"
-    volumes:
-      # Mount local code for live editing
-      - ./backend:/app
-      # Exclude virtual env (use container's packages)
-      - /app/.venv
     environment:
       - PYTHONUNBUFFERED=1
-      - FLASK_ENV=development
     networks:
       - rl-network
     restart: unless-stopped
 
-  # Frontend service (React app)
+  # Frontend service (static React build served by nginx)
   frontend:
     image: davidgoll/workshop-rl1-frontend:latest
     container_name: workshop-rl1-introduction-frontend
     ports:
-      - "3030:3000"
-    volumes:
-      # Mount local code for live editing
-      - ./frontend:/app
-      # Exclude node_modules (use container's packages)
-      - /app/node_modules
-    environment:
-      # Tell React where the backend is
-      - REACT_APP_API_URL=http://localhost:5001/api
-      # Enable hot-reload in Docker
-      - CHOKIDAR_USEPOLLING=true
+      - "3030:80"
     depends_on:
       - backend
     networks:
       - rl-network
     restart: unless-stopped
-    # Keep container running even if npm start fails initially
-    stdin_open: true
-    tty: true
 
 networks:
   rl-network:

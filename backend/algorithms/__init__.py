@@ -1,6 +1,8 @@
 from typing import Dict, Any, List
 from .base_algorithm import BaseAlgorithm
 from .q_learning import QLearning
+from .dqn import DQNAlgorithm
+from .ppo import PPOAlgorithm
 
 
 class AlgorithmFactory:
@@ -12,9 +14,10 @@ class AlgorithmFactory:
     """
 
     # Registry of available algorithms
-    # Future: Add more algorithms (SARSA, DQN, PPO, etc.)
     ALGORITHMS = {
         'Q-Learning': QLearning,
+        'DQN': DQNAlgorithm,
+        'PPO': PPOAlgorithm,
     }
 
     @staticmethod
@@ -28,7 +31,25 @@ class AlgorithmFactory:
         return list(AlgorithmFactory.ALGORITHMS.keys())
 
     @staticmethod
-    def create_algorithm(name: str, env, parameters: Dict[str, Any]) -> BaseAlgorithm:
+    def get_compatibility() -> Dict[str, List[str]]:
+        """
+        Get the algorithm -> supported environments mapping.
+
+        Returns:
+            Dict mapping algorithm names to lists of supported environment names
+        """
+        return {
+            name: cls.SUPPORTED_ENVIRONMENTS
+            for name, cls in AlgorithmFactory.ALGORITHMS.items()
+        }
+
+    @staticmethod
+    def create_algorithm(
+        name: str,
+        env,
+        parameters: Dict[str, Any],
+        environment_name: str = None
+    ) -> BaseAlgorithm:
         """
         Create an algorithm instance by name.
 
@@ -36,12 +57,15 @@ class AlgorithmFactory:
             name: Algorithm name (must be in ALGORITHMS registry)
             env: Gymnasium environment instance
             parameters: Dictionary of algorithm parameters
+            environment_name: Optional environment name; if given, the
+                algorithm/environment pair is validated for compatibility
 
         Returns:
             Algorithm instance implementing BaseAlgorithm
 
         Raises:
-            ValueError: If algorithm name is not recognized
+            ValueError: If algorithm name is not recognized or the
+                algorithm does not support the environment
         """
         if name not in AlgorithmFactory.ALGORITHMS:
             raise ValueError(
@@ -50,6 +74,13 @@ class AlgorithmFactory:
             )
 
         algorithm_class = AlgorithmFactory.ALGORITHMS[name]
+
+        if environment_name is not None and environment_name not in algorithm_class.SUPPORTED_ENVIRONMENTS:
+            raise ValueError(
+                f"Algorithm '{name}' does not support environment '{environment_name}'. "
+                f"Supported environments: {algorithm_class.SUPPORTED_ENVIRONMENTS}"
+            )
+
         return algorithm_class(env, parameters)
 
     @staticmethod
@@ -78,4 +109,4 @@ class AlgorithmFactory:
 
 
 # Export for easier imports
-__all__ = ['AlgorithmFactory', 'BaseAlgorithm', 'QLearning']
+__all__ = ['AlgorithmFactory', 'BaseAlgorithm', 'QLearning', 'DQNAlgorithm', 'PPOAlgorithm']

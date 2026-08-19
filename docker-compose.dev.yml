@@ -1,0 +1,43 @@
+# Maintainer override: bind mounts + hot reload. Explicit opt-in:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Notes:
+# - FLASK_DEBUG=1 enables the werkzeug reloader AND its interactive
+#   debugger (arbitrary code execution by design) on 0.0.0.0:5001 -
+#   dev machines only, never for participants.
+# - The anonymous volumes (/app/.venv, /app/node_modules) keep the
+#   image's dependencies visible under the bind mounts. They persist
+#   across recreates: after a dependency bump + image rebuild, run
+#   `docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v`
+#   once to drop the stale copies.
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    environment:
+      - FLASK_DEBUG=1
+    # The werkzeug debugger must not be reachable from the LAN:
+    # bind the dev backend to localhost only (!override replaces the
+    # base mapping instead of merging with it)
+    ports: !override
+      - "127.0.0.1:5001:5001"
+
+  frontend:
+    # Local dev image name - must NOT reuse the Docker Hub tag, or the
+    # dev build would shadow the participant image on this machine
+    image: workshop-rl1-frontend-dev
+    build:
+      context: ./frontend
+      target: dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    # Base file maps 3030:80 (nginx); the dev server listens on 3000.
+    # Compose MERGES port lists by default - !override replaces them.
+    ports: !override
+      - "3030:3000"
+    stdin_open: true
+    tty: true

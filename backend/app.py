@@ -2,43 +2,33 @@ import os
 # Set SDL to use dummy video driver to avoid macOS threading issues with pygame
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
+# Gymnasium's env.close() calls pygame.quit(), which tears down SDL subsystems
+# (joystick/IOKit) registered on the thread that first rendered. Our envs render
+# in short-lived Flask/SSE threads, so a later close() or GC finalization from
+# another thread segfaults on macOS (SIGSEGV in SDL_JoystickQuit). Neutralize
+# pygame teardown for the server's lifetime - SDL cleanup only matters at
+# process exit anyway.
+import pygame
+pygame.quit = lambda: None
+pygame.display.quit = lambda: None
+
 from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 import json
 import queue
 import threading
 
-print("DEBUG: Starting imports...")
+from algorithms import AlgorithmFactory
+from environments.environment_manager import EnvironmentManager
+from training.trainer import TrainingCoordinator, resolve_seed
 
-try:
-    from algorithms import AlgorithmFactory
-    print("DEBUG: AlgorithmFactory imported successfully")
-except Exception as e:
-    print(f"DEBUG: AlgorithmFactory import failed: {e}")
-
-try:
-    from environments.environment_manager import EnvironmentManager
-    print("DEBUG: EnvironmentManager imported successfully")
-except Exception as e:
-    print(f"DEBUG: EnvironmentManager import failed: {e}")
-
-try:
-    from training.trainer import TrainingCoordinator
-    print("DEBUG: TrainingCoordinator imported successfully")
-except Exception as e:
-    print(f"DEBUG: TrainingCoordinator import failed: {e}")
-
-print("DEBUG: Creating Flask app...")
 app = Flask(__name__)
 
-print("DEBUG: Setting up CORS...")
 # Enable CORS for frontend on localhost:3030
 CORS(app, origins=['http://localhost:3030', 'http://127.0.0.1:3030'])
 
-print("DEBUG: Creating training coordinator...")
 # Global training coordinator
 trainer = TrainingCoordinator()
-print("DEBUG: Training coordinator created successfully")
 
 
 @app.route('/test')
@@ -58,6 +48,17 @@ def get_algorithms():
     """
     algorithms = AlgorithmFactory.get_available_algorithms()
     return jsonify(algorithms)
+
+
+@app.route('/api/compatibility', methods=['GET'])
+def get_compatibility():
+    """
+    Get the algorithm -> supported environments mapping.
+
+    Returns:
+        JSON dict mapping algorithm names to lists of environment names
+    """
+    return jsonify(AlgorithmFactory.get_compatibility())
 
 
 @app.route('/api/environments', methods=['GET'])
@@ -133,6 +134,39 @@ def get_parameters(algorithm):
         return jsonify({'error': str(e)}), 400
 
 
+@app.route('/api/learning-data/preview', methods=['POST'])
+def preview_learning_data():
+    """
+    Learning data of a freshly initialized, untrained algorithm - e.g.
+    the initial Q-table - so the UI can show the starting point before
+    training and reflect initialization parameters live.
+
+    Request body: {"algorithm": ..., "environment": ..., "parameters": {...}}
+
+    Returns:
+        JSON learning data (same shape as during training)
+    """
+    try:
+        data = request.json
+        algorithm = data.get('algorithm')
+        environment = data.get('environment')
+        parameters = resolve_seed(data.get('parameters', {}))
+
+        env = EnvironmentManager.create_environment(environment, parameters['seed'])
+        try:
+            algo = AlgorithmFactory.create_algorithm(
+                algorithm, env, parameters, environment_name=environment
+            )
+            return jsonify(algo.get_learning_data())
+        finally:
+            env.close()
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Internal error: {str(e)}'}), 500
+
+
 @app.route('/api/train', methods=['POST'])
 def start_training():
     """
@@ -142,9 +176,10 @@ def start_training():
         {
             "algorithm": "Q-Learning",
             "environment": "FrozenLake-v1",
-            "parameters": {...},
-            "seed": 42 (optional)
+            "parameters": {...}
         }
+
+    The seed lives in parameters ('seed'); empty/missing means a random run.
 
     Returns:
         JSON with session_id
@@ -154,7 +189,6 @@ def start_training():
         algorithm = data.get('algorithm')
         environment = data.get('environment')
         parameters = data.get('parameters', {})
-        seed = data.get('seed')
 
         # Validate inputs
         if not algorithm:
@@ -163,9 +197,13 @@ def start_training():
             return jsonify({'error': 'Environment is required'}), 400
 
         # Create session
-        session_id = trainer.create_session(algorithm, environment, parameters, seed)
+        session_id = trainer.create_session(algorithm, environment, parameters)
 
-        return jsonify({'session_id': session_id})
+        # Report the resolved seed (drawn randomly when none was given),
+        # so any run can be replicated
+        used_seed = trainer.get_session(session_id)['parameters']['seed']
+
+        return jsonify({'session_id': session_id, 'seed': used_seed})
 
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
@@ -188,7 +226,6 @@ def stream_training(session_id):
         return jsonify({'error': 'Session not found'}), 404
 
     session = trainer.get_session(session_id)
-    num_episodes = int(session['parameters'].get('num_episodes', 1000))
 
     def generate():
         """Generator function for SSE events."""
@@ -196,40 +233,37 @@ def stream_training(session_id):
         event_queue = queue.Queue()
 
         def callback(episode, reward, learning_data, frame):
-            """Callback for each episode - puts data into queue."""
-            print(f"DEBUG: Episode {episode} completed with reward {reward}")
+            """Callback for each episode - puts data into queue.
 
-            # Convert frame to base64
-            frame_base64 = EnvironmentManager.frame_to_base64(frame)
-
-            # Create event data
-            event_data = {
+            frame may be None: algorithms throttle rendering during fast
+            training and only some episodes carry a frame.
+            """
+            event_queue.put({
                 'episode': episode,
                 'reward': reward,
                 'learning_data': learning_data,
-                'frame': frame_base64,
+                'frame': EnvironmentManager.frame_to_base64(frame) if frame is not None else None,
                 'status': 'training'
-            }
-
-            # Put event into queue (instead of yielding)
-            event_queue.put(event_data)
+            })
 
         def train_in_thread():
             """Run training in a separate thread."""
             try:
-                print(f"DEBUG: Starting training for session {session_id} with {num_episodes} episodes")
+                print(f"DEBUG: Starting training for session {session_id}")
 
-                # Start training
-                trainer.train(session_id, num_episodes, callback)
+                # Start training (budget comes from the algorithm's parameters)
+                trainer.train(session_id, callback)
 
-                print(f"DEBUG: Training completed successfully for session {session_id}")
-
-                # Send completion event
-                completion_data = {
-                    'status': 'complete',
-                    'message': 'Training completed successfully'
-                }
-                event_queue.put(completion_data)
+                # Distinguish a user-requested stop from natural completion
+                stopped = session['stop_event'].is_set()
+                event_queue.put({
+                    'status': 'stopped' if stopped else 'complete',
+                    'message': 'Training stopped by user' if stopped else 'Training completed successfully',
+                    # The final policy: timestep-budget algorithms keep
+                    # training past the last episode-boundary snapshot, so
+                    # the last streamed q_table can be stale vs. playback
+                    'learning_data': session['algorithm'].get_learning_data()
+                })
 
             except Exception as e:
                 print(f"DEBUG: Training failed with error: {e}")
@@ -253,22 +287,29 @@ def stream_training(session_id):
         training_thread.start()
 
         # Yield events from the queue
-        while True:
-            try:
-                # Get event from queue (blocks until available)
-                event_data = event_queue.get(timeout=1)
+        try:
+            while True:
+                try:
+                    # Get event from queue (blocks until available)
+                    event_data = event_queue.get(timeout=1)
 
-                if event_data is None:
-                    # End of training signal
-                    break
+                    if event_data is None:
+                        # End of training signal
+                        break
 
-                # Yield SSE event
-                yield f"data: {json.dumps(event_data)}\n\n"
+                    # Yield SSE event
+                    yield f"data: {json.dumps(event_data)}\n\n"
 
-            except queue.Empty:
-                # No data available, send keep-alive comment
-                yield ": keep-alive\n\n"
-                continue
+                except queue.Empty:
+                    # No data available, send keep-alive comment
+                    yield ": keep-alive\n\n"
+                    continue
+        finally:
+            # Runs on client disconnect too (GeneratorExit on the next yield):
+            # stop the training thread so an abandoned run doesn't keep
+            # burning CPU and filling the queue unbounded. Harmless after
+            # normal completion (the thread has already finished).
+            session['stop_event'].set()
 
     # Return SSE response with proper headers
     return Response(
@@ -280,6 +321,24 @@ def stream_training(session_id):
             'Connection': 'keep-alive'
         }
     )
+
+
+@app.route('/api/train/stop/<session_id>', methods=['POST'])
+def stop_training(session_id):
+    """
+    Request a graceful stop of a running training session.
+    Training halts at the next episode boundary; the partial policy
+    remains playable.
+
+    Args:
+        session_id: Session UUID
+
+    Returns:
+        JSON success message or 404 if session not found
+    """
+    if not trainer.request_stop(session_id):
+        return jsonify({'error': 'Session not found'}), 404
+    return jsonify({'message': 'Stop requested'})
 
 
 @app.route('/api/play-policy/stream/<session_id>', methods=['GET'])
@@ -297,31 +356,128 @@ def stream_playback(session_id):
         return jsonify({'error': 'Session not found'}), 404
 
     def generate():
-        """Generator function for SSE events."""
+        """Generator function for SSE events.
+
+        Streams one event per rendered frame while the rollout executes
+        (playback starts immediately, peak memory is one frame), then a
+        completion event.
+        """
+        frame_queue = queue.Queue()
+        cancelled = threading.Event()
+
+        def on_frame(frame, step, action):
+            """Called per rendered frame - encode and enqueue immediately."""
+            if cancelled.is_set():
+                # Client disconnected: unwind the rollout thread instead
+                # of finishing (and encoding) up to 500 unwatched frames
+                raise RuntimeError('playback client disconnected')
+            frame_queue.put({
+                'status': 'frame',
+                'frame': EnvironmentManager.frame_to_base64(frame),
+                'step': int(step),
+                'action': int(action)
+            })
+
+        def play_in_thread():
+            try:
+                frames = trainer.play_policy(session_id, on_frame)
+                frame_queue.put({'status': 'complete', 'num_frames': len(frames)})
+            except Exception as e:
+                frame_queue.put({'status': 'error', 'message': str(e)})
+            finally:
+                frame_queue.put(None)
+
+        playback_thread = threading.Thread(target=play_in_thread, daemon=True)
+        playback_thread.start()
+
         try:
-            # Execute policy and collect all frames
-            frames = trainer.play_policy(session_id)
-
-            # Convert all frames to base64
-            frames_base64 = [EnvironmentManager.frame_to_base64(frame) for frame in frames]
-
-            # Send all frames in one event
-            event_data = {
-                'frames': frames_base64,
-                'num_frames': len(frames_base64),
-                'status': 'complete'
-            }
-            yield f"data: {json.dumps(event_data)}\n\n"
-
-        except Exception as e:
-            # Send error event
-            error_data = {
-                'status': 'error',
-                'message': str(e)
-            }
-            yield f"data: {json.dumps(error_data)}\n\n"
+            while True:
+                try:
+                    event_data = frame_queue.get(timeout=1)
+                    if event_data is None:
+                        break
+                    yield f"data: {json.dumps(event_data)}\n\n"
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+        finally:
+            # Runs on client disconnect too (GeneratorExit on the next
+            # yield): stop the rollout thread via on_frame
+            cancelled.set()
 
     # Return SSE response with proper headers
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive'
+        }
+    )
+
+
+@app.route('/api/evaluate/stream/<session_id>', methods=['GET'])
+def stream_evaluation(session_id):
+    """
+    Evaluate a trained policy via Server-Sent Events: N greedy episodes
+    (no exploration, no rendering), streaming per-episode progress and a
+    final statistics summary.
+
+    Query Parameters:
+        episodes: Number of evaluation episodes (default 100, max 1000)
+
+    Returns:
+        SSE stream of evaluation progress + summary
+    """
+    if not trainer.session_exists(session_id):
+        return jsonify({'error': 'Session not found'}), 404
+
+    try:
+        num_episodes = max(1, min(1000, int(request.args.get('episodes', 100))))
+    except ValueError:
+        return jsonify({'error': 'episodes must be an integer'}), 400
+
+    def generate():
+        """Generator function for SSE events."""
+        event_queue = queue.Queue()
+        cancelled = threading.Event()
+
+        def on_episode(index, episode_return):
+            if cancelled.is_set():
+                # Client disconnected: abort the remaining episodes
+                raise RuntimeError('evaluation client disconnected')
+            event_queue.put({
+                'status': 'evaluating',
+                'episode': index + 1,
+                'total': num_episodes,
+                'return': episode_return
+            })
+
+        def evaluate_in_thread():
+            try:
+                summary = trainer.evaluate(session_id, num_episodes, on_episode)
+                event_queue.put({'status': 'complete', **summary})
+            except Exception as e:
+                event_queue.put({'status': 'error', 'message': str(e)})
+            finally:
+                event_queue.put(None)
+
+        eval_thread = threading.Thread(target=evaluate_in_thread, daemon=True)
+        eval_thread.start()
+
+        try:
+            while True:
+                try:
+                    event_data = event_queue.get(timeout=1)
+                    if event_data is None:
+                        break
+                    yield f"data: {json.dumps(event_data)}\n\n"
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+        finally:
+            # Client disconnect stops the evaluation thread via on_episode
+            cancelled.set()
+
     return Response(
         stream_with_context(generate()),
         mimetype='text/event-stream',
@@ -353,14 +509,19 @@ if __name__ == '__main__':
     print("Server running on http://localhost:5001")
     print("\nAvailable endpoints:")
     print("  GET  /api/algorithms")
+    print("  GET  /api/compatibility")
     print("  GET  /api/environments")
     print("  GET  /api/environments/<env_name>/preview")
     print("  GET  /api/parameters/<algorithm>")
     print("  POST /api/train")
+    print("  POST /api/train/stop/<session_id>")
     print("  GET  /api/train/stream/<session_id>")
     print("  GET  /api/play-policy/stream/<session_id>")
     print("  POST /api/reset")
     print("\nPress Ctrl+C to stop")
 
     # host='0.0.0.0' allows connections from outside the container (required for Docker)
-    app.run(host='0.0.0.0', debug=True, port=5001, threaded=True)
+    # Debug/reloader only for maintainers (docker-compose.dev.yml sets
+    # FLASK_DEBUG=1); participants run without the werkzeug debugger
+    app.run(host='0.0.0.0', debug=os.environ.get('FLASK_DEBUG') == '1',
+            port=5001, threaded=True)

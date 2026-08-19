@@ -10,6 +10,8 @@ class QLearning(BaseAlgorithm):
     Uses epsilon-greedy exploration and standard Q-learning update rule.
     """
 
+    SUPPORTED_ENVIRONMENTS = ['FrozenLake-v1-NoSlip', 'FrozenLake-v1']
+
     def __init__(self, env, parameters: Dict[str, Any]):
         """
         Initialize Q-Learning algorithm.
@@ -19,6 +21,15 @@ class QLearning(BaseAlgorithm):
             parameters: Dict with learning_rate, discount_factor, exploration_rate
         """
         super().__init__(env, parameters)
+
+        # Per-instance RNG for the algorithm's own randomness (epsilon coin
+        # flips, tie-breaks, random Q-init) - a global np.random.seed would
+        # reseed concurrently running sessions and break their reproducibility.
+        # The environment itself is seeded by the EnvironmentManager.
+        seed = parameters.get('seed')
+        self.rng = np.random.default_rng(None if seed is None else int(seed))
+        if seed is not None:
+            env.action_space.seed(int(seed))
 
         # Extract parameters
         self.learning_rate = parameters.get('learning_rate', 0.1)
@@ -43,36 +54,9 @@ class QLearning(BaseAlgorithm):
             q_init_max
         )
 
-        # Identify and handle terminal states
-        self.terminal_states = self._get_terminal_states(env)
-
-        # Force terminal state Q-values to 0 (by RL theory, terminal states have value 0)
-        for state in self.terminal_states:
-            self.q_table[state, :] = 0.0
-
-    def _get_terminal_states(self, env) -> set:
-        """
-        Identify terminal states (holes and goals) from the environment.
-
-        Args:
-            env: Gymnasium environment
-
-        Returns:
-            Set of state indices that are terminal
-        """
-        desc = env.unwrapped.desc.astype(str)
-        nrow = env.unwrapped.nrow
-        ncol = env.unwrapped.ncol
-
-        terminal_states = set()
-        for row in range(nrow):
-            for col in range(ncol):
-                cell_type = desc[row, col]
-                if cell_type in ['H', 'G']:  # Holes or Goal
-                    state_idx = row * ncol + col
-                    terminal_states.add(state_idx)
-
-        return terminal_states
+        # Cumulative environment steps and last episode length (for the UI)
+        self.total_steps = 0
+        self.last_episode_length = 0
 
     def _initialize_q_table(
         self,
@@ -107,7 +91,7 @@ class QLearning(BaseAlgorithm):
                 raise ValueError(
                     f"Invalid Q-value initialization: min ({min_val}) must be less than max ({max_val})"
                 )
-            return np.random.uniform(min_val, max_val, (num_states, num_actions))
+            return self.rng.uniform(min_val, max_val, (num_states, num_actions))
         else:
             raise ValueError(f"Unknown Q-value initialization strategy: {strategy}")
 
@@ -125,21 +109,25 @@ class QLearning(BaseAlgorithm):
         """
         max_value = np.max(q_values)
         max_actions = np.where(q_values == max_value)[0]
-        return np.random.choice(max_actions)
+        return self.rng.choice(max_actions)
 
-    def train(self, num_episodes: int, callback: Optional[Callable] = None) -> None:
+    def train(self, callback: Optional[Callable] = None, stop_event=None) -> None:
         """
-        Train Q-Learning agent.
+        Train Q-Learning agent for self.parameters['num_episodes'] episodes.
 
         CRITICAL: Only renders the final frame of each episode!
 
         Args:
-            num_episodes: Number of episodes to train
             callback: Called after each episode with (episode, reward, learning_data, frame)
+            stop_event: Optional threading.Event to stop training at an episode boundary
         """
+        num_episodes = int(self.parameters.get('num_episodes', 1000))
         max_steps_per_episode = 100  # Prevent infinite loops
 
         for episode in range(num_episodes):
+            if stop_event is not None and stop_event.is_set():
+                break
+
             state, _ = self.env.reset()
             total_reward = 0
             done = False
@@ -148,7 +136,7 @@ class QLearning(BaseAlgorithm):
             # Run episode
             while not done and steps < max_steps_per_episode:
                 # Epsilon-greedy action selection
-                if np.random.random() < self.exploration_rate:
+                if self.rng.random() < self.exploration_rate:
                     action = self.env.action_space.sample()
                 else:
                     action = self._argmax_random_tiebreak(self.q_table[state])
@@ -158,28 +146,35 @@ class QLearning(BaseAlgorithm):
                 done = terminated or truncated
                 total_reward += reward
 
-                # Q-learning update rule (use regular argmax here for speed)
-                best_next_action = self._argmax_random_tiebreak(self.q_table[next_state])
-                td_target = reward + self.discount_factor * self.q_table[next_state, best_next_action]
+                # Q-learning update rule (use regular argmax here for speed).
+                # Terminal states are masked out of the bootstrap (their
+                # Q-entries are never used or updated - the table may show
+                # their untouched init values). Truncation (time limit) is
+                # NOT terminal: bootstrapping continues through it.
+                if terminated:
+                    td_target = reward
+                else:
+                    best_next_action = self._argmax_random_tiebreak(self.q_table[next_state])
+                    td_target = reward + self.discount_factor * self.q_table[next_state, best_next_action]
                 td_error = td_target - self.q_table[state, action]
                 self.q_table[state, action] += self.learning_rate * td_error
 
                 state = next_state
                 steps += 1
 
+            self.total_steps += steps
+            self.last_episode_length = steps
+
             # CRITICAL: Render only AFTER episode completes
             frame = self.env.render()
 
             # Call callback with episode results
             if callback:
-                learning_data = self.get_learning_data()
+                callback(episode, total_reward, self.get_learning_data(), frame)
 
-                # Debug logging every 100 episodes
-                if episode % 100 == 0:
-                    print(f"DEBUG: Episode {episode}: Q-table min={np.min(self.q_table):.4f}, max={np.max(self.q_table):.4f}, mean={np.mean(self.q_table):.4f}")
-                    print(f"DEBUG: Q-table sample (state 0): {self.q_table[0]}")
-
-                callback(episode, total_reward, learning_data, frame)
+    def _greedy_action(self, observation) -> int:
+        """Greedy action from the Q-table (random tie-breaking)."""
+        return int(self._argmax_random_tiebreak(self.q_table[observation]))
 
     def play_policy(self, callback: Optional[Callable] = None) -> list:
         """
@@ -191,7 +186,7 @@ class QLearning(BaseAlgorithm):
             callback: Called after each step with (frame)
 
         Returns:
-            List of all frames from the episode
+            List of (frame, timestep) tuples from the episode
         """
         max_steps = 100  # Prevent infinite loops
         frames = []
@@ -209,10 +204,10 @@ class QLearning(BaseAlgorithm):
 
             # CRITICAL: Render AFTER every step
             frame = self.env.render()
-            frames.append(frame)
+            frames.append((frame, steps + 1))
 
             if callback:
-                callback(frame)
+                callback(frame, steps + 1, int(action))
 
             steps += 1
 
@@ -220,13 +215,17 @@ class QLearning(BaseAlgorithm):
 
     def get_learning_data(self) -> Dict[str, Any]:
         """
-        Return Q-table for visualization.
+        Return Q-table plus basic diagnostics for visualization.
 
         Returns:
-            Dictionary with q_table as nested list
+            Dictionary with q_table as nested list and diagnostics
         """
         return {
-            'q_table': self.q_table.tolist()
+            'q_table': self.q_table.tolist(),
+            'diagnostics': {
+                'total_timesteps': int(self.total_steps),
+                'episode_length': int(self.last_episode_length)
+            }
         }
 
     @staticmethod
@@ -296,5 +295,10 @@ class QLearning(BaseAlgorithm):
                 'type': 'float',
                 'default': 1.0,
                 'description': 'Maximum bound for random Q-value initialization'
+            },
+            'seed': {
+                'type': 'int',
+                'default': '',
+                'description': 'Same seed = same run. Click the dice to draw a new random seed.'
             }
         }

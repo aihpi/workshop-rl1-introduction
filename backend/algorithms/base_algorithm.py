@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Callable, Optional
 
+import numpy as np
+
 
 class BaseAlgorithm(ABC):
     """
@@ -9,6 +11,9 @@ class BaseAlgorithm(ABC):
     This class defines the interface that all algorithms (custom and stable-baselines3)
     must implement to work with the RL Playground system.
     """
+
+    # Environment names (from EnvironmentManager) this algorithm can train on
+    SUPPORTED_ENVIRONMENTS: list = []
 
     def __init__(self, env, parameters: Dict[str, Any]):
         """
@@ -22,30 +27,89 @@ class BaseAlgorithm(ABC):
         self.parameters = parameters
 
     @abstractmethod
-    def train(self, num_episodes: int, callback: Optional[Callable] = None) -> None:
+    def train(self, callback: Optional[Callable] = None, stop_event=None) -> None:
         """
-        Train the agent for a specified number of episodes.
+        Train the agent. The training budget is read from self.parameters
+        (e.g. 'num_episodes' for tabular algorithms, 'total_timesteps' for
+        stable-baselines3 algorithms).
 
         Args:
-            num_episodes: Number of episodes to train
             callback: Optional callback function called after each episode.
                      Signature: callback(episode, reward, learning_data, frame)
+            stop_event: Optional threading.Event; training stops gracefully
+                     at the next episode boundary once it is set.
         """
         pass
 
     @abstractmethod
-    def play_policy(self, callback: Optional[Callable] = None) -> list:
+    def play_policy(self, callback: Optional[Callable] = None) -> "list[tuple]":
         """
-        Execute the learned policy and return all frames.
+        Execute the learned policy and return all rendered frames.
 
         Args:
             callback: Optional callback function called after each step.
-                     Signature: callback(frame)
+                     Signature: callback(frame, timestep, action) - action
+                     is the int action taken at this step.
 
         Returns:
-            List of frames (base64 encoded strings) from the episode
+            List of (frame, timestep) tuples - frame is a numpy RGB array,
+            timestep the 1-based environment step it was rendered at
         """
         pass
+
+    @abstractmethod
+    def _greedy_action(self, observation) -> int:
+        """Return the greedy action for an observation (no exploration)."""
+        pass
+
+    def evaluate(self, num_episodes: int = 100,
+                 callback: Optional[Callable] = None,
+                 max_steps_per_episode: int = 10000) -> Dict[str, Any]:
+        """
+        Evaluate the learned policy: standard RL practice is N fresh
+        episodes acting greedily (no exploration), no rendering, and
+        reporting the distribution of episode returns.
+
+        Args:
+            num_episodes: Number of evaluation episodes
+            callback: Optional, called after each episode with
+                     (episode_index, episode_return)
+            max_steps_per_episode: Safety cap; the environment's own
+                     TimeLimit normally ends episodes first
+
+        Returns:
+            Dict with num_episodes, mean/std/min/max return, mean episode
+            length, and the raw per-episode returns
+        """
+        if num_episodes <= 0 or max_steps_per_episode <= 0:
+            raise ValueError('num_episodes and max_steps_per_episode must be positive')
+        returns = []
+        lengths = []
+        for i in range(num_episodes):
+            observation, _ = self.env.reset()
+            episode_return = 0.0
+            steps = 0
+            done = False
+            while not done and steps < max_steps_per_episode:
+                action = self._greedy_action(observation)
+                observation, reward, terminated, truncated, _ = self.env.step(action)
+                done = terminated or truncated
+                episode_return += float(reward)
+                steps += 1
+            returns.append(episode_return)
+            lengths.append(steps)
+            if callback:
+                callback(i, episode_return)
+
+        return {
+            'num_episodes': num_episodes,
+            'mean_return': float(np.mean(returns)),
+            'std_return': float(np.std(returns)),
+            'min_return': float(np.min(returns)),
+            'max_return': float(np.max(returns)),
+            'mean_length': float(np.mean(lengths)),
+            'returns': returns,
+        }
 
     @abstractmethod
     def get_learning_data(self) -> Dict[str, Any]:

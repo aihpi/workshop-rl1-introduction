@@ -13,10 +13,9 @@
         "Repeat from step 2"
       ],
       "keyConcepts": {
-        "qValue": "Expected cumulative reward for taking action 'a' in state 's'",
-        "exploration": "Trying random actions to discover new strategies",
-        "exploitation": "Using current knowledge to maximize reward",
-        "epsilonGreedy": "A policy that chooses a random action with probability ε and the best-known action with probability 1-ε"
+        "Q-Value": "Expected cumulative reward for taking action 'a' in state 's'",
+        "Exploration vs Exploitation": "Trying random actions to discover new strategies - versus using current knowledge to maximize reward",
+        "Epsilon-Greedy Policy": "A policy that chooses a random action with probability ε and the best-known action with probability 1-ε"
       },
       "parameters": {
         "learningRate": {
@@ -48,6 +47,112 @@
       {
         "text": "Article by Maxime Labonne: Q-Learning on the FrozenLake environment",
         "url": "https://medium.com/data-science/q-learning-for-beginners-2837b777741"
+      }
+    ]
+  },
+  "DQN": {
+    "name": "DQN (Deep Q-Network)",
+    "description": "Q-Learning with a neural network instead of a table: the network estimates Q-values from continuous state inputs, enabling RL in environments where a Q-table is impossible.",
+    "sections": {
+      "whatIsIt": "DQN replaces the Q-table with a neural network that takes the state as input and outputs one Q-value per action. This is necessary when states are continuous (like CartPole's positions and velocities): there are infinitely many states, so a table can't hold them. Two tricks make the training stable: a replay buffer stores past experiences and trains the network on random batches of them (breaking the correlation between consecutive steps), and a separate target network provides slowly-changing learning targets. The learning rule is the same Bellman update as Q-Learning, just applied through gradient descent.",
+      "howItWorks": [
+        "Initialize Q-network and target network with random weights",
+        "Observe current state s",
+        "Choose action using ε-greedy policy (ε decays over training)",
+        "Take action a, observe reward r and next state s'; store (s, a, r, s') in the replay buffer",
+        "Sample a random batch from the buffer and update the Q-network toward r + γ·max Q_target(s',a')",
+        "Every N steps, copy the Q-network weights into the target network",
+        "Repeat from step 2"
+      ],
+      "keyConcepts": {
+        "Q-Value": "Estimated by the neural network: input state, output one Q-value per action",
+        "Exploration vs Exploitation": "DQN starts fully random (ε = 1) and anneals ε down as it learns, shifting from exploring to exploiting the network's Q-estimates",
+        "Epsilon-Greedy Policy": "Same as Q-Learning, but ε decays linearly over the first part of training instead of staying fixed"
+      },
+      "parameters": {
+        "learningRate": {
+          "symbol": "α (alpha)",
+          "range": "0.0001 ≤ α ≤ 0.01",
+          "description": "Step size of the gradient updates to the Q-network. Higher = faster but less stable."
+        },
+        "discountFactor": {
+          "symbol": "γ (gamma)",
+          "range": "0.9 ≤ γ < 1",
+          "description": "Importance of future rewards. Higher = more long-term planning."
+        },
+        "explorationFraction": {
+          "symbol": "ε decay",
+          "range": "0.05 ≤ f ≤ 1",
+          "description": "Fraction of the timestep budget over which ε decays linearly from 1.0 to its final value."
+        },
+        "initialValueEstimate": {
+          "symbol": "Q₀",
+          "range": "environment-dependent",
+          "description": "What the untrained network guesses every state is worth. Guessing too high (optimistic) makes unvisited states look attractive and drives exploration even after ε has decayed; guessing too low kills it. The classic “optimistic initial values” trick."
+        }
+      }
+    },
+    "links": [
+      {
+        "text": "Mnih et al. 2015: Human-level control through deep RL (Nature)",
+        "url": "https://www.nature.com/articles/nature14236"
+      },
+      {
+        "text": "Stable-Baselines3 DQN Documentation",
+        "url": "https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html"
+      }
+    ]
+  },
+  "PPO": {
+    "name": "PPO (Proximal Policy Optimization)",
+    "description": "Learns the policy directly instead of action values: a neural network outputs action probabilities and is nudged toward actions that worked better than expected. The workhorse of modern RL (robotics, game AI, RLHF for language models).",
+    "sections": {
+      "whatIsIt": "Q-Learning and DQN learn how GOOD each action is and derive behavior from that. PPO belongs to the other big family - policy gradients: its network directly outputs the probability of each action, and training shifts probability toward actions that led to better-than-expected returns. A second network (the critic) estimates how good each state is, providing the 'expected' baseline. The 'proximal' part is PPO's safety mechanism: each update may move the policy only a little (the clip range), which keeps training remarkably stable - one reason PPO is the default choice in modern applications, including the RLHF training of language models.",
+      "howItWorks": [
+        "Initialize policy network (actor) and value network (critic)",
+        "Collect a batch of experience by acting with the current (stochastic) policy",
+        "For each action taken, compute the advantage: did it turn out better or worse than the critic expected?",
+        "Increase the probability of better-than-expected actions, decrease worse ones",
+        "Clip each update so the new policy stays close to the old one (proximal)",
+        "Repeat from step 2 with fresh experience"
+      ],
+      "keyConcepts": {
+        "Policy": "The network's direct output: a probability for each action in the current state",
+        "Advantage": "How much better an action turned out compared to the critic's expectation - the learning signal",
+        "Clipping": "Updates are limited to a small trusted step (the clip range), preventing destructive policy changes",
+        "Exploration": "Comes for free from the stochastic policy - no ε needed; the entropy bonus can keep it more random for longer"
+      },
+      "parameters": {
+        "learningRate": {
+          "symbol": "α (alpha)",
+          "range": "0.00005 ≤ α ≤ 0.003",
+          "description": "Step size of the gradient updates. Higher = faster but less stable."
+        },
+        "discountFactor": {
+          "symbol": "γ (gamma)",
+          "range": "0.9 ≤ γ < 1",
+          "description": "Importance of future rewards. Higher = more long-term planning."
+        },
+        "clipRange": {
+          "symbol": "ε_clip",
+          "range": "0.05 ≤ ε_clip ≤ 0.5",
+          "description": "How far a single update may move the policy. Smaller = more careful, slower learning."
+        },
+        "entropyCoefficient": {
+          "symbol": "c_ent",
+          "range": "0 ≤ c_ent ≤ 0.1",
+          "description": "Bonus for keeping the policy random - more exploration, later commitment."
+        }
+      }
+    },
+    "links": [
+      {
+        "text": "Schulman et al. 2017: Proximal Policy Optimization Algorithms",
+        "url": "https://arxiv.org/abs/1707.06347"
+      },
+      {
+        "text": "Stable-Baselines3 PPO Documentation",
+        "url": "https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html"
       }
     ]
   }

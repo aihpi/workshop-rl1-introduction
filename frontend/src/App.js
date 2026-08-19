@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import aiscBmftrLogo from './assets/logo_aisc_bmftr.jpg';
 import ParameterPanel from './components/ParameterPanel';
 import EnvironmentViewer from './components/EnvironmentViewer';
 import EnvironmentInfo from './components/EnvironmentInfo';
 import AlgorithmInfo from './components/AlgorithmInfo';
-import RewardChart from './components/RewardChart';
+import TrainingProgress from './components/TrainingProgress';
 import LearningVisualization from './components/LearningVisualization';
-import { startTraining, subscribeToTraining, subscribeToPlayback, resetTraining, getEnvironmentPreview } from './api';
+import EvaluationPanel from './components/visualizations/EvaluationPanel';
+import { startTraining, stopTraining, subscribeToTraining, subscribeToPlayback, subscribeToEvaluation, resetTraining, getEnvironmentPreview, getLearningDataPreview } from './api';
+import { BUDGET_KEYS, isIntAtLeast } from './components/ParameterPanel';
 
 // Calculate adaptive window size: 10% of episodes, clamped between 10 and 100
 const calculateWindowSize = (totalEpisodes) => {
@@ -17,6 +20,24 @@ const calculateWindowSize = (totalEpisodes) => {
 const calculateMovingAverage = (rewards, windowSize) => {
   const window = rewards.slice(Math.max(0, rewards.length - windowSize));
   return window.reduce((sum, r) => sum + r, 0) / window.length;
+};
+
+// Playback pace for turn-based environments (ms per step) - each move is a
+// discrete decision worth seeing. Environments not listed use the adaptive
+// speed (200ms, near-real-time for long rollouts like CartPole).
+const TURN_BASED_PLAYBACK_DELAY = {
+  'FrozenLake-v1': 500,
+  'FrozenLake-v1-NoSlip': 500,
+};
+
+// Standard evaluation size (greedy episodes per Evaluate Policy click)
+const EVAL_EPISODES = 100;
+
+// Keep chart series at a displayable size; the full data stays untouched
+const downsampleForDisplay = (points, maxPoints = 1000) => {
+  if (points.length <= maxPoints * 1.5) return points;
+  const stride = Math.ceil(points.length / maxPoints);
+  return points.filter((_, i) => i % stride === 0 || i === points.length - 1);
 };
 
 function App() {
@@ -32,14 +53,30 @@ function App() {
   const [trainingComplete, setTrainingComplete] = useState(false);
   const [playbackInterval, setPlaybackInterval] = useState(null);
 
+  // Evaluation state (greedy policy evaluation over N episodes)
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evalProgress, setEvalProgress] = useState(null);
+  const [evalResults, setEvalResults] = useState(null);
+
   // Data state
   const [currentFrame, setCurrentFrame] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(0);
-  const [rewards, setRewards] = useState([]);
+  const [currentTimesteps, setCurrentTimesteps] = useState(null); // total env steps so far (timestep-budgeted algorithms)
+  const [currentEpsilon, setCurrentEpsilon] = useState(null); // current exploration rate (DQN)
+  const [epsilonHistory, setEpsilonHistory] = useState([]); // {episode, epsilon} points (DQN)
+  const [lengthChartData, setLengthChartData] = useState([]); // moving-average episode lengths
+  const [usedSeed, setUsedSeed] = useState(null); // seed of the LAST run (the field shows the next run's)
+  const [playbackStep, setPlaybackStep] = useState(null); // env timestep of the shown playback frame
+  const [playbackAction, setPlaybackAction] = useState(null); // action taken at the shown playback frame
   const [chartData, setChartData] = useState([]); // Moving average data points for chart display
   const [windowSize, setWindowSize] = useState(10); // Adaptive window size for moving average
   const [totalEpisodes, setTotalEpisodes] = useState(0); // Total episodes for training (from config)
   const [learningData, setLearningData] = useState(null);
+
+  // Live charts: render charts/frames during training (default), or only at
+  // the end - an opt-out that can speed up training on weaker machines where
+  // browser rendering competes with the backend for CPU
+  const [liveCharts, setLiveCharts] = useState(true);
 
   // Error state
   const [error, setError] = useState(null);
@@ -56,60 +93,118 @@ function App() {
     };
   }, [eventSource]);
 
-  // Load environment preview and reset when environment changes
-  useEffect(() => {
-    const loadPreview = async () => {
+  const loadPreview = async () => {
+    try {
+      const previewData = await getEnvironmentPreview(selectedEnvironment);
+      setCurrentFrame(previewData.frame);
+    } catch (err) {
+      console.error('Failed to load environment preview:', err);
+      // Don't set error state for preview failures - not critical
+    }
+  };
+
+  // Reset training state (used when environment or algorithm changes)
+  const resetState = async () => {
+    // Close EventSource if open
+    if (eventSource) {
+      eventSource.close();
+      setEventSource(null);
+    }
+
+    // Reset backend if there was an active session
+    if (sessionId) {
       try {
-        const previewData = await getEnvironmentPreview(selectedEnvironment);
-        setCurrentFrame(previewData.frame);
+        await resetTraining();
       } catch (err) {
-        console.error('Failed to load environment preview:', err);
-        // Don't set error state for preview failures - not critical
+        console.error('Failed to reset training:', err);
       }
-    };
+    }
 
-    // Reset training state when environment changes
-    const resetState = async () => {
-      // Close EventSource if open
-      if (eventSource) {
-        eventSource.close();
-        setEventSource(null);
-      }
+    // Reset frontend state
+    setSessionId(null);
+    setIsTraining(false);
+    setIsPlayback(false);
+    setIsEvaluating(false);
+    setEvalProgress(null);
+    setEvalResults(null);
+    setTrainingComplete(false);
+    setCurrentEpisode(0);
+    setCurrentTimesteps(null);
+    setCurrentEpsilon(null);
+    setEpsilonHistory([]);
+    setLengthChartData([]);
+    setUsedSeed(null);
+    setPlaybackStep(null);
+    setPlaybackAction(null);
+    setChartData([]);
+    setWindowSize(10);
+    setTotalEpisodes(0);
+    setLearningData(null);
+    setError(null);
+  };
 
-      // Reset backend if there was an active session
-      if (sessionId) {
-        try {
-          await resetTraining();
-        } catch (err) {
-          console.error('Failed to reset training:', err);
-        }
-      }
-
-      // Reset frontend state
-      setSessionId(null);
-      setIsTraining(false);
-      setIsPlayback(false);
-      setTrainingComplete(false);
-      setCurrentEpisode(0);
-      setRewards([]);
-      setChartData([]);
-      setWindowSize(10);
-      setTotalEpisodes(0);
-      setLearningData(null);
-      setError(null);
-    };
-
+  // Reset and reload the preview when the environment or algorithm changes
+  // (stale learning data must not survive a switch)
+  useEffect(() => {
     resetState();
     loadPreview();
-  }, [selectedEnvironment]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEnvironment, selectedAlgorithm]);
 
-  // Validation function for Q-init parameters
+  // Before any training, show the INITIAL learning data: participants see
+  // the starting point (Q-Learning's q_init table; DQN's random network
+  // read out as a table on FrozenLake) instead of it popping into
+  // existence mid-training. Debounced; mid-typing parameter values may
+  // be invalid and are ignored quietly.
+  useEffect(() => {
+    if (isTraining || trainingComplete) return;
+
+    let stale = false;
+    const timer = setTimeout(async () => {
+      try {
+        const data = await getLearningDataPreview(
+          selectedAlgorithm, selectedEnvironment, parameters
+        );
+        if (!stale) {
+          setLearningData(data);
+        }
+      } catch (err) {
+        // invalid intermediate parameters - keep the previous preview
+      }
+    }, 300);
+
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAlgorithm, selectedEnvironment, parameters, isTraining, trainingComplete]);
+
+  // Create a fresh backend session from the current parameters. The visible
+  // seed is used verbatim - preview, play, eval and training all share it.
+  const createSession = async () => {
+    const response = await startTraining({
+      algorithm: selectedAlgorithm,
+      environment: selectedEnvironment,
+      parameters: parameters
+    });
+    setSessionId(response.session_id);
+    setUsedSeed(response.seed ?? null);
+    return response.session_id;
+  };
+
+  // Validation function for training parameters
   const isValidParameters = () => {
-    // Validate num_episodes is a positive integer
-    const episodes = parameters.num_episodes;
-    if (episodes === undefined || episodes === '' || isNaN(episodes) ||
-        parseFloat(episodes) <= 0 ||
-        parseFloat(episodes) != parseInt(episodes)) {
+    // The training budget (num_episodes or total_timesteps) must be
+    // present and a positive integer
+    const budgetKey = BUDGET_KEYS.find(key => parameters[key] !== undefined);
+    if (!budgetKey || !isIntAtLeast(parameters[budgetKey], 1)) {
+      return false;
+    }
+
+    // The seed is always a concrete number (the dice button draws new
+    // ones); an emptied field is invalid
+    if (parameters.seed !== undefined && !isIntAtLeast(parameters.seed, 0)) {
       return false;
     }
 
@@ -138,91 +233,170 @@ function App() {
 
   const handleStartTraining = async () => {
     try {
-      setError(null);
-
-      // Close any existing EventSource (stops current training)
-      if (eventSource) {
-        eventSource.close();
-        setEventSource(null);
-      }
-
-      // Clear backend sessions (free memory and prevent leaks)
-      await resetTraining();
-
-      // Reset frontend state
-      setSessionId(null);
-      setIsTraining(false);
-      setIsPlayback(false);
-      setTrainingComplete(false);
-      setCurrentEpisode(0);
-      setRewards([]);
-      setChartData([]);
-      setLearningData(null);
+      // Reset any previous run (closes the EventSource, clears backend
+      // sessions and all frontend training state)
+      await resetState();
 
       // Set training flag
       setIsTraining(true);
 
-      // Start new training session
-      const response = await startTraining({
-        algorithm: selectedAlgorithm,
-        environment: selectedEnvironment,
-        parameters: parameters,
-        seed: 42
-      });
+      const newSessionId = await createSession();
 
-      const newSessionId = response.session_id;
-      setSessionId(newSessionId);
-
-      // Calculate and store window size and total episodes from config
-      const episodeCount = parameters.num_episodes || 1000; // Default to 1000 if not specified
-      const calculatedWindowSize = calculateWindowSize(episodeCount);
+      // Window size and total episodes are only known when the budget is
+      // episode-based; timestep-budgeted algorithms (e.g. DQN) produce an
+      // unknown number of episodes -> null lets the chart auto-scale
+      const episodeCount = parameters.num_episodes ? parseInt(parameters.num_episodes) : null;
+      const calculatedWindowSize = episodeCount ? calculateWindowSize(episodeCount) : 10;
       setWindowSize(calculatedWindowSize);
       setTotalEpisodes(episodeCount);
+
+      // The mode is fixed per run (the toggle is disabled while training)
+      const liveChartsThisRun = liveCharts;
+
+      // Coalesce episode events before rendering: fast training finishes
+      // dozens of episodes per second, and re-rendering the charts and the
+      // frame on every single one exhausts browser memory (Safari kills the
+      // page). Events are buffered and applied at most ~6x per second.
+      // Everything accumulates in `pending` (plain JS, single source of
+      // truth) and chart points are computed OUTSIDE the setState updaters -
+      // updaters must stay pure (StrictMode double-invokes them and impure
+      // ones duplicate chart points). With live charts off, only the status
+      // line updates during training; charts render once at completion.
+      const pending = {
+        latest: null,
+        lastLearningData: null,
+        frame: null,
+        all: [],
+        chartPoints: [],
+        eps: [],
+        lengths: [],
+        lengthPoints: [],
+        flushedLength: 0,
+        timer: null
+      };
+
+      const flushUpdates = () => {
+        pending.timer = null;
+        // Skip if this training's stream was closed meanwhile (e.g. the user
+        // switched environments) - don't write stale data over the reset state
+        if (!pending.latest || es.readyState === EventSource.CLOSED) return;
+        const latest = pending.latest;
+        pending.latest = null;
+
+        // Status/number updates are cheap text - always live
+        setCurrentEpisode(latest.episode);
+        setCurrentTimesteps(latest.learning_data?.diagnostics?.total_timesteps ?? null);
+        setCurrentEpsilon(latest.learning_data?.diagnostics?.exploration_rate ?? null);
+
+        // Chart boundary points accumulate regardless of mode
+        // (return always; episode length when the algorithm reports it)
+        const all = pending.all;
+        const firstBoundary =
+          (Math.floor(pending.flushedLength / calculatedWindowSize) + 1) * calculatedWindowSize;
+        for (let m = firstBoundary; m <= all.length; m += calculatedWindowSize) {
+          pending.chartPoints.push({
+            episode: m,
+            avgReward: calculateMovingAverage(
+              all.slice(Math.max(0, m - calculatedWindowSize), m),
+              calculatedWindowSize
+            )
+          });
+          if (pending.lengths.length >= m) {
+            pending.lengthPoints.push({
+              episode: m,
+              avgLength: calculateMovingAverage(
+                pending.lengths.slice(Math.max(0, m - calculatedWindowSize), m),
+                calculatedWindowSize
+              )
+            });
+          }
+        }
+        pending.flushedLength = all.length;
+
+        if (!liveChartsThisRun) {
+          return; // full-speed mode: charts and frames render at completion
+        }
+
+        // Frames are throttled server-side (frame=null on most episodes
+        // during fast training); show the newest one received
+        if (pending.frame) {
+          setCurrentFrame(pending.frame);
+          pending.frame = null;
+        }
+        setLearningData(latest.learning_data);
+        setChartData(pending.chartPoints.slice());
+        setLengthChartData(pending.lengthPoints.slice());
+        setEpsilonHistory(downsampleForDisplay([...pending.eps]));
+      };
 
       // Subscribe to training updates
       const es = subscribeToTraining(
         newSessionId,
         // onUpdate - called for each episode during training
         (data) => {
-          setCurrentFrame(data.frame);
-          setCurrentEpisode(data.episode);
-          setLearningData(data.learning_data);
-
-          setRewards(prev => {
-            const updatedRewards = [...prev, data.reward];
-            const movingAvg = calculateMovingAverage(updatedRewards, calculatedWindowSize);
-
-            // Update chart every windowSize episodes for performance
-            if (updatedRewards.length % calculatedWindowSize === 0) {
-              setChartData(prevChart => [...prevChart, {
-                episode: updatedRewards.length,
-                avgReward: movingAvg
-              }]);
-            }
-
-            return updatedRewards;
-          });
+          pending.latest = data;
+          pending.lastLearningData = data.learning_data;
+          pending.all.push(data.reward);
+          const diagnostics = data.learning_data?.diagnostics;
+          if (diagnostics?.exploration_rate != null) {
+            pending.eps.push({
+              episode: (diagnostics.episode ?? pending.all.length - 1) + 1,
+              epsilon: diagnostics.exploration_rate
+            });
+          }
+          if (diagnostics?.episode_length != null) {
+            pending.lengths.push(diagnostics.episode_length);
+          }
+          if (data.frame) {
+            pending.frame = data.frame;
+          }
+          if (!pending.timer) {
+            pending.timer = setTimeout(flushUpdates, 150);
+          }
         },
         // onComplete - called when training finishes
         (data) => {
+          if (pending.timer) {
+            clearTimeout(pending.timer);
+          }
+          flushUpdates();
+
           setIsTraining(false);
           setTrainingComplete(true);
 
           // Add final chart point if needed (when episode count isn't a multiple of windowSize)
-          setRewards(currentRewards => {
-            const needsFinalPoint = currentRewards.length % calculatedWindowSize !== 0;
-            if (needsFinalPoint) {
-              const finalAvg = calculateMovingAverage(currentRewards, calculatedWindowSize);
-              setChartData(prev => [...prev, {
-                episode: currentRewards.length,
-                avgReward: finalAvg
-              }]);
-            }
-            return currentRewards;
-          });
+          const all = pending.all;
+          if (all.length > 0 && all.length % calculatedWindowSize !== 0) {
+            pending.chartPoints.push({
+              episode: all.length,
+              avgReward: calculateMovingAverage(all, calculatedWindowSize)
+            });
+          }
+
+          // Render everything accumulated. In live mode most of this is
+          // already on screen; in full-speed mode this is the single render.
+          // Prefer the final learning data sent with the complete/stopped
+          // event: the last per-episode snapshot can be stale (training
+          // continues past the last episode boundary on timestep budgets)
+          const finalData = data.learning_data ?? pending.lastLearningData;
+          if (all.length > 0) {
+            setCurrentEpisode(all.length - 1);
+            setCurrentTimesteps(finalData?.diagnostics?.total_timesteps ?? null);
+          }
+          setChartData(pending.chartPoints.slice());
+          setLengthChartData(pending.lengthPoints.slice());
+          setEpsilonHistory(downsampleForDisplay([...pending.eps]));
+          setLearningData(finalData);
+          setCurrentEpsilon(finalData?.diagnostics?.exploration_rate ?? null);
+          if (pending.frame) {
+            setCurrentFrame(pending.frame);
+          }
         },
         // onError
         (err) => {
+          if (pending.timer) {
+            clearTimeout(pending.timer);
+          }
           setError(err.message || 'Training failed');
           setIsTraining(false);
         }
@@ -235,43 +409,93 @@ function App() {
     }
   };
 
+  // A trained session is reused; otherwise a FRESH session is created from
+  // the current parameters - playing/evaluating before training shows the
+  // initialized policy (the "before" of the before/after comparison)
+  const ensureSession = async () => {
+    if (trainingComplete && sessionId) {
+      return sessionId;
+    }
+    await resetTraining(); // clear stale backend sessions
+    return createSession();
+  };
+
   const handlePlayPolicy = async () => {
-    if (!sessionId || !trainingComplete) return;
+    if (isTraining || isPlayback || isEvaluating || !isValidParameters()) return;
 
     try {
       setError(null);
+      const playSessionId = await ensureSession();
       setIsPlayback(true);
+
+      // Frames stream in one SSE event each (faster than watchable speed);
+      // the buffer decouples arrival rate from display rate, so playback
+      // starts on the first frame while the rollout is still running
+      const buffer = [];
+      let streamDone = false;
+      let fast = false; // sticky: long rollouts switch to near-real-time speed
+      let timerId = null;
+
+      const schedule = (delay) => {
+        timerId = setTimeout(showNext, delay);
+        setPlaybackInterval(timerId);
+      };
+
+      const showNext = () => {
+        if (buffer.length === 0) {
+          if (streamDone) {
+            setPlaybackInterval(null);
+            setIsPlayback(false);
+            setPlaybackStep(null);
+            setPlaybackAction(null);
+            return;
+          }
+          // Stream still running but no frame buffered yet - check again shortly
+          schedule(50);
+          return;
+        }
+
+        const { frame, step, action } = buffer.shift();
+        setCurrentFrame(frame);
+        setPlaybackStep(step);
+        setPlaybackAction(action ?? null);
+
+        // Turn-based environments play at a fixed, watchable pace;
+        // otherwise: once the rollout is clearly long, switch to
+        // near-real-time and stay there
+        const fixedDelay = TURN_BASED_PLAYBACK_DELAY[selectedEnvironment];
+        if (buffer.length > 60) {
+          fast = true;
+        }
+        schedule(fixedDelay ?? (fast ? 30 : 200));
+      };
 
       // Subscribe to playback stream
       const es = subscribeToPlayback(
-        sessionId,
-        // onFrames
-        (frames) => {
-          // Animate through frames with 200ms delay
-          let frameIndex = 0;
-          const interval = setInterval(() => {
-            if (frameIndex < frames.length) {
-              setCurrentFrame(frames[frameIndex]);
-              frameIndex++;
-            } else {
-              clearInterval(interval);
-              setPlaybackInterval(null);
-              setIsPlayback(false);
-            }
-          }, 200);
-
-          // Store interval reference so we can stop it
-          setPlaybackInterval(interval);
+        playSessionId,
+        // onFrame - buffer each streamed frame
+        (data) => {
+          buffer.push(data);
+        },
+        // onComplete - rollout finished server-side (animation may still run)
+        () => {
+          streamDone = true;
         },
         // onError
         (err) => {
+          if (timerId) {
+            clearTimeout(timerId);
+          }
           setError(err.message || 'Playback failed');
           setIsPlayback(false);
+          setPlaybackStep(null);
+          setPlaybackAction(null);
           setPlaybackInterval(null);
         }
       );
 
       setEventSource(es);
+      showNext();
     } catch (err) {
       setError(err.message || 'Failed to play policy');
       setIsPlayback(false);
@@ -280,14 +504,16 @@ function App() {
   };
 
   const handleStopPlayback = () => {
-    // Clear the animation interval
+    // Clear the pending animation timer
     if (playbackInterval) {
-      clearInterval(playbackInterval);
+      clearTimeout(playbackInterval);
       setPlaybackInterval(null);
     }
 
     // Stop playback
     setIsPlayback(false);
+    setPlaybackStep(null);
+    setPlaybackAction(null);
 
     // Close EventSource
     if (eventSource) {
@@ -296,44 +522,100 @@ function App() {
     }
   };
 
-  const handleStopTraining = async () => {
+  const handleEvaluatePolicy = async () => {
+    if (isTraining || isEvaluating || isPlayback || !isValidParameters()) return;
+
+    setError(null);
+    let evalSessionId;
     try {
-      // Close EventSource if open
-      if (eventSource) {
-        eventSource.close();
-        setEventSource(null);
-      }
-
-      // Reset backend
-      await resetTraining();
-
-      // Reset frontend state
-      setSessionId(null);
-      setIsTraining(false);
-      setIsPlayback(false);
-      setTrainingComplete(false);
-      setCurrentEpisode(0);
-      setRewards([]);
-      setChartData([]);
-      setWindowSize(10);
-      setTotalEpisodes(0);
-      setLearningData(null);
-      setError(null);
-
-      // Reload preview frame
-      const previewData = await getEnvironmentPreview(selectedEnvironment);
-      setCurrentFrame(previewData.frame);
+      evalSessionId = await ensureSession();
     } catch (err) {
-      setError(err.message || 'Stop training failed');
-      setIsTraining(false);
+      setError(err.message || 'Failed to create a session');
+      return;
+    }
+    setEvalResults(null);
+    setEvalProgress({ episode: 0, total: EVAL_EPISODES });
+    setIsEvaluating(true);
+
+    const es = subscribeToEvaluation(
+      evalSessionId,
+      EVAL_EPISODES,
+      // onProgress - one event per evaluation episode
+      (data) => {
+        setEvalProgress({ episode: data.episode, total: data.total });
+      },
+      // onComplete - statistics summary
+      (data) => {
+        setEvalResults(data);
+        setEvalProgress(null);
+        setIsEvaluating(false);
+      },
+      // onError
+      (err) => {
+        setError(err.message || 'Evaluation failed');
+        setEvalProgress(null);
+        setIsEvaluating(false);
+      }
+    );
+
+    setEventSource(es);
+  };
+
+  const handleStopTraining = async () => {
+    // The Stop button appears as soon as Start is clicked, but the session
+    // only exists once the /api/train response arrives - stopping before
+    // that would orphan the run (the backend reset is also session-gated).
+    // Ignore the click; it works again a moment later.
+    if (!sessionId) return;
+
+    try {
+      // Graceful server-side stop: training halts at the next episode
+      // boundary and the 'stopped' event arrives through the open
+      // EventSource, so the partial policy stays playable
+      await stopTraining(sessionId);
+    } catch (err) {
+      // Fallback: hard reset if the stop request failed
+      console.error('Graceful stop failed, resetting:', err);
+      await resetState();
+      await loadPreview();
     }
   };
 
   return (
     <div className="App">
       <header className="app-header">
-        <h1>RL Lab</h1>
-        <p className="subtitle">Interactive Reinforcement Learning Visualization</p>
+        <div className="header-inner">
+        {/* Home = reload the app */}
+        <button
+          type="button"
+          className="home-button"
+          title="Reload RL Lab"
+          aria-label="Reload RL Lab"
+          onClick={() => window.location.reload()}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5.5 9.5V21h13V9.5" />
+            <path d="M10 21v-6h4v6" />
+          </svg>
+        </button>
+
+        <div className="header-title">
+          <h1>RL Lab</h1>
+          <p className="subtitle">Interactive Reinforcement Learning Visualization</p>
+        </div>
+
+        <div className="header-logos">
+          <a href="https://hpi.de/en/ai-service-centre/" target="_blank" rel="noopener noreferrer">
+            <img
+              src={aiscBmftrLogo}
+              alt="KI-Servicezentrum Berlin-Brandenburg by Hasso-Plattner-Institut - gefördert durch das Bundesministerium für Forschung, Technologie und Raumfahrt"
+              className="header-logo"
+            />
+          </a>
+        </div>
+        </div>
       </header>
 
       {error && (
@@ -355,9 +637,10 @@ function App() {
             onStopTraining={handleStopTraining}
             onPlayPolicy={handlePlayPolicy}
             onStopPlayback={handleStopPlayback}
+            onEvaluatePolicy={handleEvaluatePolicy}
             isTraining={isTraining}
             isPlayback={isPlayback}
-            canPlayPolicy={trainingComplete}
+            isEvaluating={isEvaluating}
             disabled={!isValidParameters()}
           />
         </div>
@@ -366,6 +649,10 @@ function App() {
           <EnvironmentViewer
             frame={currentFrame}
             episode={currentEpisode}
+            timesteps={currentTimesteps}
+            playbackStep={playbackStep}
+            playbackAction={playbackAction}
+            environment={selectedEnvironment}
             isTraining={isTraining}
             isPlayback={isPlayback}
             trainingComplete={trainingComplete}
@@ -375,20 +662,54 @@ function App() {
         </div>
 
         <div className="column column-right">
-          <RewardChart
-            chartData={chartData}
-            totalEpisodes={totalEpisodes}
-            windowSize={windowSize}
-          />
+          {/* Q-table first: at the top it sits side by side with the
+              environment frame, making the table<->grid correspondence
+              visible (renders only when the algorithm reports a q_table) */}
           <LearningVisualization
             learningData={learningData}
             algorithm={selectedAlgorithm}
+            environment={selectedEnvironment}
           />
+          <TrainingProgress
+            episodesTrained={(isTraining || trainingComplete) ? currentEpisode + 1 : 0}
+            timesteps={currentTimesteps}
+            epsilon={currentEpsilon}
+            seed={usedSeed}
+            chartData={chartData}
+            lengthChartData={lengthChartData}
+            totalEpisodes={totalEpisodes}
+            windowSize={windowSize}
+            epsilonHistory={epsilonHistory}
+            environment={selectedEnvironment}
+          />
+          <EvaluationPanel
+            progress={evalProgress}
+            results={evalResults}
+            environment={selectedEnvironment}
+          />
+
+          {/* Compact live-charts opt-out (full-speed training on slow machines) */}
+          <div className="live-charts-toggle">
+            <label>
+              <input
+                type="checkbox"
+                checked={liveCharts}
+                onChange={(e) => setLiveCharts(e.target.checked)}
+                disabled={isTraining}
+              />
+              {' '}Live charts
+            </label>
+            {!liveCharts && (
+              <span className="toggle-hint">
+                Full speed: charts appear when training finishes.
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       <footer className="app-footer">
-        <p>Phase 1: Q-Learning on FrozenLake-v1</p>
+        <p>Authors: David Goll, Jill Barvencik</p>
       </footer>
     </div>
   );

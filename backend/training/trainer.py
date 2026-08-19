@@ -1,7 +1,20 @@
+import random
+import threading
 import uuid
 from typing import Dict, Any, Optional
 from algorithms import AlgorithmFactory
 from environments.environment_manager import EnvironmentManager
+
+
+def resolve_seed(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Return a copy of parameters with 'seed' resolved to an int
+    (drawn randomly when empty/missing - a non-reproducible run).
+    """
+    raw_seed = parameters.get('seed')
+    if raw_seed in (None, ''):
+        raw_seed = random.randint(0, 2**31 - 1)
+    return {**parameters, 'seed': int(raw_seed)}
 
 
 class TrainingCoordinator:
@@ -20,17 +33,18 @@ class TrainingCoordinator:
         self,
         algorithm_name: str,
         environment_name: str,
-        parameters: Dict[str, Any],
-        seed: Optional[int] = None
+        parameters: Dict[str, Any]
     ) -> str:
         """
         Create a new training session.
+
+        The random seed comes from parameters['seed']; empty/missing means
+        a randomly drawn seed, i.e. a non-reproducible run.
 
         Args:
             algorithm_name: Name of the algorithm to use
             environment_name: Name of the environment
             parameters: Algorithm parameters
-            seed: Optional random seed
 
         Returns:
             Session ID (UUID string)
@@ -38,11 +52,18 @@ class TrainingCoordinator:
         Raises:
             ValueError: If algorithm or environment is invalid
         """
-        # Create environment
-        env = EnvironmentManager.create_environment(environment_name, seed)
+        # Resolve the seed: explicit value -> reproducible run,
+        # empty/missing -> draw one randomly. Algorithms read it
+        # from their parameters.
+        parameters = resolve_seed(parameters)
 
-        # Create algorithm instance
-        algorithm = AlgorithmFactory.create_algorithm(algorithm_name, env, parameters)
+        # Create environment
+        env = EnvironmentManager.create_environment(environment_name, parameters['seed'])
+
+        # Create algorithm instance (validates algorithm/environment compatibility)
+        algorithm = AlgorithmFactory.create_algorithm(
+            algorithm_name, env, parameters, environment_name=environment_name
+        )
 
         # Generate session ID
         session_id = str(uuid.uuid4())
@@ -54,7 +75,8 @@ class TrainingCoordinator:
             'algorithm_name': algorithm_name,
             'environment_name': environment_name,
             'parameters': parameters,
-            'trained': False
+            'trained': False,
+            'stop_event': threading.Event()
         }
 
         return session_id
@@ -62,15 +84,14 @@ class TrainingCoordinator:
     def train(
         self,
         session_id: str,
-        num_episodes: int,
         callback: Optional[callable] = None
     ) -> None:
         """
-        Train the algorithm for a session.
+        Train the algorithm for a session. The training budget comes from
+        the algorithm's own parameters (num_episodes or total_timesteps).
 
         Args:
             session_id: Session UUID
-            num_episodes: Number of episodes to train
             callback: Optional callback function for episode updates
 
         Raises:
@@ -82,11 +103,62 @@ class TrainingCoordinator:
         session = self.sessions[session_id]
         algorithm = session['algorithm']
 
-        # Train with callback
-        algorithm.train(num_episodes, callback)
+        # A reused session starts fresh: an earlier stop must not abort
+        # the new run at its first episode boundary
+        session['stop_event'].clear()
+        # Track the thread so reset_all_sessions can wait for it before
+        # closing the environment out from under a live training loop
+        session['thread'] = threading.current_thread()
+
+        # Train with callback; a stopped run still counts as trained
+        # (a partially-trained policy is playable)
+        algorithm.train(callback, stop_event=session['stop_event'])
 
         # Mark as trained
         session['trained'] = True
+
+    def evaluate(
+        self,
+        session_id: str,
+        num_episodes: int = 100,
+        callback: Optional[callable] = None
+    ):
+        """
+        Evaluate a session's policy (greedy, no rendering). Untrained
+        sessions are allowed on purpose: the initialized policy's score is
+        the baseline participants compare training against.
+
+        Args:
+            session_id: Session UUID
+            num_episodes: Number of evaluation episodes
+            callback: Optional per-episode callback (index, episode_return)
+
+        Returns:
+            Evaluation summary dict
+
+        Raises:
+            ValueError: If the session is unknown
+        """
+        if session_id not in self.sessions:
+            raise ValueError(f"Session '{session_id}' not found")
+
+        return self.sessions[session_id]['algorithm'].evaluate(num_episodes, callback)
+
+    def request_stop(self, session_id: str) -> bool:
+        """
+        Request a graceful stop of a running training session.
+
+        Args:
+            session_id: Session UUID
+
+        Returns:
+            True if the session exists and the stop was requested, else False
+        """
+        session = self.sessions.get(session_id)
+        if session is None:
+            return False
+        session['stop_event'].set()
+        return True
 
     def play_policy(
         self,
@@ -94,7 +166,9 @@ class TrainingCoordinator:
         callback: Optional[callable] = None
     ) -> list:
         """
-        Execute the learned policy.
+        Execute the session's policy. Untrained sessions are allowed on
+        purpose: playing the freshly initialized policy shows what the
+        agent does before any learning.
 
         Args:
             session_id: Session UUID
@@ -104,18 +178,12 @@ class TrainingCoordinator:
             List of frames from policy execution
 
         Raises:
-            ValueError: If session ID is invalid or not trained
+            ValueError: If session ID is invalid
         """
         if session_id not in self.sessions:
             raise ValueError(f"Session '{session_id}' not found")
 
-        session = self.sessions[session_id]
-
-        if not session['trained']:
-            raise ValueError(f"Session '{session_id}' has not been trained yet")
-
-        algorithm = session['algorithm']
-        return algorithm.play_policy(callback)
+        return self.sessions[session_id]['algorithm'].play_policy(callback)
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -131,6 +199,19 @@ class TrainingCoordinator:
 
     def reset_all_sessions(self) -> None:
         """Clear all sessions from memory."""
+        # Signal running trainings to stop before closing their envs
+        for session in self.sessions.values():
+            session['stop_event'].set()
+
+        # Stops apply at the next episode boundary: wait for training
+        # threads to actually exit, or closing the env below would pull
+        # it out from under a live step()/render() call (pygame can
+        # crash the process on that, not just raise)
+        for session in self.sessions.values():
+            thread = session.get('thread')
+            if thread and thread is not threading.current_thread():
+                thread.join(timeout=10)
+
         # Close all environments
         for session in self.sessions.values():
             env = session.get('environment')

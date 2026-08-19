@@ -202,8 +202,10 @@ Before continuing, check that Docker Desktop is running:
 
 In Terminal (make sure you're still in the `workshop-rl1-introduction` folder), type:
 ```bash
+docker-compose pull
 docker-compose up -d
 ```
+(The `pull` downloads the latest RL Lab images - important if you have run RL Lab before, because `up` alone keeps using old images.)
 
 Press Enter and wait...
 
@@ -367,7 +369,7 @@ If you want to keep the other application running, change RL Lab's ports:
    ```yaml
    frontend:
      ports:
-       - "3030:3000"
+       - "3030:80"
    backend:
      ports:
        - "5001:5001"
@@ -377,7 +379,7 @@ If you want to keep the other application running, change RL Lab's ports:
    ```yaml
    frontend:
      ports:
-       - "3031:3000"
+       - "3031:80"
    backend:
      ports:
        - "5002:5001"

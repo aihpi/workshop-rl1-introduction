@@ -156,8 +156,10 @@ Before continuing, check that Docker Desktop is running:
 In Terminal (make sure you're still in the `workshop-rl1-introduction` folder), type:
 
 ```bash
+docker compose pull
 docker compose up -d
 ```
+(The `pull` downloads the latest RL Lab images - important if you have run RL Lab before, because `up` alone keeps using old images.)
 
 Press Enter and wait...
 

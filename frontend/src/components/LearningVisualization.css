@@ -8,7 +8,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   margin: 1.5rem auto;
-  max-width: 500px;
+  max-width: 400px; /* smaller tiles: table + environment fit side by side */
 }
 
 .q-cell {
@@ -23,6 +23,12 @@
   align-items: center;
   transition: transform 0.2s;
   background-color: #000000;
+}
+
+/* Terminal states (holes/goal): values never used or updated - muted */
+.q-cell.terminal {
+  background-color: #888;
+  opacity: 0.55;
 }
 
 .q-cell:hover {
@@ -108,4 +114,20 @@
   text-align: center;
   padding: 2rem;
   color: #999;
+}
+
+/* Policy evaluation verdict line */
+.eval-verdict {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: #fff4e6;
+  color: #b25400;
+}
+
+.eval-verdict.solved {
+  background: #eaf7ea;
+  color: #1e7d32;
 }

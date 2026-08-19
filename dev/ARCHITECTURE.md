@@ -6,7 +6,7 @@
 
 RL Lab is an educational web interface for exploring reinforcement learning algorithms interactively. Users control learning parameters and watch agents train in real-time.
 
-**Phase 1 Scope**: Q-Learning (tabular) on FrozenLake-v1 only. Future phases will add stable-baselines3 algorithms (DQN, PPO, SAC) and more Gym environments.
+**Phase 1** (done): Q-Learning (tabular) on FrozenLake-v1. **Phase 2** (done): DQN via stable-baselines3 on CartPole-v1 — SB3 wrapper (`algorithms/sb3_base.py`), algorithm↔environment compatibility (`GET /api/compatibility`), server-side graceful stop (`POST /api/train/stop/<session_id>`), per-algorithm training budget (Q-Learning: `num_episodes`, SB3: `total_timesteps`), schema-driven parameter panel, per-algorithm visualization dispatcher. **Phase 3** (done, v0.9.0): PPO on CartPole (plus MountainCar as a deliberate failure demo), DQN on FrozenLake (network Q-values rendered as the Q-table) and MountainCar, policy evaluation with confidence intervals, sticky seeds, per-environment seed-swept DQN defaults, optimistic initialization (Q₀), slim participant Docker images with a dev-mode compose override.
 
 ## Development Workflow
 
@@ -78,11 +78,14 @@ The architecture is designed for future compatibility with stable-baselines3:
 
 ```
 backend/
-├── app.py                      # Flask API (9 endpoints)
+├── app.py                      # Flask API (11 endpoints)
 ├── algorithms/
-│   ├── __init__.py             # AlgorithmFactory
+│   ├── __init__.py             # AlgorithmFactory (+ compatibility map)
 │   ├── base_algorithm.py       # Abstract base class
-│   └── q_learning.py           # Q-Learning implementation
+│   ├── q_learning.py           # Q-Learning implementation
+│   ├── sb3_base.py             # Shared stable-baselines3 wrapper
+│   ├── dqn.py                  # DQN (SB3) implementation
+│   └── ppo.py                  # PPO (SB3) implementation
 ├── environments/
 │   ├── __init__.py
 │   └── environment_manager.py  # Gym env creation, frame→base64 conversion

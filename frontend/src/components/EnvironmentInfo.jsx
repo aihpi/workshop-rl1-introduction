@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { getEnvironmentInfo } from '../utils/contentLoader';
+import environmentsData from '../content/environments.json';
 import './EnvironmentInfo.css';
 
 const EnvironmentInfo = ({ environment }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const content = getEnvironmentInfo(environment);
+  const content = environmentsData[environment] || null;
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -67,9 +67,13 @@ const EnvironmentInfo = ({ environment }) => {
           <section>
             <h4>Reward Structure</h4>
             <ul>
-              <li>Goal: +{sections.rewards.goal}</li>
-              <li>Hole: {sections.rewards.hole}</li>
-              <li>Step: {sections.rewards.step}</li>
+              {Object.entries(sections.rewards)
+                .filter(([key]) => key !== 'description')
+                .map(([key, value]) => (
+                  <li key={key}>
+                    {key.charAt(0).toUpperCase() + key.slice(1)}: {value}
+                  </li>
+                ))}
             </ul>
             <p>{sections.rewards.description}</p>
           </section>

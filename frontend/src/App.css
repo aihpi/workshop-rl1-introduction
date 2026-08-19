@@ -19,7 +19,6 @@ body {
 }
 
 .App {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -27,9 +26,68 @@ body {
 .app-header {
   background: linear-gradient(135deg, var(--hpi-orange) 0%, var(--hpi-violet) 100%);
   color: white;
-  padding: 2rem;
-  text-align: center;
+  padding: 1.25rem 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Same width geometry as .main-content so the logo chip's right edge
+   aligns with the right column's edge */
+.header-inner {
+  max-width: 1800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  /* 1fr | auto | 1fr keeps the title truly centered regardless of how
+     wide the home button and the logo are */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-title {
+  text-align: center;
+}
+
+/* Funder/host logos (right cluster): white chips keep the dark-on-white
+   artwork legible on the gradient; each links to its website */
+.header-logos {
+  justify-self: end;
+}
+
+.header-logo {
+  display: block;
+  height: 84px;
+  width: auto;
+  background: white;
+  border-radius: 8px;
+  padding: 6px 12px;
+  box-sizing: content-box;
+}
+
+/* Home/reload button */
+.home-button {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  cursor: pointer;
+}
+
+.home-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 900px) {
+  .header-logos {
+    display: none; /* protect the title on narrow screens */
+  }
 }
 
 .app-header h1 {
@@ -52,7 +110,10 @@ body {
 }
 
 .main-content {
-  flex: 1;
+  /* Exactly one viewport tall: each column scrolls internally, while the
+     page itself still scrolls globally (mouse over header/gaps/footer) -
+     scrolling the big header away gives the columns the full screen */
+  height: 100vh;
   display: grid;
   grid-template-columns: 300px 400px 1fr;
   gap: 1.5rem;
@@ -68,6 +129,14 @@ body {
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow-y: auto;
+  /* Reaching a column's end must not yank the whole page */
+  overscroll-behavior: contain;
+}
+
+/* Flex children default to shrink-to-fit, which suppresses the columns'
+   scrollbars by compressing panels instead of overflowing */
+.column > * {
+  flex-shrink: 0;
 }
 
 .column-left {
@@ -91,8 +160,7 @@ body {
   background-color: #212427;
   color: white;
   text-align: center;
-  padding: 1rem;
-  margin-top: auto;
+  padding: 0.5rem;
 }
 
 .app-footer p {
@@ -104,6 +172,8 @@ body {
 @media (max-width: 1200px) {
   .main-content {
     grid-template-columns: 1fr;
+    /* Stacked columns: natural height, plain page scrolling */
+    height: auto;
   }
 
   .column-left {
@@ -117,4 +187,26 @@ body {
   .column-right {
     order: 3;
   }
+}
+
+/* Compact live-charts toggle at the bottom of the right column */
+.live-charts-toggle {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.live-charts-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.live-charts-toggle .toggle-hint {
+  font-style: italic;
+  color: #999;
 }

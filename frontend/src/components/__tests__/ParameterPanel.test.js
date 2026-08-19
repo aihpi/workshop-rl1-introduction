@@ -33,14 +33,37 @@ describe('ParameterPanel', () => {
     }
   };
 
-  const mockEnvironments = ['FrozenLake-v1', 'FrozenLake-v1-NoSlip'];
+  const mockEnvironments = ['FrozenLake-v1', 'FrozenLake-v1-NoSlip', 'CartPole-v1'];
+
+  const mockCompatibility = {
+    'Q-Learning': ['FrozenLake-v1-NoSlip', 'FrozenLake-v1'],
+    'DQN': ['CartPole-v1']
+  };
+
+  // DQN-like schema: total_timesteps budget, no q_init keys, a step field
+  const mockDQNSchema = {
+    total_timesteps: {
+      type: 'int',
+      default: 50000,
+      description: 'Training budget in environment steps'
+    },
+    learning_rate: {
+      type: 'float',
+      min: 0.0001,
+      max: 0.01,
+      step: 0.0001,
+      default: 0.0023,
+      description: 'Adam optimizer step size'
+    }
+  };
 
   const defaultProps = {
     algorithm: 'Q-Learning',
     environment: 'FrozenLake-v1-NoSlip',
     parameters: { learning_rate: 0.1, num_episodes: 1000 },
     onParametersChange: jest.fn(),
-    onEnvironmentChange: jest.fn()
+    onEnvironmentChange: jest.fn(),
+    onAlgorithmChange: jest.fn()
   };
 
   beforeEach(() => {
@@ -50,7 +73,8 @@ describe('ParameterPanel', () => {
     // Set up default API responses
     api.getParameterSchema.mockResolvedValue(mockSchema);
     api.getEnvironments.mockResolvedValue(mockEnvironments);
-    api.getAlgorithms.mockResolvedValue(['Q-Learning']);
+    api.getAlgorithms.mockResolvedValue(['Q-Learning', 'DQN']);
+    api.getCompatibility.mockResolvedValue(mockCompatibility);
   });
 
   test('renders loading state initially', () => {
@@ -132,5 +156,92 @@ describe('ParameterPanel', () => {
       expect(environmentSelect).toBeInTheDocument();
       expect(environmentSelect).toHaveValue('FrozenLake-v1-NoSlip');
     });
+  });
+
+  test('algorithm dropdown filters by environment compatibility', async () => {
+    /**
+     * WHY: Incompatible algorithm/environment pairs must not be selectable
+     * HOW: On a FrozenLake environment, DQN must not appear as an option
+     */
+    // Act
+    render(<ParameterPanel {...defaultProps} />);
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Q-Learning')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('DQN')).not.toBeInTheDocument();
+  });
+
+  test('auto-switches algorithm when environment is incompatible', async () => {
+    /**
+     * WHY: Selecting CartPole while Q-Learning is active would be a dead state
+     * HOW: Render with an incompatible pair, expect onAlgorithmChange to fire
+     */
+    // Act
+    render(
+      <ParameterPanel
+        {...defaultProps}
+        environment="CartPole-v1"
+        algorithm="Q-Learning"
+      />
+    );
+
+    // Assert
+    await waitFor(() => {
+      expect(defaultProps.onAlgorithmChange).toHaveBeenCalledWith('DQN');
+    });
+  });
+
+  test('draws a concrete numeric seed as the default', async () => {
+    /**
+     * WHY: The seed is sticky and always visible - preview, play, eval
+     * and training share it; the dice button draws a new one
+     * HOW: Schema with a seed param; the initialized defaults must
+     * contain a numeric seed string, and the dice button must render
+     */
+    // Arrange
+    api.getParameterSchema.mockResolvedValue({
+      ...mockSchema,
+      seed: { type: 'int', default: '', description: 'Same seed = same run.' }
+    });
+
+    // Act
+    render(<ParameterPanel {...defaultProps} />);
+
+    // Assert
+    await waitFor(() => {
+      expect(defaultProps.onParametersChange).toHaveBeenCalledWith(
+        expect.objectContaining({ seed: expect.stringMatching(/^\d+$/) })
+      );
+    });
+    expect(screen.getByTitle(/draw a new random seed/i)).toBeInTheDocument();
+  });
+
+  test('renders DQN schema generically without Q-init section', async () => {
+    /**
+     * WHY: New algorithm parameters must render from the schema alone,
+     * and Q-Learning-specific sections must not leak into DQN
+     * HOW: Render with a DQN-like schema, check budget input, slider, no Q-init header
+     */
+    // Arrange
+    api.getParameterSchema.mockResolvedValue(mockDQNSchema);
+
+    // Act
+    render(
+      <ParameterPanel
+        {...defaultProps}
+        algorithm="DQN"
+        environment="CartPole-v1"
+        parameters={{ total_timesteps: 50000, learning_rate: 0.0023 }}
+      />
+    );
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByText(/total timesteps/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/learning rate/i)).toBeInTheDocument();
+    expect(screen.queryByText(/q-value initialization/i)).not.toBeInTheDocument();
   });
 });

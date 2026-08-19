@@ -1,24 +1,35 @@
-# Use Node.js 18 alpine (Version 18 is outdated in december 2025! We need to update but will leave it for the workshop on 10.12.25)
-FROM node:18-alpine
+# Multi-stage frontend build.
+# Participants run the final nginx stage (~90MB, static production
+# bundle). Maintainers run the "dev" stage via docker-compose.dev.yml
+# (CRA dev server with hot reload).
 
-# Set working directory
+# --- dev: CRA dev server (docker-compose.dev.yml targets this stage) ---
+# node 24 = npm 11, matching the toolchain that writes package-lock.json
+# (npm 10 rejects this lock's optional-peer entries under `npm ci`)
+FROM node:24-alpine AS dev
+
 WORKDIR /app
 
-# Copy package files first (for Docker layer caching)
-# This means: only reinstall packages when package.json changes
 COPY package.json package-lock.json ./
+RUN npm ci
 
-# Install dependencies
-# Using npm install (more forgiving for development)
-RUN npm install
-
-# Expose port 3000 (React dev server default)
 EXPOSE 3000
 
-# Set environment variable to make React work in Docker
-# Needed for hot-reload to work properly
-ENV CHOKIDAR_USEPOLLING=true
-
-# Start React development server
-# This provides hot-reload, debugging tools, etc.
 CMD ["npm", "start"]
+
+# --- build: static production bundle ---
+FROM dev AS build
+
+COPY . .
+RUN npm run build
+
+# --- final: nginx serving the bundle ---
+FROM nginx:alpine
+
+# The app is a single page (no client-side routing), so the default
+# nginx config is sufficient. The API URL is compiled in (api.js:
+# http://127.0.0.1:5001/api) - the browser talks to the backend
+# container's published port directly.
+COPY --from=build /app/build /usr/share/nginx/html
+
+EXPOSE 80
