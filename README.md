@@ -25,11 +25,9 @@ This repository contains the material used in the introductory reinforcement lea
 
 - **Git**
 - **Docker** (Docker Desktop on Windows/macOS, Docker Desktop or Engine on Linux)
-- **Hardware**: ~600 MB download (once), ~1.4 GB disk for the images, 8 GB RAM recommended (4 GB minimum). Any modern Intel/AMD or Apple Silicon CPU — no GPU needed.
+- **Hardware**: ~1.5 GB disk for the images, 8 GB RAM recommended (4 GB minimum). Any modern Intel/AMD or Apple Silicon CPU — no GPU needed.
 
-Nothing else — no Python, no Node.js: the Docker images contain the complete application. (Python is only needed for the optional homework notebooks, see [`examples/`](examples/README.md).)
-
-**Workshop participants**: ideally run the Quick Start at home beforehand — the image download is the slow part, and venue wifi is shared.
+Python and UV is only needed for the optional homework notebooks, see [`examples/`](examples/README.md).
 
 ### Quick Start (Experienced Users)
 
@@ -50,17 +48,12 @@ cd workshop-rl1-introduction
 docker compose pull
 docker compose up -d
 ```
-(`docker compose pull` matters especially if you have run RL Lab before: `up` alone keeps using old images.)
 
-4. Open browser to http://localhost:3030
-
-**First-time setup downloads ~600 MB of pre-built images** — a few minutes on a fast connection.
-
-**Note**: Running in detached mode (`-d`) keeps your terminal free. To view logs if needed for debugging, open a separate terminal and run `docker compose logs -f`
+1. Open browser to http://localhost:3030
 
 ### Installation Guides (Beginners)
 
-**New to programming or Docker?** Follow the installation guides:
+**New to programming or Docker?** Follow the more detailed installation guides:
 
 <table>
 <tr>
@@ -177,11 +170,11 @@ More commands and troubleshooting recipes are in the [installation guides](docs/
 
 ## License
 
-MIT License - Free to use for educational purposes
+See [LICENSE](LICENSE.txt)
 
 ---
 
 ## Acknowledgements
 <img src="00_aisc/img/logo_bmftr_de.png" alt="drawing" style="width:170px;"/>
 
-The [AI Service Centre Berlin Brandenburg](http://hpi.de/kisz) is funded by the [Federal Ministry of Research, Technology and Space](https://www.bmbf.de/) under the funding code 01IS22092.
+The [AI Service Centre Berlin Brandenburg](http://hpi.de/kisz) is funded by the [Federal Ministry of Research, Technology and Space](https://www.bmbf.de/) under the funding code 16IS22092.
