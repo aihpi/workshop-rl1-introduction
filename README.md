@@ -74,21 +74,6 @@ docker compose up -d
 </tr>
 </table>
 
-**Useful Docker Commands**
-
-Once installed, here are some helpful commands:
-
-```bash
-docker compose pull            # Update to the latest images
-docker compose up -d           # Start the application (detached mode)
-docker compose down            # Stop the application
-docker compose logs -f         # View live logs (for debugging, in separate terminal)
-docker compose logs backend    # View only backend logs
-docker compose logs frontend   # View only frontend logs
-docker compose ps              # Check container status
-docker compose restart         # Restart services
-```
-
 ## User Guide
 
 ### Using the Tool
@@ -163,6 +148,16 @@ workshop-rl1-introduction/
 ├── docker-compose.yml     # Participant setup (self-contained images)
 └── docker-compose.dev.yml # Maintainer override (bind mounts, hot reload)
 ```
+
+## Stopping, Updating, Troubleshooting
+
+```bash
+docker compose down                          # Stop the application
+docker compose pull && docker compose up -d  # Update to the latest version
+docker compose logs -f                       # Live logs (for bug reports)
+```
+
+More commands and troubleshooting recipes are in the [installation guides](docs/).
 
 ## References
 
