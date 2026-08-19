@@ -25,12 +25,12 @@
         },
         "learningRate": {
           "symbol": "α (alpha)",
-          "range": "0.01 ≤ α ≤ 1",
+          "range": "0 < α ≤ 1",
           "description": "How much to update Q-values. Higher = faster learning but less stable."
         },
         "discountFactor": {
           "symbol": "γ (gamma)",
-          "range": "0 ≤ γ ≤ 0.99",
+          "range": "0 ≤ γ ≤ 1",
           "description": "Importance of future rewards. Higher = more long-term planning."
         },
         "explorationRate": {
@@ -40,7 +40,7 @@
         },
         "qInitialization": {
           "symbol": "Q₀ init",
-          "range": "fixed value or random",
+          "range": "any real value (or random)",
           "description": "The table's starting values. Initializing above the true values (optimistic) makes unvisited cells look attractive and drives exploration. Terminal-state entries are never updated and keep their init - the greyed tiles in the Q-table."
         }
       }
@@ -88,32 +88,32 @@
         },
         "learningRate": {
           "symbol": "α (alpha)",
-          "range": "0.0001 ≤ α ≤ 0.01",
+          "range": "α > 0",
           "description": "Step size of the gradient updates to the Q-network. Higher = faster but less stable."
         },
         "discountFactor": {
           "symbol": "γ (gamma)",
-          "range": "0.9 ≤ γ < 1",
+          "range": "0 ≤ γ ≤ 1",
           "description": "Importance of future rewards. Higher = more long-term planning."
         },
         "explorationFraction": {
           "symbol": "ε decay",
-          "range": "0.05 ≤ f ≤ 1",
+          "range": "0 ≤ f ≤ 1",
           "description": "Fraction of the timestep budget over which ε decays linearly from 1.0 to its final value."
         },
         "initialValueEstimate": {
           "symbol": "Q₀",
-          "range": "environment-dependent",
+          "range": "any real value",
           "description": "What the untrained network guesses every state is worth. Guessing too high (optimistic) makes unvisited states look attractive and drives exploration even after ε has decayed; guessing too low kills it. The classic “optimistic initial values” trick."
         },
         "explorationFinalEps": {
           "symbol": "ε_final",
-          "range": "0 ≤ ε ≤ 0.5",
+          "range": "0 ≤ ε ≤ 1",
           "description": "Where the decay ends: the exploration that remains for the rest of training. A higher floor keeps the replay buffer diverse."
         },
         "batchSize": {
           "symbol": "batch",
-          "range": "16 ≤ batch ≤ 256",
+          "range": "integer ≥ 1",
           "description": "How many buffered experiences each gradient step trains on."
         }
       }
@@ -156,23 +156,23 @@
         },
         "learningRate": {
           "symbol": "α (alpha)",
-          "range": "0.00005 ≤ α ≤ 0.003",
+          "range": "α > 0",
           "description": "Step size of the gradient updates. Higher = faster but less stable."
         },
         "discountFactor": {
           "symbol": "γ (gamma)",
-          "range": "0.9 ≤ γ < 1",
+          "range": "0 ≤ γ ≤ 1",
           "description": "Importance of future rewards. Higher = more long-term planning."
         },
         "clipRange": {
           "symbol": "ε_clip",
-          "range": "0.05 ≤ ε_clip ≤ 0.5",
+          "range": "ε_clip > 0",
           "description": "How far a single update may move the policy. Smaller = more careful, slower learning."
         },
         "entropyCoefficient": {
           "symbol": "c_ent",
-          "range": "0 ≤ c_ent ≤ 0.1",
-          "description": "Bonus for keeping the policy random - more exploration, later commitment."
+          "range": "c_ent ≥ 0",
+          "description": "Bonus for keeping the policy random - more exploration, later commitment. 0 = off (the default): CartPole's feedback is immediate, so committing fast is exactly right. Raise it in environments where the first strategy that sort-of works is not the best one."
         }
       }
     },
