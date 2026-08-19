@@ -113,14 +113,14 @@ docker compose restart         # Restart services
 
 6. **Evaluate policy**: Runs 100 greedy episodes and reports the mean return with a 95% confidence interval, against the environment's "solved" threshold.
 
-### Hands-On Coding (Optional Homework)
+### Finished early? Want to dig deeper at home?
 
-Two small Jupyter notebooks in [`examples/`](examples/README.md) show the code behind what RL Lab does — as homework for digging deeper, not workshop material:
+RL Lab shows *what* the algorithms do — two small Jupyter notebooks in [`examples/`](examples/README.md) show the code that does it. They are deliberately minimal (a guided tour with exercises, not a course) and link to the official [Gymnasium](https://gymnasium.farama.org) and [Stable-Baselines3](https://stable-baselines3.readthedocs.io/) documentation wherever you want more depth:
 
-- **Q-Learning on FrozenLake**: implement the Q-learning update yourself (the exact rule RL Lab's tabular agent uses)
-- **Stable-Baselines3 quickstart**: run DQN/PPO with the library RL Lab wraps — evaluate → train → evaluate, plus two exercises
+- **`frozenlake_q_learning.ipynb`** — implement the Q-learning update rule yourself (the exact rule RL Lab's tabular agent uses, terminal-state handling included), train it on an 8×8 map and watch your own agent play.
+- **`sb3_quickstart.ipynb`** — the ~15 lines of Stable-Baselines3 code behind RL Lab's DQN and PPO: the evaluate → train → evaluate workflow with the same tuned hyperparameters, plus two exercises (why MountainCar needs its own settings; swapping DQN for PPO). Its first cell installs the bigger deep-RL dependencies itself.
 
-Both are deliberately minimal and link to the official [Gymnasium](https://gymnasium.farama.org) and [SB3](https://stable-baselines3.readthedocs.io/) documentation for depth. Setup instructions: [`examples/README.md`](examples/README.md).
+Solutions are included. One-time setup (~2 minutes, then everything is click-through): [`examples/README.md`](examples/README.md).
 
 ![Notebook Screenshot](docs/screenshots/app/notebook-QL-FrozenLake.png)
 
@@ -141,30 +141,28 @@ workshop-rl1-introduction/
 │   └── app.py             # Flask API server
 ├── frontend/              # React frontend
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   │   ├── ParameterPanel.jsx
-│   │   │   ├── EnvironmentViewer.jsx
-│   │   │   ├── RewardChart.jsx
-│   │   │   ├── LearningVisualization.jsx
-│   │   │   └── ControlButtons.jsx
+│   │   ├── components/    # React components (parameters, viewer, charts,
+│   │   │                  # info panels, Q-table & evaluation visualizations)
+│   │   ├── content/       # Environment & algorithm texts (About panels)
 │   │   ├── App.js         # Main application
 │   │   └── api.js         # Backend communication
 │   └── src/components/__tests__/  # Frontend test suite
+├── examples/              # Optional homework notebooks (+ solutions)
+│   ├── notebooks/
+│   │   ├── frozenlake_q_learning.ipynb   # Implement Q-Learning yourself
+│   │   ├── sb3_quickstart.ipynb          # DQN/PPO with stable-baselines3
+│   │   └── solutions/
+│   └── README.md          # Notebook setup instructions
 ├── docs/
-│   ├── DEVELOPMENT.md          # Local development setup (without Docker)
+│   ├── DEVELOPMENT.md          # Maintainer setup (dev mode, local runs)
 │   ├── INSTALLATION_LINUX.md   # Linux installation guide
 │   ├── INSTALLATION_MACOS.md   # macOS installation guide
 │   ├── INSTALLATION_WINDOWS.md # Windows installation guide
 │   └── screenshots/            # Documentation screenshots
+├── presentations/         # Workshop slides
 ├── docker-compose.yml     # Participant setup (self-contained images)
 └── docker-compose.dev.yml # Maintainer override (bind mounts, hot reload)
 ```
-
-## Limitations
-
-- Four environments (FrozenLake 4x4 ×2, CartPole, MountainCar) and three algorithms (Q-Learning, DQN, PPO)
-- Each algorithm supports specific environments (Q-Learning needs discrete states; PPO on MountainCar is included as an instructive failure)
-- Requires Docker for running the application
 
 ## References
 
