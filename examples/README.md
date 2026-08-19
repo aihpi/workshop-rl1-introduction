@@ -36,4 +36,4 @@ Then open a notebook, click "Select Kernel" (top right) → "Jupyter Kernel" →
 
 ## Note for the SB3 notebook
 
-The deep-RL dependencies (PyTorch + stable-baselines3) are an optional extra so the basic setup stays small. The notebook's first cell installs them for you; the terminal equivalent is `uv sync --extra sb3`.
+The deep-RL dependencies (PyTorch + stable-baselines3) are an optional extra so the basic setup stays small. The notebook's first cell installs them for you by running `uv sync --extra sb3` — the exact pinned versions from the lockfile, into the same environment the kernel runs in.
