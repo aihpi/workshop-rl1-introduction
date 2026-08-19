@@ -52,13 +52,26 @@ describe('EvaluationPanel', () => {
   });
 
   test('shows no verdict for environments without a threshold', () => {
+    // All shipped environments define solvedThreshold now; an unknown
+    // environment stands in for a future one without a threshold
     render(
       <EvaluationPanel
         progress={null}
         results={{ ...results, mean_return: 0.8, min_return: 0, max_return: 1 }}
-        environment="FrozenLake-v1"
+        environment="Acrobot-v1"
       />
     );
     expect(screen.queryByText(/solved/i)).not.toBeInTheDocument();
+  });
+
+  test('shows a verdict on FrozenLake (slippery, threshold 0.7)', () => {
+    render(
+      <EvaluationPanel
+        progress={null}
+        results={{ ...results, mean_return: 0.72, min_return: 0, max_return: 1 }}
+        environment="FrozenLake-v1"
+      />
+    );
+    expect(screen.getByText(/✅ solved/i)).toBeInTheDocument();
   });
 });
