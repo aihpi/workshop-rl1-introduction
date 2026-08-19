@@ -3,13 +3,13 @@
     "name": "Q-Learning",
     "description": "A simple tabular reinforcement learning algorithm that learns the value of actions in states.",
     "sections": {
-      "whatIsIt": "Q-Learning learns a Q-function Q(s,a) that estimates the expected cumulative reward of taking action 'a' in state 's' and following the optimal policy thereafter. During training, the agent explores the environment using an ε-greedy policy to balance exploration and exploitation. After training, the learned (estimated!) Q-values can be used to derive an optimal policy by selecting the action with the highest Q-value in each state (greedy policy).",
+      "whatIsIt": "Q-Learning learns a Q-function Q(s,a) that estimates the expected cumulative reward of taking action 'a' in state 's' and following the optimal policy thereafter. During training, the agent explores the environment using an ε-greedy policy to balance exploration and exploitation. After training, the learned (estimated!) Q-values can be used to derive an optimal policy by selecting the action with the highest Q-value in each state (greedy policy). Because it stores one value per state-action pair in a table, Q-Learning needs a small, discrete state space - which is why it is only offered on FrozenLake here.",
       "howItWorks": [
         "Initialize Q-table",
         "Observe current state",
         "Choose action using ε-greedy policy",
         "Take action a, observe reward r and next state s'",
-        "Q(s,a) ← Q(s,a) + α[r + γ·max Q(s',a') - Q(s,a)]",
+        "Q(s,a) ← Q(s,a) + α[target − Q(s,a)], with target = r if the episode ended at s' (terminal states have no future), else r + γ·max Q(s',a')",
         "Repeat from step 2"
       ],
       "keyConcepts": {
@@ -18,20 +18,30 @@
         "Epsilon-Greedy Policy": "A policy that chooses a random action with probability ε and the best-known action with probability 1-ε"
       },
       "parameters": {
+        "trainingEpisodes": {
+          "symbol": "num_episodes",
+          "range": "≥ 1",
+          "description": "The training budget, counted in episodes. (The deep algorithms count timesteps instead - their episodes vary in length.)"
+        },
         "learningRate": {
           "symbol": "α (alpha)",
-          "range": "0 < α ≤ 1.0",
+          "range": "0.01 ≤ α ≤ 1",
           "description": "How much to update Q-values. Higher = faster learning but less stable."
         },
         "discountFactor": {
           "symbol": "γ (gamma)",
-          "range": "0 < γ ≤ 1",
+          "range": "0 ≤ γ ≤ 0.99",
           "description": "Importance of future rewards. Higher = more long-term planning."
         },
         "explorationRate": {
           "symbol": "ε (epsilon)",
           "range": "0 ≤ ε ≤ 1",
           "description": "Probability of random exploration. Higher = more exploration."
+        },
+        "qInitialization": {
+          "symbol": "Q₀ init",
+          "range": "fixed value or random",
+          "description": "The table's starting values. Initializing above the true values (optimistic) makes unvisited cells look attractive and drives exploration. Terminal-state entries are never updated and keep their init - the greyed tiles in the Q-table."
         }
       }
     },
@@ -45,8 +55,8 @@
         "url": "https://en.wikipedia.org/wiki/Q-learning"
       },
       {
-        "text": "Article by Maxime Labonne: Q-Learning on the FrozenLake environment",
-        "url": "https://medium.com/data-science/q-learning-for-beginners-2837b777741"
+        "text": "Hugging Face Deep RL Course: Q-Learning (free, hands-on)",
+        "url": "https://huggingface.co/learn/deep-rl-course/unit2/introduction"
       }
     ]
   },
@@ -54,22 +64,28 @@
     "name": "DQN (Deep Q-Network)",
     "description": "Q-Learning with a neural network instead of a table: the network estimates Q-values from continuous state inputs, enabling RL in environments where a Q-table is impossible.",
     "sections": {
-      "whatIsIt": "DQN replaces the Q-table with a neural network that takes the state as input and outputs one Q-value per action. This is necessary when states are continuous (like CartPole's positions and velocities): there are infinitely many states, so a table can't hold them. Two tricks make the training stable: a replay buffer stores past experiences and trains the network on random batches of them (breaking the correlation between consecutive steps), and a separate target network provides slowly-changing learning targets. The learning rule is the same Bellman update as Q-Learning, just applied through gradient descent.",
+      "whatIsIt": "DQN replaces the Q-table with a neural network that takes the state as input and outputs one Q-value per action. This is necessary when states are continuous (like CartPole's positions and velocities): there are infinitely many states, so a table can't hold them. Two tricks make the training stable: a replay buffer stores past experiences and trains the network on random batches of them (breaking the correlation between consecutive steps), and a separate target network provides slowly-changing learning targets. The learning rule is the same Bellman update as Q-Learning, just applied through gradient descent. In RL Lab, DQN also runs on FrozenLake: there the network's Q-values for all 16 states are read out and displayed as the familiar Q-table - the same picture as tabular Q-Learning, produced by a network instead of a table.",
       "howItWorks": [
         "Initialize Q-network and target network with random weights",
         "Observe current state s",
         "Choose action using ε-greedy policy (ε decays over training)",
         "Take action a, observe reward r and next state s'; store (s, a, r, s') in the replay buffer",
-        "Sample a random batch from the buffer and update the Q-network toward r + γ·max Q_target(s',a')",
+        "Sample a random batch from the buffer and update the Q-network toward r + γ·max Q_target(s',a') (just r for transitions that ended the episode)",
         "Every N steps, copy the Q-network weights into the target network",
         "Repeat from step 2"
       ],
       "keyConcepts": {
         "Q-Value": "Estimated by the neural network: input state, output one Q-value per action",
-        "Exploration vs Exploitation": "DQN starts fully random (ε = 1) and anneals ε down as it learns, shifting from exploring to exploiting the network's Q-estimates",
-        "Epsilon-Greedy Policy": "Same as Q-Learning, but ε decays linearly over the first part of training instead of staying fixed"
+        "Replay Buffer": "A memory of past experiences; training samples random batches from it - so one lucky success can teach the network thousands of times",
+        "Target Network": "A slowly-updated copy of the Q-network that provides stable learning targets - chasing a constantly moving target is what made early deep RL diverge",
+        "Epsilon-Greedy with Decay": "Starts fully random (ε = 1) and decays toward exploiting the network estimates as it learns"
       },
       "parameters": {
+        "trainingTimesteps": {
+          "symbol": "total_timesteps",
+          "range": "≥ 1",
+          "description": "The training budget, counted in environment steps (not episodes - deep-RL convention)."
+        },
         "learningRate": {
           "symbol": "α (alpha)",
           "range": "0.0001 ≤ α ≤ 0.01",
@@ -89,13 +105,23 @@
           "symbol": "Q₀",
           "range": "environment-dependent",
           "description": "What the untrained network guesses every state is worth. Guessing too high (optimistic) makes unvisited states look attractive and drives exploration even after ε has decayed; guessing too low kills it. The classic “optimistic initial values” trick."
+        },
+        "explorationFinalEps": {
+          "symbol": "ε_final",
+          "range": "0 ≤ ε ≤ 0.5",
+          "description": "Where the decay ends: the exploration that remains for the rest of training. A higher floor keeps the replay buffer diverse."
+        },
+        "batchSize": {
+          "symbol": "batch",
+          "range": "16 ≤ batch ≤ 256",
+          "description": "How many buffered experiences each gradient step trains on."
         }
       }
     },
     "links": [
       {
-        "text": "Mnih et al. 2015: Human-level control through deep RL (Nature)",
-        "url": "https://www.nature.com/articles/nature14236"
+        "text": "Mnih et al. 2013: Playing Atari with Deep RL (arXiv, free)",
+        "url": "https://arxiv.org/abs/1312.5602"
       },
       {
         "text": "Stable-Baselines3 DQN Documentation",
@@ -120,9 +146,14 @@
         "Policy": "The network's direct output: a probability for each action in the current state",
         "Advantage": "How much better an action turned out compared to the critic's expectation - the learning signal",
         "Clipping": "Updates are limited to a small trusted step (the clip range), preventing destructive policy changes",
-        "Exploration": "Comes for free from the stochastic policy - no ε needed; the entropy bonus can keep it more random for longer"
+        "Exploration": "Comes for free from the stochastic policy - no ε needed. (Though randomness alone does not crack hard-exploration tasks - see MountainCar.)"
       },
       "parameters": {
+        "trainingTimesteps": {
+          "symbol": "total_timesteps",
+          "range": "≥ 1",
+          "description": "The training budget, counted in environment steps. PPO consumes it in rollouts of fixed size."
+        },
         "learningRate": {
           "symbol": "α (alpha)",
           "range": "0.00005 ≤ α ≤ 0.003",
