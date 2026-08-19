@@ -10,3 +10,22 @@ dependencies = [
     "jupyterlab>=4.0.0",   # Jupyter Lab interface
     "ipykernel>=6.25.0",   # Kernel for notebooks
 ]
+
+# Deep-RL extras for the stable-baselines3 notebook (~500MB, CPU-only).
+# The notebook's first cell installs these itself; the terminal
+# equivalent is: uv sync --extra sb3
+[project.optional-dependencies]
+sb3 = [
+    "stable-baselines3>=2.6.0",
+    "torch>=2.3",
+]
+
+# CPU-only torch on Linux (avoids the multi-GB CUDA download);
+# macOS/Windows wheels are CPU-only anyway. Same setup as the backend.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

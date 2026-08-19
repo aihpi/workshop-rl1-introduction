@@ -113,11 +113,14 @@ docker compose restart         # Restart services
 
 6. **Evaluate policy**: Runs 100 greedy episodes and reports the mean return with a 95% confidence interval, against the environment's "solved" threshold.
 
-### Hands-On Coding (Optional)
+### Hands-On Coding (Optional Homework)
 
-Want to implement Q-Learning yourself? After using RL Lab to build intuition, try the Jupyter notebook in the examples directory to implement Q-Learning yourself and see how the code works.
+Two small Jupyter notebooks in [`examples/`](examples/README.md) show the code behind what RL Lab does — as homework for digging deeper, not workshop material:
 
-Instructions for how to get the notebooks running are in [`examples/README.md`](examples/README.md).
+- **Q-Learning on FrozenLake**: implement the Q-learning update yourself (the exact rule RL Lab's tabular agent uses)
+- **Stable-Baselines3 quickstart**: run DQN/PPO with the library RL Lab wraps — evaluate → train → evaluate, plus two exercises
+
+Both are deliberately minimal and link to the official [Gymnasium](https://gymnasium.farama.org) and [SB3](https://stable-baselines3.readthedocs.io/) documentation for depth. Setup instructions: [`examples/README.md`](examples/README.md).
 
 ![Notebook Screenshot](docs/screenshots/app/notebook-QL-FrozenLake.png)
 
