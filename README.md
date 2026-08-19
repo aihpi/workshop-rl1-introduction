@@ -3,7 +3,7 @@
 <h1> Workshop: Reinforcement Learning I - Introduction
 </div>
 
-This repository contains the material used in the "Reinforcement Learning I - Introduction" workshop by the AI Service Center Berlin Brandenburg. It provides an educational interface, called **RL Lab**, for building intuition about reinforcement learning fundamentals. The backend is built on the environments of the [gymnasium library](https://gymnasium.farama.org).
+This repository contains the material used in the introductory reinforcement learning workshop by the [AI Service Center Berlin Brandenburg](https://hpi.de/en/ai-service-centre/). It provides **RL Lab**, an educational interface for building intuition about reinforcement learning fundamentals. 
 
 ![Application Screenshot](docs/screenshots/app/main-interface.png)
 
@@ -23,12 +23,17 @@ This repository contains the material used in the "Reinforcement Learning I - In
 
 ### Prerequisites
 
-- Git
-- Docker Desktop running or Docker Engine
+- **Git**
+- **Docker** (Docker Desktop on Windows/macOS, Docker Desktop or Engine on Linux)
+- **Hardware**: ~600 MB download (once), ~1.4 GB disk for the images, 8 GB RAM recommended (4 GB minimum). Any modern Intel/AMD or Apple Silicon CPU — no GPU needed.
+
+Nothing else — no Python, no Node.js: the Docker images contain the complete application. (Python is only needed for the optional homework notebooks, see [`examples/`](examples/README.md).)
+
+**Workshop participants**: ideally run the Quick Start at home beforehand — the image download is the slow part, and venue wifi is shared.
 
 ### Quick Start (Experienced Users)
 
-Already have git and Docker installed? Get started in 4 commands:
+Already have git installed and Docker running? Get started in 4 commands:
 
 1. Clone the repository
 ```bash
@@ -49,7 +54,7 @@ docker compose up -d
 
 4. Open browser to http://localhost:3030
 
-**First-time setup takes ~1-2 minutes** (downloads pre-built images).
+**First-time setup downloads ~600 MB of pre-built images** — a few minutes on a fast connection.
 
 **Note**: Running in detached mode (`-d`) keeps your terminal free. To view logs if needed for debugging, open a separate terminal and run `docker compose logs -f`
 
@@ -100,12 +105,12 @@ docker compose up -d
 
 ### Finished early? Want to dig deeper at home?
 
-RL Lab shows *what* the algorithms do — two small Jupyter notebooks in [`examples/`](examples/README.md) show the code that does it. They are deliberately minimal (a guided tour with exercises, not a course) and link to the official [Gymnasium](https://gymnasium.farama.org) and [Stable-Baselines3](https://stable-baselines3.readthedocs.io/) documentation wherever you want more depth:
+RL Lab shows *what* the algorithms do — two small Jupyter notebooks in [`examples/`](examples/README.md) show the code that does it. They are minimal and link to the official [Gymnasium](https://gymnasium.farama.org) and [Stable-Baselines3](https://stable-baselines3.readthedocs.io/) documentation wherever you want more depth:
 
-- **`frozenlake_q_learning.ipynb`** — implement the Q-learning update rule yourself (the exact rule RL Lab's tabular agent uses, terminal-state handling included), train it on an 8×8 map and watch your own agent play.
-- **`sb3_quickstart.ipynb`** — the ~15 lines of Stable-Baselines3 code behind RL Lab's DQN and PPO: the evaluate → train → evaluate workflow with the same tuned hyperparameters, plus two exercises (why MountainCar needs its own settings; swapping DQN for PPO). Its first cell installs the bigger deep-RL dependencies itself.
+- **`frozenlake_q_learning.ipynb`** — implement the Q-learning update rule yourself, train it on an 8×8 map and watch your own agent play.
+- **`sb3_quickstart.ipynb`** — the ~15 lines of Stable-Baselines3 code behind RL Lab's DQN and PPO: the evaluate → train → evaluate workflow with the same tuned hyperparameters, plus two exercises (why MountainCar needs its own settings; swapping DQN for PPO). 
 
-Solutions are included. One-time setup (~2 minutes, then everything is click-through): [`examples/README.md`](examples/README.md).
+Solutions are included. One-time setup: [`examples/README.md`](examples/README.md).
 
 ![Notebook Screenshot](docs/screenshots/app/notebook-QL-FrozenLake.png)
 
