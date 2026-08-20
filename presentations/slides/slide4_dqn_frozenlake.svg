@@ -24,9 +24,11 @@
     <text x="638" y="80" font-size="22" fill="#555555" text-anchor="middle" font-weight="600">index 14</text>
   </g>
 
+  <!-- connector: one-hot vector -> network -->
+  <path d="M 112 420 L 112 600 L 168 600" stroke="#2d2d2d" stroke-width="5" fill="none" marker-end="url(#arrD)"/>
+
   <!-- network -->
   <g transform="translate(190, 500)">
-    <path d="M -60 100 L -20 100" stroke="#2d2d2d" stroke-width="5" fill="none" marker-end="url(#arrD)"/>
     <rect x="0" y="0" width="180" height="200" rx="12" fill="#f7f7f7" stroke="#bbbbbb" stroke-width="3"/>
     <text x="90" y="90" font-size="26" fill="#555555" text-anchor="middle" font-weight="600">hidden</text>
     <text x="90" y="124" font-size="26" fill="#555555" text-anchor="middle" font-weight="600">64 × 64</text>
