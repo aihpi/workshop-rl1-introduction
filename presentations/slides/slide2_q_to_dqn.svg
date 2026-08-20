@@ -1,90 +1,75 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
   <rect width="1920" height="1080" fill="#ffffff"/>
-  <rect x="0" y="0" width="1920" height="8" fill="#ff7500"/>
 
-  <text x="90" y="110" font-size="56" font-weight="700" fill="#2d2d2d">From Q-Learning to DQN: replace the table with a network</text>
-  <text x="90" y="165" font-size="30" fill="#666666">Same idea, same update — a neural network estimates Q(s, a) when a table is impossible</text>
+  <text x="90" y="110" font-size="56" font-weight="700" fill="#2d2d2d">From Q-Learning to DQN</text>
+  <text x="90" y="165" font-size="30" fill="#666666">Same idea, same update — a network estimates Q(s, a)</text>
 
-  <!-- Problem box -->
-  <text x="90" y="265" font-size="30" font-weight="700" fill="#ff7500">THE PROBLEM</text>
-  <rect x="90" y="290" width="520" height="220" rx="12" fill="#fff4ea" stroke="#ff7500" stroke-width="3"/>
-  <text x="120" y="340" font-size="28" fill="#2d2d2d">CartPole's state: 4 continuous numbers</text>
-  <text x="120" y="378" font-size="26" fill="#666666">position, velocity, angle, angular velocity</text>
-  <text x="120" y="432" font-size="28" fill="#2d2d2d">Infinitely many states</text>
-  <text x="120" y="470" font-size="28" font-weight="700" fill="#c65600">→ a table cannot hold them</text>
+  <!-- Problem -->
+  <rect x="90" y="250" width="520" height="190" rx="12" fill="#f7f7f7"/>
+  <text x="120" y="305" font-size="28" fill="#2d2d2d">CartPole: 4 continuous numbers</text>
+  <text x="120" y="355" font-size="28" fill="#2d2d2d">→ infinitely many states</text>
+  <text x="120" y="405" font-size="28" font-weight="700" fill="#2d2d2d">→ no table can hold them</text>
 
   <!-- The swap: table -> network -->
-  <text x="90" y="600" font-size="30" font-weight="700" fill="#7664a0">THE SWAP</text>
-
-  <!-- crossed-out table -->
-  <g stroke="#dddddd" stroke-width="2" fill="#ffffff">
-    <rect x="90" y="640" width="70" height="45"/><rect x="160" y="640" width="70" height="45"/><rect x="230" y="640" width="70" height="45"/>
-    <rect x="90" y="685" width="70" height="45"/><rect x="160" y="685" width="70" height="45"/><rect x="230" y="685" width="70" height="45"/>
-    <rect x="90" y="730" width="70" height="45"/><rect x="160" y="730" width="70" height="45"/><rect x="230" y="730" width="70" height="45"/>
-  </g>
-  <line x1="80" y1="785" x2="310" y2="630" stroke="#c62828" stroke-width="7" stroke-linecap="round"/>
-  <line x1="80" y1="630" x2="310" y2="785" stroke="#c62828" stroke-width="7" stroke-linecap="round"/>
-
-  <path d="M 340 707 L 430 707" stroke="#2d2d2d" stroke-width="5" fill="none" marker-end="url(#arrowD)"/>
-
-  <!-- network diagram -->
-  <g>
-    <!-- input -->
-    <circle cx="490" cy="620" r="16" fill="#7664a0"/>
-    <circle cx="490" cy="675" r="16" fill="#7664a0"/>
-    <circle cx="490" cy="730" r="16" fill="#7664a0"/>
-    <circle cx="490" cy="785" r="16" fill="#7664a0"/>
-    <!-- hidden -->
-    <circle cx="620" cy="600" r="16" fill="#b3a5cf"/>
-    <circle cx="620" cy="655" r="16" fill="#b3a5cf"/>
-    <circle cx="620" cy="710" r="16" fill="#b3a5cf"/>
-    <circle cx="620" cy="765" r="16" fill="#b3a5cf"/>
-    <circle cx="620" cy="820" r="16" fill="#b3a5cf"/>
-    <!-- output -->
-    <circle cx="750" cy="660" r="16" fill="#ff7500"/>
-    <circle cx="750" cy="745" r="16" fill="#ff7500"/>
-    <!-- edges -->
-    <g stroke="#cccccc" stroke-width="2">
-      <line x1="506" y1="620" x2="604" y2="600"/><line x1="506" y1="620" x2="604" y2="655"/><line x1="506" y1="620" x2="604" y2="710"/><line x1="506" y1="620" x2="604" y2="765"/><line x1="506" y1="620" x2="604" y2="820"/>
-      <line x1="506" y1="675" x2="604" y2="600"/><line x1="506" y1="675" x2="604" y2="655"/><line x1="506" y1="675" x2="604" y2="710"/><line x1="506" y1="675" x2="604" y2="765"/><line x1="506" y1="675" x2="604" y2="820"/>
-      <line x1="506" y1="730" x2="604" y2="600"/><line x1="506" y1="730" x2="604" y2="655"/><line x1="506" y1="730" x2="604" y2="710"/><line x1="506" y1="730" x2="604" y2="765"/><line x1="506" y1="730" x2="604" y2="820"/>
-      <line x1="506" y1="785" x2="604" y2="600"/><line x1="506" y1="785" x2="604" y2="655"/><line x1="506" y1="785" x2="604" y2="710"/><line x1="506" y1="785" x2="604" y2="765"/><line x1="506" y1="785" x2="604" y2="820"/>
-      <line x1="636" y1="600" x2="734" y2="660"/><line x1="636" y1="655" x2="734" y2="660"/><line x1="636" y1="710" x2="734" y2="660"/><line x1="636" y1="765" x2="734" y2="660"/><line x1="636" y1="820" x2="734" y2="660"/>
-      <line x1="636" y1="600" x2="734" y2="745"/><line x1="636" y1="655" x2="734" y2="745"/><line x1="636" y1="710" x2="734" y2="745"/><line x1="636" y1="765" x2="734" y2="745"/><line x1="636" y1="820" x2="734" y2="745"/>
+  <g transform="translate(90, 560)">
+    <g stroke="#cccccc" stroke-width="2" fill="#ffffff">
+      <rect x="0" y="0" width="70" height="45"/><rect x="70" y="0" width="70" height="45"/><rect x="140" y="0" width="70" height="45"/>
+      <rect x="0" y="45" width="70" height="45"/><rect x="70" y="45" width="70" height="45"/><rect x="140" y="45" width="70" height="45"/>
+      <rect x="0" y="90" width="70" height="45"/><rect x="70" y="90" width="70" height="45"/><rect x="140" y="90" width="70" height="45"/>
     </g>
+    <line x1="-15" y1="150" x2="225" y2="-15" stroke="#8a8a8a" stroke-width="7" stroke-linecap="round"/>
+    <line x1="-15" y1="-15" x2="225" y2="150" stroke="#8a8a8a" stroke-width="7" stroke-linecap="round"/>
   </g>
-  <text x="490" y="580" font-size="24" fill="#7664a0" text-anchor="middle" font-weight="600">state</text>
-  <text x="750" y="620" font-size="24" fill="#ff7500" text-anchor="middle" font-weight="600">one Q-value</text>
-  <text x="750" y="648" font-size="24" fill="#ff7500" text-anchor="middle" font-weight="600">per action</text>
 
-  <text x="90" y="900" font-size="27" fill="#444444">The update rule stays the same — it just becomes</text>
-  <text x="90" y="936" font-size="27" fill="#444444">a gradient step instead of a cell overwrite.</text>
+  <path d="M 340 627 L 420 627" stroke="#2d2d2d" stroke-width="5" fill="none" marker-end="url(#arrD)"/>
+
+  <!-- network -->
+  <g transform="translate(480, 520)">
+    <circle cx="0" cy="20" r="14" fill="#555555"/>
+    <circle cx="0" cy="75" r="14" fill="#555555"/>
+    <circle cx="0" cy="130" r="14" fill="#555555"/>
+    <circle cx="0" cy="185" r="14" fill="#555555"/>
+    <circle cx="125" cy="0" r="14" fill="#aaaaaa"/>
+    <circle cx="125" cy="55" r="14" fill="#aaaaaa"/>
+    <circle cx="125" cy="110" r="14" fill="#aaaaaa"/>
+    <circle cx="125" cy="165" r="14" fill="#aaaaaa"/>
+    <circle cx="125" cy="220" r="14" fill="#aaaaaa"/>
+    <circle cx="250" cy="55" r="14" fill="#ff7500"/>
+    <circle cx="250" cy="150" r="14" fill="#ff7500"/>
+    <g stroke="#dddddd" stroke-width="2">
+      <line x1="14" y1="20" x2="111" y2="0"/><line x1="14" y1="20" x2="111" y2="55"/><line x1="14" y1="20" x2="111" y2="110"/><line x1="14" y1="20" x2="111" y2="165"/><line x1="14" y1="20" x2="111" y2="220"/>
+      <line x1="14" y1="75" x2="111" y2="0"/><line x1="14" y1="75" x2="111" y2="55"/><line x1="14" y1="75" x2="111" y2="110"/><line x1="14" y1="75" x2="111" y2="165"/><line x1="14" y1="75" x2="111" y2="220"/>
+      <line x1="14" y1="130" x2="111" y2="0"/><line x1="14" y1="130" x2="111" y2="55"/><line x1="14" y1="130" x2="111" y2="110"/><line x1="14" y1="130" x2="111" y2="165"/><line x1="14" y1="130" x2="111" y2="220"/>
+      <line x1="14" y1="185" x2="111" y2="0"/><line x1="14" y1="185" x2="111" y2="55"/><line x1="14" y1="185" x2="111" y2="110"/><line x1="14" y1="185" x2="111" y2="165"/><line x1="14" y1="185" x2="111" y2="220"/>
+      <line x1="139" y1="0" x2="236" y2="55"/><line x1="139" y1="55" x2="236" y2="55"/><line x1="139" y1="110" x2="236" y2="55"/><line x1="139" y1="165" x2="236" y2="55"/><line x1="139" y1="220" x2="236" y2="55"/>
+      <line x1="139" y1="0" x2="236" y2="150"/><line x1="139" y1="55" x2="236" y2="150"/><line x1="139" y1="110" x2="236" y2="150"/><line x1="139" y1="165" x2="236" y2="150"/><line x1="139" y1="220" x2="236" y2="150"/>
+    </g>
+    <text x="0" y="-30" font-size="24" fill="#555555" text-anchor="middle" font-weight="600">state</text>
+    <text x="278" y="62" font-size="24" fill="#ff7500" font-weight="600">Q(s, a₁)</text>
+    <text x="278" y="157" font-size="24" fill="#ff7500" font-weight="600">Q(s, a₂)</text>
+  </g>
+
+  <text x="90" y="880" font-size="28" fill="#2d2d2d">Same update rule — <tspan font-weight="700">now a gradient step</tspan></text>
 
   <!-- Right: the two tricks -->
-  <text x="950" y="265" font-size="30" font-weight="700" fill="#7664a0">TWO TRICKS MAKE IT STABLE</text>
+  <text x="950" y="285" font-size="30" font-weight="700" fill="#2d2d2d">TWO TRICKS MAKE IT STABLE</text>
 
-  <rect x="950" y="290" width="880" height="270" rx="12" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
-  <text x="985" y="345" font-size="34" font-weight="700" fill="#7664a0">1&#160;&#160;Replay Buffer</text>
-  <text x="985" y="395" font-size="27" fill="#2d2d2d">A memory of past experiences (s, a, r, s').</text>
-  <text x="985" y="433" font-size="27" fill="#2d2d2d">Each gradient step trains on a random batch from it.</text>
-  <text x="985" y="490" font-size="27" font-weight="600" fill="#7664a0">→ breaks correlations between consecutive steps</text>
-  <text x="985" y="528" font-size="27" font-weight="600" fill="#7664a0">→ one lucky success teaches the network thousands of times</text>
+  <rect x="950" y="315" width="880" height="215" rx="12" fill="#ffffff" stroke="#bbbbbb" stroke-width="3"/>
+  <text x="985" y="370" font-size="34" font-weight="700" fill="#2d2d2d">1&#160;&#160;Replay Buffer</text>
+  <text x="985" y="420" font-size="27" fill="#555555">a memory of experiences (s, a, r, s') — train on random batches</text>
+  <text x="985" y="490" font-size="27" fill="#2d2d2d">→ one lucky success teaches the network thousands of times</text>
 
-  <rect x="950" y="590" width="880" height="230" rx="12" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
-  <text x="985" y="645" font-size="34" font-weight="700" fill="#7664a0">2&#160;&#160;Target Network</text>
-  <text x="985" y="695" font-size="27" fill="#2d2d2d">A slowly-updated copy of the Q-network computes the target</text>
-  <text x="985" y="733" font-size="27" fill="#2d2d2d">r + γ · max Q<tspan font-size="20" baseline-shift="sub">target</tspan>(s', a')&#160;&#160;— frozen for many steps at a time.</text>
-  <text x="985" y="790" font-size="27" font-weight="600" fill="#7664a0">→ stops the network from chasing its own moving estimates</text>
+  <rect x="950" y="570" width="880" height="215" rx="12" fill="#ffffff" stroke="#bbbbbb" stroke-width="3"/>
+  <text x="985" y="625" font-size="34" font-weight="700" fill="#2d2d2d">2&#160;&#160;Target Network</text>
+  <text x="985" y="675" font-size="27" fill="#555555">a frozen copy computes the targets r + γ · max Q<tspan font-size="20" baseline-shift="sub">target</tspan>(s', a')</text>
+  <text x="985" y="745" font-size="27" fill="#2d2d2d">→ no chasing your own moving estimates</text>
 
-  <!-- One consequence -->
-  <rect x="950" y="850" width="880" height="110" rx="12" fill="#f7f7f7"/>
-  <text x="985" y="898" font-size="27" fill="#2d2d2d"><tspan font-weight="700">One consequence:</tspan> all values share the network's weights —</text>
-  <text x="985" y="934" font-size="27" fill="#2d2d2d">every update moves ALL states a little (generalization).</text>
+  <rect x="950" y="825" width="880" height="100" rx="12" fill="#f7f7f7"/>
+  <text x="985" y="885" font-size="27" fill="#2d2d2d"><tspan font-weight="700">Shared weights:</tspan> every update moves ALL states a little</text>
 
-  <rect x="90" y="980" width="1740" height="4" fill="#eeeeee"/>
-  <text x="90" y="1035" font-size="28" fill="#ff7500" font-weight="600">DQN = Q-Learning + function approximation + replay buffer + target network.</text>
+  <text x="90" y="1040" font-size="30" fill="#2d2d2d" font-weight="600">DQN&#160;&#160;=&#160;&#160;Q-Learning&#160;&#160;+&#160;&#160;network&#160;&#160;+&#160;&#160;replay buffer&#160;&#160;+&#160;&#160;target network</text>
 
   <defs>
-    <marker id="arrowD" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2d2d2d"/></marker>
+    <marker id="arrD" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2d2d2d"/></marker>
   </defs>
 </svg>
