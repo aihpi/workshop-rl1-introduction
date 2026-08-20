@@ -1,23 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
   <rect width="1920" height="1080" fill="#ffffff"/>
-  <rect x="0" y="0" width="1920" height="8" fill="#ff7500"/>
 
   <text x="90" y="115" font-size="60" font-weight="700" fill="#2d2d2d">From Q-Learning to DQN</text>
 
   <!-- Problem line -->
-  <text x="90" y="215" font-size="34" fill="#2d2d2d">Continuous states <tspan fill="#888888">(CartPole: 4 numbers)</tspan>  →  <tspan font-weight="700" fill="#c65600">infinitely many rows: a table is impossible</tspan></text>
+  <text x="90" y="215" font-size="34" fill="#2d2d2d">Continuous states <tspan fill="#888888">(CartPole: 4 numbers)</tspan>  →  <tspan font-weight="700">a table is impossible</tspan></text>
 
-  <!-- Center visual: table -> network -->
   <!-- crossed-out table -->
   <g transform="translate(150, 330)">
-    <g stroke="#dddddd" stroke-width="3" fill="#ffffff">
+    <g stroke="#cccccc" stroke-width="3" fill="#ffffff">
       <rect x="0" y="0" width="110" height="70"/><rect x="110" y="0" width="110" height="70"/><rect x="220" y="0" width="110" height="70"/>
       <rect x="0" y="70" width="110" height="70"/><rect x="110" y="70" width="110" height="70"/><rect x="220" y="70" width="110" height="70"/>
       <rect x="0" y="140" width="110" height="70"/><rect x="110" y="140" width="110" height="70"/><rect x="220" y="140" width="110" height="70"/>
       <rect x="0" y="210" width="110" height="70"/><rect x="110" y="210" width="110" height="70"/><rect x="220" y="210" width="110" height="70"/>
     </g>
-    <line x1="-20" y1="300" x2="350" y2="-20" stroke="#c62828" stroke-width="10" stroke-linecap="round"/>
-    <line x1="-20" y1="-20" x2="350" y2="300" stroke="#c62828" stroke-width="10" stroke-linecap="round"/>
+    <line x1="-20" y1="300" x2="350" y2="-20" stroke="#8a8a8a" stroke-width="10" stroke-linecap="round"/>
+    <line x1="-20" y1="-20" x2="350" y2="300" stroke="#8a8a8a" stroke-width="10" stroke-linecap="round"/>
     <text x="165" y="350" font-size="30" fill="#888888" text-anchor="middle">Q-table</text>
   </g>
 
@@ -25,21 +23,18 @@
 
   <!-- network -->
   <g transform="translate(720, 300)">
-    <!-- input -->
-    <circle cx="0" cy="60" r="20" fill="#7664a0"/>
-    <circle cx="0" cy="140" r="20" fill="#7664a0"/>
-    <circle cx="0" cy="220" r="20" fill="#7664a0"/>
-    <circle cx="0" cy="300" r="20" fill="#7664a0"/>
-    <!-- hidden -->
-    <circle cx="180" cy="20" r="20" fill="#b3a5cf"/>
-    <circle cx="180" cy="100" r="20" fill="#b3a5cf"/>
-    <circle cx="180" cy="180" r="20" fill="#b3a5cf"/>
-    <circle cx="180" cy="260" r="20" fill="#b3a5cf"/>
-    <circle cx="180" cy="340" r="20" fill="#b3a5cf"/>
-    <!-- output -->
+    <circle cx="0" cy="60" r="20" fill="#555555"/>
+    <circle cx="0" cy="140" r="20" fill="#555555"/>
+    <circle cx="0" cy="220" r="20" fill="#555555"/>
+    <circle cx="0" cy="300" r="20" fill="#555555"/>
+    <circle cx="180" cy="20" r="20" fill="#aaaaaa"/>
+    <circle cx="180" cy="100" r="20" fill="#aaaaaa"/>
+    <circle cx="180" cy="180" r="20" fill="#aaaaaa"/>
+    <circle cx="180" cy="260" r="20" fill="#aaaaaa"/>
+    <circle cx="180" cy="340" r="20" fill="#aaaaaa"/>
     <circle cx="360" cy="110" r="20" fill="#ff7500"/>
     <circle cx="360" cy="250" r="20" fill="#ff7500"/>
-    <g stroke="#cccccc" stroke-width="2.5">
+    <g stroke="#dddddd" stroke-width="2.5">
       <line x1="20" y1="60" x2="160" y2="20"/><line x1="20" y1="60" x2="160" y2="100"/><line x1="20" y1="60" x2="160" y2="180"/><line x1="20" y1="60" x2="160" y2="260"/><line x1="20" y1="60" x2="160" y2="340"/>
       <line x1="20" y1="140" x2="160" y2="20"/><line x1="20" y1="140" x2="160" y2="100"/><line x1="20" y1="140" x2="160" y2="180"/><line x1="20" y1="140" x2="160" y2="260"/><line x1="20" y1="140" x2="160" y2="340"/>
       <line x1="20" y1="220" x2="160" y2="20"/><line x1="20" y1="220" x2="160" y2="100"/><line x1="20" y1="220" x2="160" y2="180"/><line x1="20" y1="220" x2="160" y2="260"/><line x1="20" y1="220" x2="160" y2="340"/>
@@ -47,7 +42,7 @@
       <line x1="200" y1="20" x2="340" y2="110"/><line x1="200" y1="100" x2="340" y2="110"/><line x1="200" y1="180" x2="340" y2="110"/><line x1="200" y1="260" x2="340" y2="110"/><line x1="200" y1="340" x2="340" y2="110"/>
       <line x1="200" y1="20" x2="340" y2="250"/><line x1="200" y1="100" x2="340" y2="250"/><line x1="200" y1="180" x2="340" y2="250"/><line x1="200" y1="260" x2="340" y2="250"/><line x1="200" y1="340" x2="340" y2="250"/>
     </g>
-    <text x="0" y="-15" font-size="30" fill="#7664a0" text-anchor="middle" font-weight="600">state</text>
+    <text x="0" y="-15" font-size="30" fill="#555555" text-anchor="middle" font-weight="600">state</text>
     <text x="380" y="115" font-size="30" fill="#ff7500" font-weight="600">Q(s, a₁)</text>
     <text x="380" y="255" font-size="30" fill="#ff7500" font-weight="600">Q(s, a₂)</text>
     <text x="180" y="410" font-size="30" fill="#888888" text-anchor="middle">Q-network</text>
@@ -59,18 +54,17 @@
   <text x="1390" y="435" font-size="32" fill="#2d2d2d">now a gradient step</text>
 
   <!-- Two tricks -->
-  <rect x="90" y="800" width="850" height="150" rx="14" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
-  <text x="125" y="862" font-size="36" font-weight="700" fill="#7664a0">1&#160;&#160;Replay Buffer</text>
-  <text x="125" y="915" font-size="30" fill="#2d2d2d">remember experiences, train on random batches</text>
-
-  <rect x="980" y="800" width="850" height="150" rx="14" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
-  <text x="1015" y="862" font-size="36" font-weight="700" fill="#7664a0">2&#160;&#160;Target Network</text>
-  <text x="1015" y="915" font-size="30" fill="#2d2d2d">a frozen copy computes the targets — stability</text>
-
   <text x="960" y="760" font-size="30" fill="#888888" text-anchor="middle">two tricks make it stable</text>
 
-  <rect x="90" y="990" width="1740" height="4" fill="#eeeeee"/>
-  <text x="90" y="1042" font-size="30" fill="#ff7500" font-weight="600">DQN&#160;&#160;=&#160;&#160;Q-Learning&#160;&#160;+&#160;&#160;network&#160;&#160;+&#160;&#160;replay buffer&#160;&#160;+&#160;&#160;target network</text>
+  <rect x="90" y="800" width="850" height="150" rx="14" fill="#ffffff" stroke="#bbbbbb" stroke-width="3"/>
+  <text x="125" y="862" font-size="36" font-weight="700" fill="#2d2d2d">1&#160;&#160;Replay Buffer</text>
+  <text x="125" y="915" font-size="30" fill="#555555">train on random batches of remembered experience</text>
+
+  <rect x="980" y="800" width="850" height="150" rx="14" fill="#ffffff" stroke="#bbbbbb" stroke-width="3"/>
+  <text x="1015" y="862" font-size="36" font-weight="700" fill="#2d2d2d">2&#160;&#160;Target Network</text>
+  <text x="1015" y="915" font-size="30" fill="#555555">stable targets from a frozen copy</text>
+
+  <text x="90" y="1040" font-size="30" fill="#2d2d2d" font-weight="600">DQN&#160;&#160;=&#160;&#160;Q-Learning&#160;&#160;+&#160;&#160;network&#160;&#160;+&#160;&#160;replay buffer&#160;&#160;+&#160;&#160;target network</text>
 
   <defs>
     <marker id="arrD" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2d2d2d"/></marker>
