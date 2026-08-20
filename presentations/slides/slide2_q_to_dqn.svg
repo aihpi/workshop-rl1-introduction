@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <rect width="1920" height="1080" fill="#ffffff"/>
+  <rect x="0" y="0" width="1920" height="8" fill="#ff7500"/>
+
+  <text x="90" y="110" font-size="56" font-weight="700" fill="#2d2d2d">From Q-Learning to DQN: replace the table with a network</text>
+  <text x="90" y="165" font-size="30" fill="#666666">Same idea, same update — a neural network estimates Q(s, a) when a table is impossible</text>
+
+  <!-- Problem box -->
+  <text x="90" y="265" font-size="30" font-weight="700" fill="#ff7500">THE PROBLEM</text>
+  <rect x="90" y="290" width="520" height="220" rx="12" fill="#fff4ea" stroke="#ff7500" stroke-width="3"/>
+  <text x="120" y="340" font-size="28" fill="#2d2d2d">CartPole's state: 4 continuous numbers</text>
+  <text x="120" y="378" font-size="26" fill="#666666">position, velocity, angle, angular velocity</text>
+  <text x="120" y="432" font-size="28" fill="#2d2d2d">Infinitely many states</text>
+  <text x="120" y="470" font-size="28" font-weight="700" fill="#c65600">→ a table cannot hold them</text>
+
+  <!-- The swap: table -> network -->
+  <text x="90" y="600" font-size="30" font-weight="700" fill="#7664a0">THE SWAP</text>
+
+  <!-- crossed-out table -->
+  <g stroke="#dddddd" stroke-width="2" fill="#ffffff">
+    <rect x="90" y="640" width="70" height="45"/><rect x="160" y="640" width="70" height="45"/><rect x="230" y="640" width="70" height="45"/>
+    <rect x="90" y="685" width="70" height="45"/><rect x="160" y="685" width="70" height="45"/><rect x="230" y="685" width="70" height="45"/>
+    <rect x="90" y="730" width="70" height="45"/><rect x="160" y="730" width="70" height="45"/><rect x="230" y="730" width="70" height="45"/>
+  </g>
+  <line x1="80" y1="785" x2="310" y2="630" stroke="#c62828" stroke-width="7" stroke-linecap="round"/>
+  <line x1="80" y1="630" x2="310" y2="785" stroke="#c62828" stroke-width="7" stroke-linecap="round"/>
+
+  <path d="M 340 707 L 430 707" stroke="#2d2d2d" stroke-width="5" fill="none" marker-end="url(#arrowD)"/>
+
+  <!-- network diagram -->
+  <g>
+    <!-- input -->
+    <circle cx="490" cy="620" r="16" fill="#7664a0"/>
+    <circle cx="490" cy="675" r="16" fill="#7664a0"/>
+    <circle cx="490" cy="730" r="16" fill="#7664a0"/>
+    <circle cx="490" cy="785" r="16" fill="#7664a0"/>
+    <!-- hidden -->
+    <circle cx="620" cy="600" r="16" fill="#b3a5cf"/>
+    <circle cx="620" cy="655" r="16" fill="#b3a5cf"/>
+    <circle cx="620" cy="710" r="16" fill="#b3a5cf"/>
+    <circle cx="620" cy="765" r="16" fill="#b3a5cf"/>
+    <circle cx="620" cy="820" r="16" fill="#b3a5cf"/>
+    <!-- output -->
+    <circle cx="750" cy="660" r="16" fill="#ff7500"/>
+    <circle cx="750" cy="745" r="16" fill="#ff7500"/>
+    <!-- edges -->
+    <g stroke="#cccccc" stroke-width="2">
+      <line x1="506" y1="620" x2="604" y2="600"/><line x1="506" y1="620" x2="604" y2="655"/><line x1="506" y1="620" x2="604" y2="710"/><line x1="506" y1="620" x2="604" y2="765"/><line x1="506" y1="620" x2="604" y2="820"/>
+      <line x1="506" y1="675" x2="604" y2="600"/><line x1="506" y1="675" x2="604" y2="655"/><line x1="506" y1="675" x2="604" y2="710"/><line x1="506" y1="675" x2="604" y2="765"/><line x1="506" y1="675" x2="604" y2="820"/>
+      <line x1="506" y1="730" x2="604" y2="600"/><line x1="506" y1="730" x2="604" y2="655"/><line x1="506" y1="730" x2="604" y2="710"/><line x1="506" y1="730" x2="604" y2="765"/><line x1="506" y1="730" x2="604" y2="820"/>
+      <line x1="506" y1="785" x2="604" y2="600"/><line x1="506" y1="785" x2="604" y2="655"/><line x1="506" y1="785" x2="604" y2="710"/><line x1="506" y1="785" x2="604" y2="765"/><line x1="506" y1="785" x2="604" y2="820"/>
+      <line x1="636" y1="600" x2="734" y2="660"/><line x1="636" y1="655" x2="734" y2="660"/><line x1="636" y1="710" x2="734" y2="660"/><line x1="636" y1="765" x2="734" y2="660"/><line x1="636" y1="820" x2="734" y2="660"/>
+      <line x1="636" y1="600" x2="734" y2="745"/><line x1="636" y1="655" x2="734" y2="745"/><line x1="636" y1="710" x2="734" y2="745"/><line x1="636" y1="765" x2="734" y2="745"/><line x1="636" y1="820" x2="734" y2="745"/>
+    </g>
+  </g>
+  <text x="490" y="580" font-size="24" fill="#7664a0" text-anchor="middle" font-weight="600">state</text>
+  <text x="750" y="620" font-size="24" fill="#ff7500" text-anchor="middle" font-weight="600">one Q-value</text>
+  <text x="750" y="648" font-size="24" fill="#ff7500" text-anchor="middle" font-weight="600">per action</text>
+
+  <text x="90" y="900" font-size="27" fill="#444444">The update rule stays the same — it just becomes</text>
+  <text x="90" y="936" font-size="27" fill="#444444">a gradient step instead of a cell overwrite.</text>
+
+  <!-- Right: the two tricks -->
+  <text x="950" y="265" font-size="30" font-weight="700" fill="#7664a0">TWO TRICKS MAKE IT STABLE</text>
+
+  <rect x="950" y="290" width="880" height="270" rx="12" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
+  <text x="985" y="345" font-size="34" font-weight="700" fill="#7664a0">1&#160;&#160;Replay Buffer</text>
+  <text x="985" y="395" font-size="27" fill="#2d2d2d">A memory of past experiences (s, a, r, s').</text>
+  <text x="985" y="433" font-size="27" fill="#2d2d2d">Each gradient step trains on a random batch from it.</text>
+  <text x="985" y="490" font-size="27" font-weight="600" fill="#7664a0">→ breaks correlations between consecutive steps</text>
+  <text x="985" y="528" font-size="27" font-weight="600" fill="#7664a0">→ one lucky success teaches the network thousands of times</text>
+
+  <rect x="950" y="590" width="880" height="230" rx="12" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
+  <text x="985" y="645" font-size="34" font-weight="700" fill="#7664a0">2&#160;&#160;Target Network</text>
+  <text x="985" y="695" font-size="27" fill="#2d2d2d">A slowly-updated copy of the Q-network computes the target</text>
+  <text x="985" y="733" font-size="27" fill="#2d2d2d">r + γ · max Q<tspan font-size="20" baseline-shift="sub">target</tspan>(s', a')&#160;&#160;— frozen for many steps at a time.</text>
+  <text x="985" y="790" font-size="27" font-weight="600" fill="#7664a0">→ stops the network from chasing its own moving estimates</text>
+
+  <!-- One consequence -->
+  <rect x="950" y="850" width="880" height="110" rx="12" fill="#f7f7f7"/>
+  <text x="985" y="898" font-size="27" fill="#2d2d2d"><tspan font-weight="700">One consequence:</tspan> all values share the network's weights —</text>
+  <text x="985" y="934" font-size="27" fill="#2d2d2d">every update moves ALL states a little (generalization).</text>
+
+  <rect x="90" y="980" width="1740" height="4" fill="#eeeeee"/>
+  <text x="90" y="1035" font-size="28" fill="#ff7500" font-weight="600">DQN = Q-Learning + function approximation + replay buffer + target network.</text>
+
+  <defs>
+    <marker id="arrowD" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2d2d2d"/></marker>
+  </defs>
+</svg>

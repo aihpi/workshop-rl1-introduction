@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <rect width="1920" height="1080" fill="#ffffff"/>
+  <rect x="0" y="0" width="1920" height="8" fill="#7664a0"/>
+
+  <text x="90" y="110" font-size="56" font-weight="700" fill="#2d2d2d">Q-Learning on FrozenLake: two updates, by hand</text>
+  <text x="90" y="165" font-size="30" fill="#666666">Reward: +1 for reaching the goal, 0 for everything else &#160;·&#160; α = 0.1, γ = 0.95 &#160;·&#160; table starts at all zeros</text>
+
+  <!-- FrozenLake grid -->
+  <g transform="translate(90, 240)">
+    <!-- tiles: 4x4, 150px each -->
+    <g stroke="#ffffff" stroke-width="6">
+      <rect x="0"   y="0"   width="150" height="150" fill="#dbeafe"/>
+      <rect x="150" y="0"   width="150" height="150" fill="#dbeafe"/>
+      <rect x="300" y="0"   width="150" height="150" fill="#dbeafe"/>
+      <rect x="450" y="0"   width="150" height="150" fill="#dbeafe"/>
+      <rect x="0"   y="150" width="150" height="150" fill="#dbeafe"/>
+      <rect x="150" y="150" width="150" height="150" fill="#1e3a5f"/>
+      <rect x="300" y="150" width="150" height="150" fill="#dbeafe"/>
+      <rect x="450" y="150" width="150" height="150" fill="#1e3a5f"/>
+      <rect x="0"   y="300" width="150" height="150" fill="#dbeafe"/>
+      <rect x="150" y="300" width="150" height="150" fill="#dbeafe"/>
+      <rect x="300" y="300" width="150" height="150" fill="#dbeafe"/>
+      <rect x="450" y="300" width="150" height="150" fill="#1e3a5f"/>
+      <rect x="0"   y="450" width="150" height="150" fill="#1e3a5f"/>
+      <rect x="150" y="450" width="150" height="150" fill="#dbeafe"/>
+      <rect x="300" y="450" width="150" height="150" fill="#dbeafe"/>
+      <rect x="450" y="450" width="150" height="150" fill="#7bb662"/>
+    </g>
+    <!-- state numbers -->
+    <g font-size="24" fill="#666666">
+      <text x="10" y="30">0</text><text x="160" y="30">1</text><text x="310" y="30">2</text><text x="460" y="30" fill="#dddddd">3</text>
+      <text x="10" y="180">4</text><text x="160" y="180" fill="#9fb6cc">5</text><text x="310" y="180">6</text><text x="460" y="180" fill="#9fb6cc">7</text>
+      <text x="10" y="330">8</text><text x="160" y="330">9</text><text x="310" y="330">10</text><text x="460" y="330" fill="#9fb6cc">11</text>
+      <text x="10" y="480" fill="#9fb6cc">12</text><text x="160" y="480">13</text><text x="310" y="480">14</text><text x="460" y="480" fill="#ffffff">15</text>
+    </g>
+    <!-- labels -->
+    <text x="75"  y="95"  font-size="42" font-weight="700" fill="#2d2d2d" text-anchor="middle">S</text>
+    <text x="225" y="245" font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle">H</text>
+    <text x="525" y="245" font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle">H</text>
+    <text x="525" y="395" font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle">H</text>
+    <text x="75"  y="545" font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle">H</text>
+    <text x="525" y="545" font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle">G</text>
+    <!-- update arrows -->
+    <path d="M 385 525 L 440 525" stroke="#ff7500" stroke-width="8" fill="none" marker-end="url(#arrO)"/>
+    <path d="M 235 525 L 290 525" stroke="#7664a0" stroke-width="8" fill="none" marker-end="url(#arrV)"/>
+    <circle cx="358" cy="525" r="12" fill="#ff7500"/>
+    <circle cx="208" cy="525" r="12" fill="#7664a0"/>
+  </g>
+
+  <text x="90" y="920" font-size="26" fill="#444444">Terminal states (holes, goal) are never updated —</text>
+  <text x="90" y="954" font-size="26" fill="#444444">no action is ever taken from them.</text>
+
+  <!-- Update 1 -->
+  <text x="800" y="265" font-size="30" font-weight="700" fill="#ff7500">UPDATE 1 — REACHING THE GOAL (terminal)</text>
+  <rect x="800" y="290" width="1030" height="230" rx="12" fill="#fff4ea" stroke="#ff7500" stroke-width="3"/>
+  <text x="835" y="345" font-size="28" fill="#2d2d2d">In state <tspan font-weight="700">14</tspan>, take <tspan font-weight="700">→</tspan> , reach the goal: r = 1, episode ends</text>
+  <text x="835" y="405" font-size="28" fill="#2d2d2d">target = r = <tspan font-weight="700">1</tspan>&#160;&#160;&#160;<tspan fill="#888888">(terminal → no bootstrap term)</tspan></text>
+  <text x="835" y="475" font-size="30" fill="#2d2d2d">Q(14, →) ← 0 + 0.1 · (1 − 0) = <tspan font-weight="700" fill="#c65600">0.1</tspan></text>
+
+  <!-- Update 2 -->
+  <text x="800" y="600" font-size="30" font-weight="700" fill="#7664a0">UPDATE 2 — ONE STEP EARLIER (bootstrap)</text>
+  <rect x="800" y="625" width="1030" height="230" rx="12" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
+  <text x="835" y="680" font-size="28" fill="#2d2d2d">Later, in state <tspan font-weight="700">13</tspan>, take <tspan font-weight="700">→</tspan> , land in 14: r = 0, episode continues</text>
+  <text x="835" y="740" font-size="28" fill="#2d2d2d">target = 0 + 0.95 · max Q(14, ·) = 0.95 · 0.1 = <tspan font-weight="700">0.095</tspan></text>
+  <text x="835" y="810" font-size="30" fill="#2d2d2d">Q(13, →) ← 0 + 0.1 · (0.095 − 0) = <tspan font-weight="700" fill="#7664a0">0.0095</tspan></text>
+
+  <rect x="90" y="980" width="1740" height="4" fill="#eeeeee"/>
+  <text x="90" y="1035" font-size="28" fill="#7664a0" font-weight="600">The goal's reward seeps backwards through the table, one visited cell at a time — that is the whole algorithm.</text>
+
+  <defs>
+    <marker id="arrO" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ff7500"/></marker>
+    <marker id="arrV" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#7664a0"/></marker>
+  </defs>
+</svg>

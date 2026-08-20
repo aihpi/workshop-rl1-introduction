@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <rect width="1920" height="1080" fill="#ffffff"/>
+  <rect x="0" y="0" width="1920" height="8" fill="#7664a0"/>
+
+  <!-- Title -->
+  <text x="90" y="110" font-size="56" font-weight="700" fill="#2d2d2d">Q-Learning: a table of action values</text>
+  <text x="90" y="165" font-size="30" fill="#666666">Learn Q(s, a) = how much total reward to expect from taking action a in state s</text>
+
+  <!-- Left column: the loop -->
+  <text x="90" y="270" font-size="30" font-weight="700" fill="#7664a0">THE LOOP</text>
+
+  <rect x="90" y="300" width="300" height="90" rx="10" fill="#7664a0"/>
+  <text x="240" y="355" font-size="32" font-weight="600" fill="#ffffff" text-anchor="middle">Agent</text>
+
+  <rect x="90" y="560" width="300" height="90" rx="10" fill="#4a4a4a"/>
+  <text x="240" y="615" font-size="32" font-weight="600" fill="#ffffff" text-anchor="middle">Environment</text>
+
+  <!-- action arrow (down, right side) -->
+  <path d="M 330 390 L 330 560" stroke="#ff7500" stroke-width="5" fill="none" marker-end="url(#arrowO)"/>
+  <text x="350" y="480" font-size="26" fill="#ff7500" font-weight="600">action a</text>
+  <text x="350" y="512" font-size="24" fill="#888888">ε-greedy: random with prob. ε,</text>
+  <text x="350" y="540" font-size="24" fill="#888888">else best known action</text>
+
+  <!-- state/reward arrow (up, left side) -->
+  <path d="M 150 560 L 150 390" stroke="#7664a0" stroke-width="5" fill="none" marker-end="url(#arrowV)"/>
+  <text x="60" y="480" font-size="26" fill="#7664a0" font-weight="600" text-anchor="end">reward r,</text>
+  <text x="60" y="512" font-size="26" fill="#7664a0" font-weight="600" text-anchor="end">next state s'</text>
+
+  <text x="90" y="720" font-size="26" fill="#444444">After every single step:</text>
+  <text x="90" y="754" font-size="26" fill="#444444">update ONE table cell, Q(s, a)</text>
+
+  <!-- Middle: the update rule -->
+  <text x="640" y="270" font-size="30" font-weight="700" fill="#7664a0">THE UPDATE RULE</text>
+
+  <rect x="640" y="300" width="700" height="130" rx="12" fill="#f4f1fa" stroke="#7664a0" stroke-width="3"/>
+  <text x="990" y="378" font-size="40" font-weight="600" fill="#2d2d2d" text-anchor="middle">Q(s,a) ← Q(s,a) + α · [ target − Q(s,a) ]</text>
+
+  <rect x="640" y="460" width="700" height="150" rx="12" fill="#fff4ea" stroke="#ff7500" stroke-width="3"/>
+  <text x="670" y="510" font-size="30" fill="#2d2d2d">target = r + γ · max Q(s', a')</text>
+  <text x="1260" y="510" font-size="26" fill="#888888" text-anchor="end">normal step</text>
+  <text x="670" y="570" font-size="30" fill="#2d2d2d">target = r</text>
+  <text x="1260" y="570" font-size="26" fill="#888888" text-anchor="end">episode ended: no future</text>
+
+  <text x="640" y="680" font-size="27" fill="#444444">"Nudge my estimate toward what just happened,</text>
+  <text x="640" y="716" font-size="27" fill="#444444">plus the best I believe about what comes next."</text>
+
+  <!-- parameters strip -->
+  <rect x="640" y="770" width="700" height="180" rx="12" fill="#f7f7f7"/>
+  <text x="670" y="820" font-size="27" fill="#2d2d2d"><tspan font-weight="700" fill="#7664a0">α</tspan>  learning rate — how big each nudge is</text>
+  <text x="670" y="868" font-size="27" fill="#2d2d2d"><tspan font-weight="700" fill="#7664a0">γ</tspan>  discount — how much the future counts</text>
+  <text x="670" y="916" font-size="27" fill="#2d2d2d"><tspan font-weight="700" fill="#7664a0">ε</tspan>  exploration — how often to try something random</text>
+
+  <!-- Right: mini Q-table -->
+  <text x="1450" y="270" font-size="30" font-weight="700" fill="#7664a0">THE TABLE</text>
+  <text x="1450" y="310" font-size="24" fill="#888888">one row per state, one column per action</text>
+
+  <!-- table: header -->
+  <g font-size="26" text-anchor="middle">
+    <text x="1530" y="370" fill="#888888">←</text>
+    <text x="1610" y="370" fill="#888888">↓</text>
+    <text x="1690" y="370" fill="#888888">→</text>
+    <text x="1770" y="370" fill="#888888">↑</text>
+  </g>
+  <g font-size="24" fill="#888888" text-anchor="end">
+    <text x="1478" y="425">s = 0</text>
+    <text x="1478" y="505">s = 1</text>
+    <text x="1478" y="585">s = 2</text>
+    <text x="1478" y="665">⋮</text>
+  </g>
+  <g stroke="#dddddd" stroke-width="2" fill="#ffffff">
+    <rect x="1490" y="390" width="80" height="55"/><rect x="1570" y="390" width="80" height="55"/><rect x="1650" y="390" width="80" height="55"/><rect x="1730" y="390" width="80" height="55"/>
+    <rect x="1490" y="470" width="80" height="55"/><rect x="1570" y="470" width="80" height="55"/><rect x="1650" y="470" width="80" height="55"/><rect x="1730" y="470" width="80" height="55"/>
+    <rect x="1490" y="550" width="80" height="55"/><rect x="1570" y="550" width="80" height="55"/><rect x="1650" y="550" width="80" height="55"/><rect x="1730" y="550" width="80" height="55"/>
+  </g>
+  <!-- one highlighted cell -->
+  <rect x="1650" y="470" width="80" height="55" fill="#ff7500" opacity="0.25"/>
+  <rect x="1650" y="470" width="80" height="55" fill="none" stroke="#ff7500" stroke-width="4"/>
+  <g font-size="24" fill="#555555" text-anchor="middle">
+    <text x="1530" y="425">0.38</text><text x="1610" y="425">0.77</text><text x="1690" y="425">0.34</text><text x="1770" y="425">0.10</text>
+    <text x="1530" y="505">0.41</text><text x="1610" y="505">0.00</text><text x="1690" y="505" font-weight="700" fill="#c65600">0.81</text><text x="1770" y="505">0.12</text>
+    <text x="1530" y="585">0.62</text><text x="1610" y="585">0.86</text><text x="1690" y="585">0.36</text><text x="1770" y="585">0.00</text>
+  </g>
+  <text x="1450" y="700" font-size="26" fill="#444444">Greedy policy = per row,</text>
+  <text x="1450" y="734" font-size="26" fill="#444444">pick the largest value</text>
+
+  <!-- footer takeaway -->
+  <rect x="90" y="980" width="1740" height="4" fill="#eeeeee"/>
+  <text x="90" y="1035" font-size="28" fill="#7664a0" font-weight="600">Every value is stored explicitly — that only works while the number of states stays small.</text>
+
+  <defs>
+    <marker id="arrowO" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ff7500"/></marker>
+    <marker id="arrowV" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#7664a0"/></marker>
+  </defs>
+</svg>
