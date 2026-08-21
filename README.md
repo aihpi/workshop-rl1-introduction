@@ -51,6 +51,8 @@ docker compose up -d
 
 1. Open browser to http://localhost:3030
 
+**Remote machine?** RL Lab also works when the containers run on another computer (a lab server, a VM): open `http://<server-address>:3030` - the browser talks only to that one address, everything else is proxied inside.
+
 ### Installation Guides (Beginners)
 
 **New to programming or Docker?** Follow the more detailed installation guides:
