@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:5001/api';
+// Production bundle: same-origin '/api', proxied to the backend by the
+// frontend's nginx (see frontend/nginx.conf) - works on localhost AND
+// when the containers run on a remote machine (GitHub issue #4).
+// Dev server (npm start / docker-compose.dev.yml): no nginx in front,
+// so talk to Flask directly on the host that served the page.
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+  ? `http://${window.location.hostname}:5001/api`
+  : '/api';
 
 /**
  * Get list of available algorithms

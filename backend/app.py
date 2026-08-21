@@ -25,7 +25,12 @@ from training.trainer import TrainingCoordinator, resolve_seed
 app = Flask(__name__)
 
 # Enable CORS for frontend on localhost:3030
-CORS(app, origins=['http://localhost:3030', 'http://127.0.0.1:3030'])
+# Any origin: production traffic arrives same-origin through the
+# frontend's nginx proxy anyway; direct cross-origin calls happen in
+# dev mode and from remote-host setups (GitHub issue #4). The API is
+# an unauthenticated local teaching tool - an allowlist protects
+# nothing here and broke every non-localhost deployment.
+CORS(app)
 
 # Global training coordinator
 trainer = TrainingCoordinator()

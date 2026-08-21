@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 **Note**: Phase 1 is currently in development. Core features are implemented but production readiness (testing, UI polish, documentation) is ongoing.
 
+## [0.9.2] - 2026-08-21
+
+### Fixed
+- **Remote-host access (GitHub issue #4, reported and diagnosed by @shevchukdp)**: the frontend bundle hardcoded `http://127.0.0.1:5001/api`, which the *browser* resolves - on a remote deployment every API/SSE call targeted the participant's own machine, and the backend's CORS allowlist (localhost only) was a second blocker. The production bundle now uses same-origin `/api`, proxied to the backend by the frontend's nginx (`frontend/nginx.conf`, `proxy_buffering off` for the SSE streams), making the app hostname-agnostic with no CORS dependency; the dev server still talks to Flask directly via `window.location.hostname`. Backend CORS is open (`CORS(app)`) for the dev/direct paths.
+
 ## [0.9.1] - 2026-08-19
 
 ### Added

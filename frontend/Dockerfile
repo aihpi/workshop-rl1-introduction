@@ -30,6 +30,7 @@ FROM nginx:alpine
 # nginx config is sufficient. The API URL is compiled in (api.js:
 # http://127.0.0.1:5001/api) - the browser talks to the backend
 # container's published port directly.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 80
